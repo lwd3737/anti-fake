@@ -22,7 +22,7 @@ export interface SearchVideosResult {
 export default class YoutubeService {
 	private youtube: youtube_v3.Youtube;
 
-	constructor(config: Config) {
+	constructor(config: Pick<Config, "google">) {
 		this.youtube = google.youtube({
 			version: "v3",
 			auth: config.google.apiKey,
