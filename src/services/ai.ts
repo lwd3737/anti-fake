@@ -1,9 +1,14 @@
-import { Config } from "@/config";
+import loadConfig, { Config } from "@/config";
 import { openai } from "@ai-sdk/openai";
 import { LanguageModelV1, streamObject, streamText } from "ai";
 
 export default class AiService {
 	private model: LanguageModelV1;
+
+	public static create() {
+		const config = loadConfig();
+		return new AiService({ openai: config.openai });
+	}
 
 	constructor(config: Pick<Config, "openai">) {
 		this.model = openai(config.openai.gptModel);
