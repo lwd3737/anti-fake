@@ -48,4 +48,14 @@ export default class GoogleAuth {
 		this.client.setCredentials(tokens);
 		return tokens;
 	}
+
+	public async verifyAccessToken(accessToken: string): Promise<boolean> {
+		try {
+			const res = await this.client.getTokenInfo(accessToken);
+			return res.expiry_date > Date.now();
+		} catch (e) {
+			console.error(e);
+			return false;
+		}
+	}
 }

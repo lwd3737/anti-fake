@@ -1,12 +1,12 @@
 import loadConfig from "@/config";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import GoogleAuth from "@/services/googgle-auth";
-import { GenerateOauthUrlDto } from "@/dto/auth";
+import { GenerateOauthUrlResponseDto } from "@/dto/auth";
+import GoogleAuth from "@/services/google-auth";
 
 export async function POST(
 	req: NextRequest,
-): Promise<NextResponse<GenerateOauthUrlDto>> {
+): Promise<NextResponse<GenerateOauthUrlResponseDto>> {
 	const config = loadConfig();
 
 	const googgleAuth = GoogleAuth.create();
@@ -19,14 +19,6 @@ export async function POST(
 		sameSite: "strict",
 		httpOnly: true,
 	});
-
-	// return NextResponse.redirect(authUrl, {
-	// 	status: 302,
-	// 	headers: {
-	// 		"Access-Control-Allow-Origin": "*",
-	// 		"Access-Control-Allow-Methods": "GET",
-	// 	},
-	// });
 
 	return NextResponse.json({ oauthUrl });
 }

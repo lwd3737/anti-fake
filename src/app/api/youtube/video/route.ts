@@ -1,6 +1,6 @@
 import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
-import { ErrorCode } from "@/error/code";
-import { handleError } from "@/error/reponse-handler";
+import { ErrorCode } from "@/app/api/error/code";
+import { handleError } from "@/app/api/error/reponse-handler";
 import YoutubeService from "@/services/youtube";
 import { NextRequest, NextResponse } from "next/server";
 
