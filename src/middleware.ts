@@ -4,8 +4,10 @@ import { fetchVerifyAccessToken } from "./app/api/auth/verify-token/fetch";
 import { generateServerUrl } from "./utils/url";
 
 export async function middleware(req: NextRequest) {
+	console.log(req.nextUrl.pathname);
 	if (isPublic(req.nextUrl.pathname)) return NextResponse.next();
 
+	console.log(req.nextUrl.pathname, "is not public");
 	const isAuthenticated = await authenticate(req);
 	if (!isAuthenticated)
 		return NextResponse.redirect(generateServerUrl(PAGE_ROUTES.login));

@@ -1,29 +1,49 @@
 "use client";
-import { isFailure } from "@/result";
-import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { PAGE_ROUTES } from "@/constants/routes";
 import { useEffect } from "react";
+import { useAuth } from "../components/AuthProvider";
+import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
+import { isFailure } from "@/result";
 
 export default function OauthCallbackPage() {
 	const params = useSearchParams();
 	const router = useRouter();
 
+	const { login, generateToken } = useAuth();
+
 	useEffect(
-		function () {
+		function gnerateTokenOnMount() {
 			const [state, code] = [params.get("state"), params.get("code")];
 			if (!state || !code) return redirect(PAGE_ROUTES.error.auth);
 
-			fetchGenerateAccessToken({
-				state,
-				authCode: code,
-			}).then((result) => {
-				if (isFailure(result)) router.push(PAGE_ROUTES.error.auth);
+			const controller = new AbortController();
 
-				router.push("/");
-			});
+			fetchGenerateAccessToken(
+				{
+					state,
+					authCode: code,
+				},
+				controller.signal,
+			)
+				.then((result) => {
+					if (isFailure(result)) router.push(PAGE_ROUTES.error.auth);
+
+					login();
+				})
+				.catch((e) => {
+					const error = e as Error;
+					if (error.name === "AbortError") {
+						console.log(error.message);
+						return;
+					}
+
+					console.error(error);
+				});
+
+			return () => controller.abort();
 		},
-		[params, router],
+		[login, params, router],
 	);
 
 	return (
