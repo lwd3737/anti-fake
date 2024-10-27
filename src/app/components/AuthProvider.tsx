@@ -6,12 +6,10 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { fetchVerifyAccessToken } from "../api/auth/verify-token/fetch";
 import { PAGE_ROUTES } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
-import { set } from "zod";
 
 export const AuthContext = createContext<{
 	isAuthenticated: boolean;
