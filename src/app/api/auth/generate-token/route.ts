@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 		expires: Date.now() + 1000 * 60 * 60 * 24 * 7, // 1 week
 		secure: loadConfig().nodeEnv === "production",
 		sameSite: "strict",
-		httpOnly: true,
+		// httpOnly: true,
 	});
 
 	return NextResponse.json({ isAuthenticated: true });

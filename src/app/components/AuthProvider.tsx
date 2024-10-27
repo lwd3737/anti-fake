@@ -1,9 +1,17 @@
 "use client";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
+import { fetchVerifyAccessToken } from "../api/auth/verify-token/fetch";
 import { PAGE_ROUTES } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
+import { set } from "zod";
 
 export const AuthContext = createContext<{
 	isAuthenticated: boolean;
@@ -41,6 +49,20 @@ export default function AuthProvider({
 		},
 		[login, router],
 	);
+
+	useEffect(() => {
+		const accessTokenCookie = document.cookie
+			.split(";")
+			.find((cookie) => cookie.includes("access-token"));
+		if (!accessTokenCookie) {
+			return;
+		}
+
+		const accessToken = accessTokenCookie.split("=")[1];
+		if (accessToken) {
+			setIsAuthenticated(true);
+		}
+	}, [login, logout]);
 
 	return (
 		<AuthContext.Provider
