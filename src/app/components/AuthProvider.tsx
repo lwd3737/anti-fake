@@ -1,12 +1,5 @@
 "use client";
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
-import { fetchVerifyAccessToken } from "../api/auth/verify-token/fetch";
+import { createContext, useCallback, useContext, useState } from "react";
 import { PAGE_ROUTES } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
@@ -48,24 +41,6 @@ export default function AuthProvider({
 		},
 		[login, router],
 	);
-
-	// useEffect(() => {
-	// 	const accessTokenCookie = document.cookie
-	// 		.split(";")
-	// 		.find((cookie) => cookie.includes("access-token"));
-	// 	if (!accessTokenCookie) {
-	// 		console.log("logout");
-	// 		logout();
-	// 		return;
-	// 	}
-
-	// 	const accessToken = accessTokenCookie.split("=")[1];
-
-	// 	fetchVerifyAccessToken(accessToken).then((result) => {
-	// 		const { isVerified } = result;
-	// 		return isVerified ? login() : logout();
-	// 	});
-	// }, [login, logout]);
 
 	return (
 		<AuthContext.Provider

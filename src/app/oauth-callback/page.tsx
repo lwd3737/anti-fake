@@ -10,7 +10,7 @@ export default function OauthCallbackPage() {
 	const params = useSearchParams();
 	const router = useRouter();
 
-	const { login, generateToken } = useAuth();
+	const { login } = useAuth();
 
 	useEffect(
 		function gnerateTokenOnMount() {
