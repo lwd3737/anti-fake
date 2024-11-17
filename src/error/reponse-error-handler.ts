@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ErrorCode } from "./code";
+import { ErrorCode } from "./error-code";
 
 export interface Failure {
 	code: ErrorCode;

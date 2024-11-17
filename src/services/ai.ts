@@ -1,6 +1,13 @@
 import loadConfig, { Config } from "@/config";
 import { openai } from "@ai-sdk/openai";
-import { LanguageModelV1, streamObject, streamText } from "ai";
+import {
+	generateObject,
+	generateText,
+	LanguageModelV1,
+	streamObject,
+	streamText,
+} from "ai";
+import { z, ZodSchema } from "zod";
 
 export default class AiService {
 	private model: LanguageModelV1;
@@ -25,5 +32,47 @@ export default class AiService {
 		});
 
 		return res.toTextStreamResponse();
+	}
+
+	public async generateText(input: {
+		prompt: string;
+		config?: { model?: string; temperature?: number };
+	}): Promise<string> {
+		const { prompt, config } = input;
+
+		const result = await generateText({
+			model: config?.model ? openai(config?.model) : this.model,
+			prompt,
+			temperature: config?.temperature,
+		});
+		return result.text;
+	}
+
+	public async generateObject(input: {
+		schema: ZodSchema;
+		schemaName?: string;
+		schemaDescription?: string;
+		prompt: string;
+		config?: {
+			mode?: "auto" | "json" | "tool";
+			system?: string;
+			model?: string;
+			temperature?: number;
+		};
+	}): Promise<any> {
+		const { schema, schemaName, schemaDescription, prompt, config } = input;
+
+		const result = await generateObject({
+			model: config?.model ? openai(config?.model) : this.model,
+			schema,
+			schemaName,
+			schemaDescription,
+			prompt,
+			mode: config?.mode ?? "json",
+			system: config?.system,
+			temperature: config?.temperature,
+		});
+
+		return result.object;
 	}
 }

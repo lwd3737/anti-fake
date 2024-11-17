@@ -1,6 +1,8 @@
 import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
-import { ErrorCode } from "@/app/api/error/code";
-import { handleError } from "@/app/api/error/reponse-handler";
+import { ErrorCode } from "@/error/error-code";
+import { handleRouteError } from "@/error/reponse-error-handler";
+import AiService from "@/services/ai";
+import FactCheckerService from "@/services/fact-checker/fact-checker";
 import YoutubeService from "@/services/youtube";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,21 +11,29 @@ export async function POST(req: NextRequest) {
 	const url = new URL(videoUrl);
 
 	if (url.host !== "www.youtube.com" || url.pathname !== "/watch") {
-		return handleError(ErrorCode.INVALID_URL, "Invalid URL", 400);
+		return handleRouteError(
+			ErrorCode.INVALID_YOUTUBE_VIDEO_URL,
+			"Invalid Youtube video URL",
+			400,
+		);
 	}
 
 	const videoId = url.searchParams.get("v");
 	if (!videoId) {
-		return handleError(ErrorCode.INVALID_URL, "Invalid URL", 400);
+		return handleRouteError(
+			ErrorCode.INVALID_YOUTUBE_VIDEO_URL,
+			"Invalid Youtube video id",
+			400,
+		);
 	}
 
-	const youtube = YoutubeService.create();
+	// TODO: 비디오에 대한 정보도 가져오기
 
-	const video = await youtube.getVideo(videoId);
-	console.log("video", video);
+	const caption = await YoutubeService.getSubtitle(videoId);
+	const factChecker = new FactCheckerService();
+	const result = await factChecker.execute({ subtitle: caption });
 
-	const caption = await youtube.downloadCaption(video.id);
-	console.log(caption);
+	// factChecker.formatSubtitle(caption).detectClaims().logPipeline();
 
-	return NextResponse.json({ video, caption });
+	return NextResponse.json({ result });
 }

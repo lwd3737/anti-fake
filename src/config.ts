@@ -9,6 +9,7 @@ export default function loadConfig() {
 		GOOGLE_CLIENT_ID,
 		GOOGLE_SECRET_KEY,
 		GOOGLE_REDIRECT_URL,
+		DEV_MODE,
 	} = process.env;
 
 	if (!BASE_URL) throw new Error("BASE_URL is required");
@@ -22,6 +23,7 @@ export default function loadConfig() {
 	return {
 		nodeEnv: process.env.NODE_ENV,
 		baseUrl: BASE_URL,
+		devMode: DEV_MODE === "true",
 		openai: {
 			apiKey: OPENAI_API_KEY,
 			gptModel: GPT_MODEL,
