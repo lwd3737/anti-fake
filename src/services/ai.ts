@@ -1,12 +1,6 @@
 import loadConfig, { Config } from "@/config";
 import { openai } from "@ai-sdk/openai";
-import {
-	generateObject,
-	generateText,
-	LanguageModelV1,
-	streamObject,
-	streamText,
-} from "ai";
+import { generateObject, generateText, LanguageModelV1, streamText } from "ai";
 import { z, ZodSchema } from "zod";
 
 export default class AiService {

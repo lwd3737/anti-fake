@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
 	const factChecker = new FactCheckerService();
 	const result = await factChecker.execute({ subtitle: caption });
 
-	// factChecker.formatSubtitle(caption).detectClaims().logPipeline();
-
-	return NextResponse.json({ result });
+	return NextResponse.json({
+		subtitle: factChecker.pipeline.formattedSubtitle,
+		claims: factChecker.pipeline.claims,
+	});
 }
