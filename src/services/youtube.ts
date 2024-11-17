@@ -1,20 +1,33 @@
 import loadConfig, { Config } from "@/config";
 import { SearchChannelDto, SearchVideosDto, VideoDto } from "@/dto/youttube";
 import { GaxiosResponse } from "gaxios";
-import { google, youtube_v3 } from "googleapis";
+import { Auth, google, youtube_v3 } from "googleapis";
+import GoogleAuth from "./google-auth";
+import { YoutubeTranscript } from "youtube-transcript";
 
 export default class YoutubeService {
 	private youtube: youtube_v3.Youtube;
 
-	public static create() {
-		const config = loadConfig();
-		return new YoutubeService({ google: config.google });
+	public static create(googleAuth?: GoogleAuth): YoutubeService {
+		return new YoutubeService(
+			googleAuth ? googleAuth.client : { google: loadConfig().google },
+		);
 	}
 
-	constructor(config: Pick<Config, "google">) {
+	public static async getSubtitle(videoId: string): Promise<string> {
+		const transcripts = await YoutubeTranscript.fetchTranscript(videoId);
+		return transcripts.reduce(
+			(transcript, segment) => transcript + segment.text,
+			"",
+		);
+	}
+
+	constructor(config: Pick<Config, "google"> | Auth.OAuth2Client) {
+		const auth =
+			config instanceof Auth.OAuth2Client ? config : config.google.apiKey;
 		this.youtube = google.youtube({
 			version: "v3",
-			auth: config.google.apiKey,
+			auth,
 		});
 	}
 
@@ -42,34 +55,6 @@ export default class YoutubeService {
 		}
 
 		return video;
-	}
-
-	public async downloadCaption(videoId: string) {
-		const res = await this.youtube.captions.list({
-			part: ["id"],
-			videoId,
-		});
-		if (this.isFailed(res)) {
-			throw new Error(`Youtube caption list is failed: ${res.statusText}`);
-		}
-
-		const trackIds = res.data.items!.map((item) => {
-			return item!.id!;
-		})[0];
-
-		console.log("trackids", trackIds);
-
-		let caption: ArrayBuffer;
-		for (const trackId of trackIds) {
-			const res = await this.youtube.captions.download({
-				id: trackId,
-			});
-			if (this.isFailed(res)) continue;
-			console.log("res", res.data);
-			return res.data as ArrayBuffer;
-		}
-
-		throw new Error(`Youtube caption download is failed: ${videoId}`);
 	}
 
 	public async searchChannel(name: string): Promise<SearchChannelDto[]> {
