@@ -9,6 +9,8 @@ export default function loadConfig() {
 		GOOGLE_CLIENT_ID,
 		GOOGLE_SECRET_KEY,
 		GOOGLE_REDIRECT_URL,
+		GOOGLE_CUSTOM_SEARCH_API_KEY,
+		GOOGLE_SEARCH_ENGINE_ID,
 		DEV_MODE,
 	} = process.env;
 
@@ -19,6 +21,10 @@ export default function loadConfig() {
 	if (!GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is required");
 	if (!GOOGLE_SECRET_KEY) throw new Error("GOOGLE_SECRET_KEY is required");
 	if (!GOOGLE_REDIRECT_URL) throw new Error("GOOGLE_REDIRECT_URL is required");
+	if (!GOOGLE_CUSTOM_SEARCH_API_KEY)
+		throw new Error("GOOGLE_CUSTOM_SEARCH_API_KEY is required");
+	if (!GOOGLE_SEARCH_ENGINE_ID)
+		throw new Error("GOOGLE_SEARCH_ENGINE_ID is required");
 
 	return {
 		nodeEnv: process.env.NODE_ENV,
@@ -33,6 +39,8 @@ export default function loadConfig() {
 			clientId: GOOGLE_CLIENT_ID,
 			clientSecret: GOOGLE_SECRET_KEY,
 			redirectUrl: GOOGLE_REDIRECT_URL,
+			customSearchApiKey: GOOGLE_CUSTOM_SEARCH_API_KEY,
+			searchEngineId: GOOGLE_SEARCH_ENGINE_ID,
 		},
 	};
 }

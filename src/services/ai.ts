@@ -30,12 +30,13 @@ export default class AiService {
 
 	public async generateText(input: {
 		prompt: string;
-		config?: { model?: string; temperature?: number };
+		config?: { model?: string; temperature?: number; system?: string };
 	}): Promise<string> {
 		const { prompt, config } = input;
 
 		const result = await generateText({
 			model: config?.model ? openai(config?.model) : this.model,
+			system: config?.system,
 			prompt,
 			temperature: config?.temperature,
 		});

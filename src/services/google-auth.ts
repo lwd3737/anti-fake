@@ -23,7 +23,9 @@ export default class GoogleAuth {
 		return auth;
 	}
 
-	constructor(config: Omit<Config["google"], "apiKey">) {
+	constructor(
+		config: Pick<Config["google"], "clientId" | "clientSecret" | "redirectUrl">,
+	) {
 		const { clientId, clientSecret, redirectUrl } = config;
 
 		this._client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl);

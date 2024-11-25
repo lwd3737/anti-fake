@@ -29,12 +29,12 @@ export async function POST(req: NextRequest) {
 
 	// TODO: 비디오에 대한 정보도 가져오기
 
-	const caption = await YoutubeService.getSubtitle(videoId);
+	const subtitle = await YoutubeService.getSubtitle(videoId);
 	const factChecker = new FactCheckerService();
-	const result = await factChecker.execute({ subtitle: caption });
+	const result = await factChecker.execute(subtitle);
 
 	return NextResponse.json({
-		subtitle: factChecker.pipeline.formattedSubtitle,
-		claims: factChecker.pipeline.claims,
+		// subtitle: factChecker.getStageResult("correctedSubtitle"),
+		claims: factChecker.getStageResult("detectedClaims"),
 	});
 }

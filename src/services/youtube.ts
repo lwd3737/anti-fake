@@ -1,5 +1,9 @@
 import loadConfig, { Config } from "@/config";
-import { SearchChannelDto, SearchVideosDto, VideoDto } from "@/dto/youttube";
+import {
+	SearchVideoChannelDto,
+	SearchVideosDto,
+	VideoDto,
+} from "@/dto/youttube";
 import { GaxiosResponse } from "gaxios";
 import { Auth, google, youtube_v3 } from "googleapis";
 import GoogleAuth from "./google-auth";
@@ -57,7 +61,7 @@ export default class YoutubeService {
 		return video;
 	}
 
-	public async searchChannel(name: string): Promise<SearchChannelDto[]> {
+	public async searchChannel(name: string): Promise<SearchVideoChannelDto[]> {
 		const res = await this.youtube.search.list({
 			part: ["snippet"],
 			type: ["channel"],

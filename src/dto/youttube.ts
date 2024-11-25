@@ -10,7 +10,7 @@ export interface VideoDto {
 	channelTitle: string;
 }
 
-export interface SearchChannelDto {
+export interface SearchVideoChannelDto {
 	channelId: string;
 	channelTitle: string;
 	description: string;
