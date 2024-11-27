@@ -2,9 +2,9 @@ import { customsearch, customsearch_v1 } from "@googleapis/customsearch";
 import GoogleAuth from "./google-auth";
 import loadConfig, { Config } from "@/config";
 import { GoogleSearchDto, GoogleSearchItemDto } from "@/dto/google-search";
+import { json } from "@/utils/pretty";
 
 export default class GoogleSearchService {
-	private searchEngineId: string;
 	private search: customsearch_v1.Customsearch;
 
 	public static create(): GoogleSearchService {
@@ -13,9 +13,9 @@ export default class GoogleSearchService {
 		return new GoogleSearchService({ apiKey, searchEngineId });
 	}
 
-	constructor(config: Pick<Config["google"], "apiKey" | "searchEngineId">) {
-		// const auth = GoogleAuth.create()
-		this.searchEngineId = config.searchEngineId;
+	constructor(
+		private config: Pick<Config["google"], "apiKey" | "searchEngineId">,
+	) {
 		this.search = customsearch({
 			version: "v1",
 			auth: config.apiKey,
@@ -27,10 +27,13 @@ export default class GoogleSearchService {
 		options?: { count?: number },
 	): Promise<GoogleSearchDto> {
 		const res = await this.search.cse.list({
-			cx: this.searchEngineId,
+			key: this.config.apiKey,
+			cx: this.config.searchEngineId,
 			q: query,
 			num: options?.count ?? 10,
 		});
+
+		// console.log("search result", json(res.data));
 
 		const items = res.data.items?.map((item) => {
 			const { title, link } = item as GoogleSearchItemDto;

@@ -7,7 +7,6 @@ export default function GoogleLoginButton() {
 	const router = useRouter();
 
 	const handleClick = async () => {
-		console.log("GoogleLoginButton handleClick");
 		try {
 			const { oauthUrl } = await fetchGenerateOauthUrl();
 			location.href = oauthUrl;

@@ -45,11 +45,12 @@ export default class GoogleAuth {
 		return this._client.generateAuthUrl({ state: csrfToken, ...options });
 	}
 
-	public generateAuthUrlWithYoutubeScope(): string {
+	public generateAuthUrlWithScopes(): string {
 		return this.generateAuthUrl({
 			scope: [
 				"https://www.googleapis.com/auth/youtube.force-ssl",
 				"https://www.googleapis.com/auth/youtubepartner",
+				"https://www.googleapis.com/auth/cse",
 			],
 		});
 	}

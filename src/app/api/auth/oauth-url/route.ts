@@ -10,7 +10,7 @@ export async function POST(
 	const config = loadConfig();
 
 	const googgleAuth = GoogleAuth.create();
-	const oauthUrl = googgleAuth.generateAuthUrlWithYoutubeScope();
+	const oauthUrl = googgleAuth.generateAuthUrlWithScopes();
 
 	cookies().set({
 		name: "csrf-token",

@@ -1,7 +1,6 @@
 import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
-import AiService from "@/services/ai";
 import FactCheckerService from "@/services/fact-checker/fact-checker";
 import YoutubeService from "@/services/youtube";
 import { NextRequest, NextResponse } from "next/server";
