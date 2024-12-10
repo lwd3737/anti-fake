@@ -2,7 +2,7 @@ import { z } from "zod";
 import AiService from "../ai";
 import { PROMPTS } from "./prompt";
 import GoogleSearchService from "../google-search";
-import { json } from "@/utils/pretty";
+import parse, { HTMLElement } from "node-html-parser";
 
 const DetectedClaimsSchema = z.object({
 	items: z.array(
@@ -13,12 +13,16 @@ const DetectedClaimsSchema = z.object({
 	),
 });
 
+const SearchKeywordsSchema = z.object({
+	items: z.array(z.string()),
+});
+
 type StageResults = {
 	correctedSubtitle?: string;
 	detectedClaims?: DetectedClaimsResult["items"];
 };
 type DetectedClaimsResult = z.infer<typeof DetectedClaimsSchema>;
-
+type SearchKeywordsResult = z.infer<typeof SearchKeywordsSchema>;
 export default class FactCheckerService {
 	private ai = AiService.create();
 	private stageResults: StageResults = {};
@@ -81,19 +85,107 @@ export default class FactCheckerService {
 
 		const search = GoogleSearchService.create();
 
-		const evidences = Promise.all(
-			claims?.map(async (claim, i) => {
-				const query = await this.generateSearchQuery(claim.content);
-				const sanitizedQuery = this.sanitizeQuery(query);
-				const evidencesInfo = await search.list(sanitizedQuery, { count: 5 });
-				console.debug(
-					"evidences:",
-					evidencesInfo.items.forEach((item) =>
-						console.log("snippet", item.snippet),
-					),
-				);
-			}),
-		);
+		// TODO: claim을 묶어서 검색 쿼리 생성
+		const claimContents = claims.map((claim) => claim.content);
+		const searchKeyords = await this.generateSearchKeywords(claimContents);
+
+		console.log("saerched count", searchKeyords.length * 3);
+
+		searchKeyords.map(async (keyword, i) => {
+			const searchResult = await search.list(keyword, { count: 3 });
+
+			const evidences = searchResult.items.map(async (item, i) => {
+				const { title, link } = item;
+
+				console.log(title, link);
+
+				const res = await fetch(link);
+				const html = await res.text();
+				const parsed = this.parseHtml(html);
+
+				// const parsed = await this.ai.generateText({
+				// 	prompt: html,
+				// 	config: {
+				// 		model: "gpt-4o-mini",
+				// 		system: PROMPTS.htmlParser,
+				// 		temperature: 0,
+				// 	},
+				// });
+
+				// return parsed;
+			});
+		});
+
+		// const evidences = Promise.all(
+		// 	claims?.map(async (claim, i) => {
+		// 		const query = await this.generateSearchQuery(claim.content);
+		// 		const sanitizedQuery = this.sanitizeQuery(query);
+		// 		const searchResult = await search.list(sanitizedQuery, { count: 5 });
+
+		// 		searchResult.items.map(async (item, i) => {
+		// 			const { title, link } = item;
+
+		// 			const res = await fetch(link);
+		// 			const html = await res.text();
+
+		// 			const content = await this.ai.generateText({
+		// 				prompt: html,
+		// 				config: {
+		// 					model: "gpt-4o-mini",
+		// 					system: PROMPTS.htmlParser,
+		// 					temperature: 0,
+		// 				},
+		// 			});
+
+		// 			if (i === 0) console.log(content);
+		// 		});
+		// 	}),
+		// );
+	}
+
+	private parseHtml(html: string): string {
+		const [ELEMENT_NODE, TEXT_NODE] = [1, 3];
+
+		const body = parse(html, {
+			blockTextElements: {
+				script: false,
+				noscript: false,
+				style: false,
+				pre: false,
+			},
+		}).getElementsByTagName("body")[0];
+
+		const elements: HTMLElement[] = [body];
+
+		let text = "";
+
+		while (elements.length > 0) {
+			const curElement = elements.pop();
+			if (!curElement) continue;
+
+			for (const node of curElement.childNodes) {
+				if (node.nodeType === TEXT_NODE) {
+					text += node.textContent;
+				} else if (node.nodeType === ELEMENT_NODE) {
+					const el = node as unknown as HTMLElement;
+
+					switch (el.tagName) {
+						case "HEADER":
+						case "FOOTER":
+						case "NAV":
+						case "ASIDE":
+						case "SCRIPT":
+						case "NOSCRIPT":
+						case "STYLE":
+							break;
+						default:
+							elements.push(el);
+					}
+				}
+			}
+		}
+
+		return text;
 	}
 
 	private async generateSearchQuery(claim: string): Promise<string> {
@@ -105,6 +197,24 @@ export default class FactCheckerService {
 				temperature: 0,
 			},
 		});
+	}
+
+	private async generateSearchKeywords(claims: string[]): Promise<string[]> {
+		const result = await this.ai.generateObject({
+			prompt: claims.map((claim, i) => `${i}.${claim}`).join("\n"),
+			schema: SearchKeywordsSchema,
+			schemaName: "SearchQueryKeywords",
+			schemaDescription:
+				"각 주장에 대한 구글 검색 키워드를 생성하세요. 생성된 검색 키워드는 '{ items: string[] }' 형식으로 표현하세요.",
+			config: {
+				model: "gpt-4o-mini",
+				system: PROMPTS.generateSearchQuery,
+				temperature: 0,
+				mode: "json",
+			},
+		});
+
+		return result.items;
 	}
 
 	private sanitizeQuery(query: string): string {
