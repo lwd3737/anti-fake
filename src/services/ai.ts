@@ -39,7 +39,11 @@ export default class AiService {
 			system: config?.system,
 			prompt,
 			temperature: config?.temperature,
+			onStepFinish(event) {
+				console.log("token usage: ", event.usage);
+			},
 		});
+
 		return result.text;
 	}
 

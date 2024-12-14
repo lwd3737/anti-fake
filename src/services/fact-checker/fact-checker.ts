@@ -65,7 +65,7 @@ export default class FactCheckerService {
 			schema: DetectedClaimsSchema,
 			schemaName: "DetectedClaims",
 			schemaDescription:
-				"자막에서 사실적으로 검증 가능하고 검증 가치가 있는 주장들을 탐지하세요. 추출된 주장들은 '{ items: { content: string, reason: string }[] }' 형식으로 표현하세요. 여기서 content는 추출된 주장의 내용을 나타내고, reason은 해당 주장을 포함한 이유를 설명합니다.",
+				"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장들을 탐지하세요. 추출된 주장들은 '{ items: { content: string, reason: string }[] }' 형식으로 표현하세요. 여기서 content는 추출된 주장의 내용을 나타내고, reason은 해당 주장을 포함한 이유를 설명합니다.",
 			config: {
 				model: "gpt-4o-mini",
 				system: PROMPTS.detectClaims,
@@ -87,12 +87,12 @@ export default class FactCheckerService {
 
 		// TODO: claim을 묶어서 검색 쿼리 생성
 		const claimContents = claims.map((claim) => claim.content);
-		const searchKeyords = await this.generateSearchKeywords(claimContents);
+		const searchQueries = await this.generateSearchKeywords(claimContents);
 
-		console.log("saerched count", searchKeyords.length * 3);
+		// console.log("saerched count", searchKeyords.length * 3);
 
-		searchKeyords.map(async (keyword, i) => {
-			const searchResult = await search.list(keyword, { count: 3 });
+		searchQueries.map(async (query, i) => {
+			const searchResult = await search.list(query, { count: 3 });
 
 			const evidences = searchResult.items.map(async (item, i) => {
 				const { title, link } = item;
@@ -203,9 +203,9 @@ export default class FactCheckerService {
 		const result = await this.ai.generateObject({
 			prompt: claims.map((claim, i) => `${i}.${claim}`).join("\n"),
 			schema: SearchKeywordsSchema,
-			schemaName: "SearchQueryKeywords",
+			schemaName: "SearchQuery",
 			schemaDescription:
-				"각 주장에 대한 구글 검색 키워드를 생성하세요. 생성된 검색 키워드는 '{ items: string[] }' 형식으로 표현하세요.",
+				"각 주장에 대한 구글 검색 쿼리를 생성하세요. 검색 쿼리는 주장에 대한 핵심 내용을 잘 표현해야 합니다. 생성된 검색 쿼리는 '{ items: string[] }' 형식으로 표현하세요.",
 			config: {
 				model: "gpt-4o-mini",
 				system: PROMPTS.generateSearchQuery,
