@@ -1,6 +1,6 @@
 import { API_ROUTES } from "@/constants/routes";
 import { VerifyTokenResponseDto } from "@/dto/auth";
-import { generateServerUrl } from "@/utils/url";
+import { generateServerUrl } from "@/util/url";
 
 export async function fetchVerifyAccessToken(
 	accessToken: string,

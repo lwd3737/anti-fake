@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ROUTES, PAGE_ROUTES } from "./constants/routes";
 import { fetchVerifyAccessToken } from "./app/api/auth/verify-token/fetch";
-import { generateServerUrl } from "./utils/url";
+import { generateServerUrl } from "./util/url";
 import loadConfig from "./config";
 
 export async function middleware(req: NextRequest) {

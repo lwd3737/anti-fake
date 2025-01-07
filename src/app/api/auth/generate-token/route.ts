@@ -2,7 +2,7 @@ import loadConfig from "@/config";
 import { GenerateTokenRequestDto } from "@/dto/auth";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
-import GoogleAuth from "@/services/google-auth";
+import GoogleAuth from "@/service/google-auth";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 

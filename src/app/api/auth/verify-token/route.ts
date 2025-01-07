@@ -1,5 +1,5 @@
 import { VerifyTokenRequestDto, VerifyTokenResponseDto } from "@/dto/auth";
-import GoogleAuth from "@/services/google-auth";
+import GoogleAuth from "@/service/google-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(

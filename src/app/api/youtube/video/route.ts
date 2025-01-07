@@ -1,8 +1,8 @@
 import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
-import FactCheckerService from "@/services/fact-checker/fact-checker";
-import YoutubeService from "@/services/youtube";
+import FactCheckerService from "@/service/fact-checker/fact-checker";
+import YoutubeService from "@/service/youtube";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -30,10 +30,11 @@ export async function POST(req: NextRequest) {
 
 	const subtitle = await YoutubeService.getSubtitle(videoId);
 	const factChecker = new FactCheckerService();
-	const result = await factChecker.execute(subtitle);
+	const result = await factChecker
+		.onClaimsDetected((claim) => {})
+		.onClaimVerified((verifiedClaim) => {})
+		.execute(subtitle);
 
-	return NextResponse.json({
-		// subtitle: factChecker.getStageResult("correctedSubtitle"),
-		claims: factChecker.getStageResult("detectedClaims"),
-	});
+	// return NextResponse.json({
+	// });
 }

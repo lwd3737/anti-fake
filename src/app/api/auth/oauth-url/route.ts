@@ -2,7 +2,7 @@ import loadConfig from "@/config";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { GenerateOauthUrlResponseDto } from "@/dto/auth";
-import GoogleAuth from "@/services/google-auth";
+import GoogleAuth from "@/service/google-auth";
 
 export async function POST(
 	req: NextRequest,

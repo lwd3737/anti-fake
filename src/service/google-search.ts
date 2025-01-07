@@ -2,7 +2,7 @@ import { customsearch, customsearch_v1 } from "@googleapis/customsearch";
 import GoogleAuth from "./google-auth";
 import loadConfig, { Config } from "@/config";
 import { GoogleSearchDto, GoogleSearchItemDto } from "@/dto/google-search";
-import { json } from "@/utils/pretty";
+import { json } from "@/util/serialize";
 
 export default class GoogleSearchService {
 	private search: customsearch_v1.Customsearch;
