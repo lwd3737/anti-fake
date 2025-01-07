@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { AIModel } from "../ai";
 import { Prompts } from "./prompt";
 import GoogleSearchService from "../google-search";
 import parse, { HTMLElement } from "node-html-parser";
@@ -107,7 +106,7 @@ export default class FactCheckerService {
 	private async detectClaims(subtitle: string): Promise<void> {
 		// const subtitle = this.getStageResult("correctedSubtitle");
 		const result = await streamObject({
-			model: createAIModel(AIModel.GPT4_O_MINI),
+			model: createAIModel("gpt-4o"),
 			system: Prompts.DETECT_CLAIMS,
 			prompt: `${subtitle}`,
 			mode: "json",
@@ -120,7 +119,7 @@ export default class FactCheckerService {
 			onFinish: (event) => {
 				this.tokenUsageLogger.log({
 					...event.usage,
-					model: AIModel.GPT4_O_MINI,
+					model: "gpt-4o-mini",
 					title: "Detect Claims",
 					description: "Detect claims from subtitle",
 					createdAt: formatDate(),
@@ -168,14 +167,14 @@ export default class FactCheckerService {
 		const parsed = this.parseHtml(html);
 
 		const content = await generateText({
-			model: createAIModel(AIModel.GPT4_O_MINI),
+			model: createAIModel("gpt-4o-mini"),
 			system: Prompts.PARSE_HTML,
 			prompt: parsed,
 		});
 
 		this.tokenUsageLogger.log({
 			...content.usage,
-			model: AIModel.GPT4_O_MINI,
+			model: "gpt-4o-mini",
 			title: `Parse HTML - ${title}`,
 			description: "Parse HTML content",
 			createdAt: formatDate(),
@@ -200,7 +199,7 @@ export default class FactCheckerService {
 			.join("\n")}`;
 
 		const result = await generateObject({
-			model: createAIModel(AIModel.GPT4_O_MINI),
+			model: createAIModel("gpt-4o"),
 			system: Prompts.VERIFY_CLAIM,
 			prompt,
 			mode: "json",
@@ -214,7 +213,7 @@ export default class FactCheckerService {
 
 		this.tokenUsageLogger.log({
 			...result.usage,
-			model: AIModel.GPT4_O_MINI,
+			model: "gpt-4o-mini",
 			title: "Verify Claims",
 			description: "Verify claims with evidence",
 			createdAt: formatDate(),
@@ -268,7 +267,7 @@ export default class FactCheckerService {
 
 	private async generateSearchQueries(claims: string[]): Promise<string[]> {
 		const result = await generateObject({
-			model: createAIModel(AIModel.GPT4_O_MINI),
+			model: createAIModel("gpt-4o-mini"),
 			prompt: claims.map((claim, i) => `${i}.${claim}`).join("\n"),
 			output: "array",
 			mode: "json",
@@ -281,7 +280,7 @@ export default class FactCheckerService {
 
 		this.tokenUsageLogger.log({
 			...result.usage,
-			model: AIModel.GPT4_O_MINI,
+			model: "gpt-4o-mini",
 			title: "Generate Search Queries",
 			description: "Generate search queries from claims",
 			createdAt: formatDate(),

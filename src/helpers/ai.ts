@@ -4,9 +4,9 @@ import { LanguageModel } from "ai";
 
 export type AIModel = "gpt-4o" | "gpt-4o-mini";
 
-export const createAIModel = (modelName?: string): LanguageModel => {
+export const createAIModel = (model?: AIModel): LanguageModel => {
 	const {
 		openai: { gptModel },
 	} = loadConfig();
-	return modelName ? openai(modelName) : openai(gptModel);
+	return model ? openai(model) : openai(gptModel);
 };
