@@ -11,14 +11,14 @@ export interface TokenUsageLogData {
 	usageHistory: (TokenUsageRecord | TokenUsageError)[];
 }
 
-type TokenUsage = LanguageModelUsage;
+export type TokenUsage = LanguageModelUsage;
 
-interface TokenUsageCost {
+export interface TokenUsageCost {
 	amount: number;
 	currency: string;
 }
 
-type TokenUsageRecord = TokenUsage & {
+export type TokenUsageRecord = TokenUsage & {
 	model?: AIModel;
 	title: string;
 	description?: string;
@@ -26,7 +26,7 @@ type TokenUsageRecord = TokenUsage & {
 	createdAt: string;
 };
 
-interface TokenUsageError {
+export interface TokenUsageError {
 	name: string;
 	message: string;
 }
@@ -39,8 +39,9 @@ export default class LLMTokenUsageLogger {
 		private info: Pick<TokenUsageLogData, "title" | "description">,
 	) {}
 
-	public log(record: TokenUsageRecord | TokenUsageError): void {
+	public log(record: TokenUsageRecord | TokenUsageError): this {
 		this.history = [...this.history, record];
+		return this;
 	}
 
 	public async save(): Promise<void> {

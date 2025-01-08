@@ -6,7 +6,9 @@ import { GoogleSearchItemDto } from "@/dto/google-search";
 import EventEmitter from "events";
 import { generateObject, generateText, streamObject } from "ai";
 import { createAIModel } from "@/helpers/ai";
-import LLMTokenUsageLogger from "@/infra/logger/llm-token-usage";
+import LLMTokenUsageLogger, {
+	TokenUsageError,
+} from "@/infra/logger/llm-token-usage";
 import { formatDate } from "@/util/date";
 
 const DetectedClaimSchema = z.object({
@@ -82,6 +84,7 @@ export default class FactCheckerService {
 
 	public async execute(subtitle: string) {
 		// await this.correctSubtitle(input.subtitle);
+
 		this.events.on(EventType.ALL_CALIMS_DETECTED, this.retrieveEvidences);
 		this.events.on(EventType.EVIDENCES_RETRIEVED_BY_CLAIM, this.verifyClaim);
 
@@ -105,55 +108,72 @@ export default class FactCheckerService {
 
 	private async detectClaims(subtitle: string): Promise<void> {
 		// const subtitle = this.getStageResult("correctedSubtitle");
-		const result = await streamObject({
-			model: createAIModel("gpt-4o"),
-			system: Prompts.DETECT_CLAIMS,
-			prompt: `${subtitle}`,
-			mode: "json",
-			output: "array",
-			schema: DetectedClaimSchema,
-			schemaName: "DetectedClaims",
-			schemaDescription:
-				"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
-			temperature: 0,
-			onFinish: (event) => {
-				this.tokenUsageLogger.log({
-					...event.usage,
-					model: "gpt-4o-mini",
-					title: "Detect Claims",
-					description: "Detect claims from subtitle",
-					createdAt: formatDate(),
-				});
-			},
-		});
+		try {
+			const result = await streamObject({
+				model: createAIModel("gpt-4o"),
+				system: Prompts.DETECT_CLAIMS,
+				prompt: `${subtitle}`,
+				mode: "json",
+				output: "array",
+				schema: DetectedClaimSchema,
+				schemaName: "DetectedClaims",
+				schemaDescription:
+					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
+				temperature: 0,
+				onFinish: (event) => {
+					this.tokenUsageLogger.log({
+						...event.usage,
+						model: "gpt-4o-mini",
+						title: "Detect Claims",
+						description: "Detect claims from subtitle",
+						createdAt: formatDate(),
+					});
+				},
+			});
 
-		for await (const claim of result.elementStream) {
-			this.events.emit(EventType.CLAIM_DETECTED, claim);
+			for await (const claim of result.elementStream) {
+				this.events.emit(EventType.CLAIM_DETECTED, claim);
+			}
+
+			this.events.emit(EventType.ALL_CALIMS_DETECTED);
+		} catch (error) {
+			this.tokenUsageLogger
+				.log({
+					name: "Detect Claims Error",
+					message: (error as Error).message,
+				})
+				.save();
 		}
-
-		this.events.emit(EventType.ALL_CALIMS_DETECTED);
 	}
 
 	private async retrieveEvidences(claims: DetectedClaim[]): Promise<void> {
-		const search = GoogleSearchService.create();
+		try {
+			const search = GoogleSearchService.create();
+			const claimContents = claims.map((claim) => claim.content);
+			const searchQueries = await this.generateSearchQueries(claimContents);
 
-		const claimContents = claims.map((claim) => claim.content);
-		const searchQueries = await this.generateSearchQueries(claimContents);
+			for (let idx = 0; idx < searchQueries.length; idx++) {
+				const query = searchQueries[idx];
+				const searchResult = await search.list(query, {
+					count: SEARCH_RESULT_COUNT,
+				});
 
-		for (let idx = 0; idx < searchQueries.length; idx++) {
-			const query = searchQueries[idx];
-			const searchResult = await search.list(query, {
-				count: SEARCH_RESULT_COUNT,
-			});
+				const evidences = await Promise.all(
+					searchResult.items.map(this.retrieveEvidence),
+				);
 
-			const evidences = await Promise.all(
-				searchResult.items.map(this.retrieveEvidence),
-			);
-
-			this.events.emit(EventType.EVIDENCES_RETRIEVED_BY_CLAIM, {
-				claim: claims[idx],
-				evidences,
-			});
+				this.events.emit(EventType.EVIDENCES_RETRIEVED_BY_CLAIM, {
+					claim: claims[idx],
+					evidences,
+				});
+			}
+		} catch (error) {
+			this.tokenUsageLogger
+				.log({
+					name: "Retrieve Evidences Error",
+					message: (error as Error).message,
+				})
+				.save();
 		}
 	}
 
@@ -194,30 +214,39 @@ export default class FactCheckerService {
 		claim: DetectedClaim;
 		evidences: RetrievedEvidence[];
 	}): Promise<void> {
-		const prompt = `${claim.content}\n${evidences
-			.map((evidence, idx) => `${idx}.${evidence.content}`)
-			.join("\n")}`;
+		try {
+			const prompt = `${claim.content}\n${evidences
+				.map((evidence, idx) => `${idx}.${evidence.content}`)
+				.join("\n")}`;
 
-		const result = await generateObject({
-			model: createAIModel("gpt-4o"),
-			system: Prompts.VERIFY_CLAIM,
-			prompt,
-			mode: "json",
-			schema: VerifiedClaimSchema,
-			schemaName: "VerifiedClaims",
-			schemaDescription: "주장에 대한 검증 결과를 판단하세요.",
-			temperature: 0,
-		});
+			const result = await generateObject({
+				model: createAIModel("gpt-4o"),
+				system: Prompts.VERIFY_CLAIM,
+				prompt,
+				mode: "json",
+				schema: VerifiedClaimSchema,
+				schemaName: "VerifiedClaims",
+				schemaDescription: "주장에 대한 검증 결과를 판단하세요.",
+				temperature: 0,
+			});
 
-		this.events.emit(EventType.CLAIM_VERIFIED, result.object);
+			this.events.emit(EventType.CLAIM_VERIFIED, result.object);
 
-		this.tokenUsageLogger.log({
-			...result.usage,
-			model: "gpt-4o-mini",
-			title: "Verify Claims",
-			description: "Verify claims with evidence",
-			createdAt: formatDate(),
-		});
+			this.tokenUsageLogger.log({
+				...result.usage,
+				model: "gpt-4o-mini",
+				title: "Verify Claims",
+				description: "Verify claims with evidence",
+				createdAt: formatDate(),
+			});
+		} catch (error) {
+			this.tokenUsageLogger
+				.log({
+					name: "Verify Claim Error",
+					message: (error as Error).message,
+				})
+				.save();
+		}
 	}
 
 	private parseHtml(html: string): string {
