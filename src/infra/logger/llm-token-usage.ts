@@ -27,8 +27,9 @@ export type TokenUsageRecord = TokenUsage & {
 };
 
 export interface TokenUsageError {
-	name: string;
+	errorCode: string;
 	message: string;
+	stack?: string[];
 }
 
 export default class LLMTokenUsageLogger {
@@ -39,8 +40,23 @@ export default class LLMTokenUsageLogger {
 		private info: Pick<TokenUsageLogData, "title" | "description">,
 	) {}
 
-	public log(record: TokenUsageRecord | TokenUsageError): this {
+	public log(record: TokenUsageRecord): this {
 		this.history = [...this.history, record];
+		return this;
+	}
+
+	public error(code: string, error: Error): this {
+		const stack = error.stack?.split("\n").map((line) => line.trim());
+
+		this.history = [
+			...this.history,
+			{
+				errorCode: code,
+				message: error.message,
+				stack,
+			},
+		];
+
 		return this;
 	}
 

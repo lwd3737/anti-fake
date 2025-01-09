@@ -8,5 +8,5 @@ export const formatDate = (dateObj?: Date) => {
 		now.getMinutes(),
 		now.getSeconds(),
 	];
-	return `${year}/${month}/${date}/${hour}:${minute}:${second}`;
+	return `${year}-${month}-${date}T${hour}:${minute}:${second}`;
 };

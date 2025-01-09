@@ -39,12 +39,8 @@ describe("LLMTokenUsageLogger", () => {
 	});
 
 	it("should log a TokenUsageError", () => {
-		const error: TokenUsageError = {
-			name: "ErrorName",
-			message: "ErrorMessage",
-		};
-
-		logger.log(error);
+		const error = new Error("test");
+		logger.error("test", error);
 
 		expect(logger["history"]).toContain(error);
 	});
