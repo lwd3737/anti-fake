@@ -3,12 +3,12 @@ import { LanguageModelUsage } from "ai";
 import { logJsonFile } from "./file";
 
 export interface TokenUsageLogData {
-	createdAt: string;
 	title: string;
 	description?: string;
 	totalUsage: TokenUsage;
 	totalCost?: TokenUsageCost;
-	usageHistory: (TokenUsageRecord | TokenUsageError)[];
+	history: (TokenUsageRecord | TokenUsageError)[];
+	createdAt: string;
 }
 
 export type TokenUsage = LanguageModelUsage;
@@ -30,6 +30,8 @@ export interface TokenUsageError {
 	errorCode: string;
 	message: string;
 	stack?: string[];
+	cause?: any;
+	context?: Record<string, any>;
 }
 
 export default class LLMTokenUsageLogger {
@@ -40,20 +42,29 @@ export default class LLMTokenUsageLogger {
 		private info: Pick<TokenUsageLogData, "title" | "description">,
 	) {}
 
+	// TODO: createdAt은 자동 생성
 	public log(record: TokenUsageRecord): this {
 		this.history = [...this.history, record];
 		return this;
 	}
 
-	public error(code: string, error: Error): this {
+	public error(
+		code: string,
+		error: Error,
+		context?: Record<string, any>,
+	): this {
+		console.error(error);
+
 		const stack = error.stack?.split("\n").map((line) => line.trim());
 
 		this.history = [
 			...this.history,
 			{
 				errorCode: code,
-				message: error.message,
+				message: `${error.name}:${error.message}`,
 				stack,
+				cause: error.cause,
+				context,
 			},
 		];
 
