@@ -10,37 +10,19 @@ export const parseHtml = (html: string) => {
 			style: false,
 			pre: false,
 		},
+		comment: false,
+		parseNoneClosedTags: false,
 	}).getElementsByTagName("body")[0];
 
-	const elements: HTMLElement[] = [body];
+	[
+		...Array.from(document.getElementsByTagName("header")),
+		...Array.from(document.getElementsByTagName("footer")),
+		...Array.from(document.getElementsByTagName("nav")),
+		...Array.from(document.getElementsByTagName("aside")),
+		...Array.from(document.getElementsByTagName("script")),
+		...Array.from(document.getElementsByTagName("noscript")),
+		...Array.from(document.getElementsByTagName("style")),
+	].forEach((el) => el.remove());
 
-	let text = "";
-
-	while (elements.length > 0) {
-		const curElement = elements.pop();
-		if (!curElement) continue;
-
-		for (const node of curElement.childNodes) {
-			if (node.nodeType === TEXT_NODE) {
-				text += node.textContent;
-			} else if (node.nodeType === ELEMENT_NODE) {
-				const el = node as unknown as HTMLElement;
-
-				switch (el.tagName) {
-					case "HEADER":
-					case "FOOTER":
-					case "NAV":
-					case "ASIDE":
-					case "SCRIPT":
-					case "NOSCRIPT":
-					case "STYLE":
-						break;
-					default:
-						elements.push(el);
-				}
-			}
-		}
-	}
-
-	return text;
+	return body.textContent;
 };
