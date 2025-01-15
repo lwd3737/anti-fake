@@ -1,5 +1,5 @@
 import loadConfig, { Config } from "@/config";
-import { generateCsrfToken } from "@/util/csrf";
+import { generateCsrfToken } from "@/utils/csrf";
 import { google, Auth } from "googleapis";
 import { NextRequest } from "next/server";
 

@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { json } from "@/util/serialize";
+import { json } from "@/utils/serialize";
 
 export const logJsonFile = async (pathName: string, data: any) => {
 	const absolutePath = path.join(process.cwd(), pathName);
