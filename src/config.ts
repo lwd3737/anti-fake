@@ -11,6 +11,7 @@ export default function loadConfig() {
 		GOOGLE_REDIRECT_URL,
 		GOOGLE_CUSTOM_SEARCH_API_KEY,
 		GOOGLE_SEARCH_ENGINE_ID,
+		GEMINI_API_KEY,
 		DEV_MODE,
 	} = process.env;
 
@@ -25,6 +26,7 @@ export default function loadConfig() {
 		throw new Error("GOOGLE_CUSTOM_SEARCH_API_KEY is required");
 	if (!GOOGLE_SEARCH_ENGINE_ID)
 		throw new Error("GOOGLE_SEARCH_ENGINE_ID is required");
+	if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
 
 	return {
 		nodeEnv: process.env.NODE_ENV,
@@ -41,6 +43,9 @@ export default function loadConfig() {
 			redirectUrl: GOOGLE_REDIRECT_URL,
 			customSearchApiKey: GOOGLE_CUSTOM_SEARCH_API_KEY,
 			searchEngineId: GOOGLE_SEARCH_ENGINE_ID,
+			gemini: {
+				apiKey: GEMINI_API_KEY,
+			},
 		},
 	};
 }

@@ -3,6 +3,7 @@ import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
 import FactCheckerService from "@/service/fact-checker/fact-checker";
 import YoutubeService from "@/service/youtube";
+import { ok } from "assert";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -30,11 +31,18 @@ export async function POST(req: NextRequest) {
 
 	const subtitle = await YoutubeService.getSubtitle(videoId);
 	const factChecker = new FactCheckerService();
-	const result = await factChecker
-		.onClaimsDetected((claim) => {})
-		.onClaimVerified((verifiedClaim) => {})
-		.execute(subtitle);
 
-	// return NextResponse.json({
-	// });
+	await new Promise(async (resolve) => {
+		await factChecker
+			.onClaimsDetected((claim) => {})
+			.onClaimVerified((verifiedClaim) => {})
+			.onAllClaimsVerified(() => {
+				resolve(null);
+			})
+			.execute(subtitle);
+	});
+
+	return NextResponse.json({
+		message: "success",
+	});
 }

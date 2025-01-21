@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev",
+		"dev": "NODE_OPTIONS='--network-family-autoselection-attempt-timeout=1000' next dev",
 		"build": "next build",
 		"start": "next start",
 		"test": "vitest",
@@ -11,6 +11,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "^0.0.61",
+		"@google/generative-ai": "^0.21.0",
 		"@googleapis/customsearch": "^3.2.0",
 		"ai": "^3.4.0",
 		"googleapis": "^144.0.0",

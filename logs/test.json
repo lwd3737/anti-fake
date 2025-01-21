@@ -1,5 +1,5 @@
 {
-  "createdAt": "2025-01-08T17:44:37.427Z",
+  "createdAt": "2025-01-15T17:24:27.805Z",
   "title": "Test Title",
   "description": "Test Description",
   "usageHistory": [
@@ -7,7 +7,7 @@
       "title": "Record Title",
       "description": "Record Description",
       "model": "gpt-4o-mini",
-      "createdAt": "2025-01-08T17:44:37.427Z",
+      "createdAt": "2025-01-15T17:24:27.805Z",
       "promptTokens": 100,
       "completionTokens": 200,
       "totalTokens": 300
