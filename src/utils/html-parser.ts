@@ -1,8 +1,6 @@
-import parse, { HTMLElement } from "node-html-parser";
+import parse from "node-html-parser";
 
 export const parseHtml = (html: string) => {
-	const [ELEMENT_NODE, TEXT_NODE] = [1, 3];
-
 	const body = parse(html, {
 		blockTextElements: {
 			script: false,
@@ -14,6 +12,7 @@ export const parseHtml = (html: string) => {
 		parseNoneClosedTags: false,
 	}).getElementsByTagName("body")[0];
 
+	// FIX: ReferenceError: document is not defined
 	[
 		...Array.from(document.getElementsByTagName("header")),
 		...Array.from(document.getElementsByTagName("footer")),
