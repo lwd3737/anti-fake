@@ -54,6 +54,7 @@ const RETRIEVE_LOG_PATH = "logs/retrieve";
 const SEARCH_RESULT_COUNT = 3;
 
 export default class FactCheckerService {
+	private devMode = false;
 	private events = new EventEmitter();
 	private promptyLogger = new LLMPromptLogger(
 		`${PROMPTY_LOG_PATH}/${formatDate()}.json`,
@@ -70,7 +71,11 @@ export default class FactCheckerService {
 		},
 	);
 
-	constructor() {
+	constructor(options: { devMode?: boolean } = {}) {
+		if (options?.devMode) {
+			this.devMode = options.devMode;
+		}
+
 		this.detectClaims = this.detectClaims.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
 		// this.retrieveEvidence = this.retrieveEvidence.bind(this);
@@ -123,9 +128,9 @@ export default class FactCheckerService {
 	private async detectClaims(subtitle: string): Promise<void> {
 		// const subtitle = this.getStageResult("correctedSubtitle");
 
-		const startedAt = new Date();
-
 		try {
+			const startedAt = new Date();
+
 			const result = await streamObject({
 				model: createAIModel("gpt-4o"),
 				system: Prompts.DETECT_CLAIMS,
@@ -149,24 +154,26 @@ export default class FactCheckerService {
 
 					this.events.emit(EventType.ALL_CALIMS_DETECTED, output);
 
-					const endedAt = new Date();
-					this.promptyLogger.log({
-						title: "Detect Claims",
-						description: "Detect claims from subtitle",
-						model: "gpt-4o",
-						system: Prompts.DETECT_CLAIMS,
-						prompt: subtitle,
-						output,
-						generatationTime: endedAt.getTime() - startedAt.getTime(),
-					});
+					if (!this.devMode) {
+						const endedAt = new Date();
+						this.promptyLogger.log({
+							title: "Detect Claims",
+							description: "Detect claims from subtitle",
+							model: "gpt-4o",
+							system: Prompts.DETECT_CLAIMS,
+							prompt: subtitle,
+							output,
+							generatationTime: endedAt.getTime() - startedAt.getTime(),
+						});
 
-					this.tokenUsageLogger.log({
-						...event.usage,
-						model: "gpt-4o-mini",
-						title: "Detect Claims",
-						description: "Detect claims from subtitle",
-						createdAt: formatDate(),
-					});
+						this.tokenUsageLogger.log({
+							...event.usage,
+							model: "gpt-4o-mini",
+							title: "Detect Claims",
+							description: "Detect claims from subtitle",
+							createdAt: formatDate(),
+						});
+					}
 				},
 			});
 
@@ -174,6 +181,8 @@ export default class FactCheckerService {
 				this.events.emit(EventType.CLAIM_DETECTED, claim);
 			}
 		} catch (error) {
+			if (this.devMode) return;
+
 			const code = "DetectClaimsError";
 			await Promise.all([
 				this.promptyLogger.error(code, error as Error).save(),

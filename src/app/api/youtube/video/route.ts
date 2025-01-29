@@ -1,3 +1,4 @@
+import loadConfig from "@/config";
 import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
@@ -29,8 +30,10 @@ export async function POST(req: NextRequest) {
 
 	// TODO: 비디오에 대한 정보도 가져오기
 
+	const { devMode } = loadConfig();
+
 	const subtitle = await YoutubeService.getSubtitle(videoId);
-	const factChecker = new FactCheckerService();
+	const factChecker = new FactCheckerService({ devMode });
 
 	await new Promise(async (resolve) => {
 		await factChecker
