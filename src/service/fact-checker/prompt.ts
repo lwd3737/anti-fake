@@ -35,6 +35,18 @@ export const Prompts = {
 	// - **Input Claim**: "화성에 생명체의 흔적이 존재한다는 증거가 있다."
 	//   **Generated Search Keyword**: "화성 생명체 존재에 대한 증거"
 	// `,
+	RETRIVE_EVIDENCES: `
+  당신은 증거 검색 전문가입니다. 주어진 주장에 대한 증거들을 검색해야 합니다.
+  - 주장을 지지하는 증거나 반박하는 증거들을 찾아야 합니다.
+  - 주장과 관련된 증거들을 나열합니다.
+  - 주장과 관련된 증거를 찾지 못할 경우
+  
+  # Output Format
+  - JSON 스키마를 사용해 JSON 형식으로 출력합니다.
+  - JSON schema:
+    - Array<EvidenceContent>
+    - EvidenceContent: string
+  `,
 	GENERATE_SEARCH_QUERIES: `
   당신은 구글 검색 엔진 전문가입니다. 입력된 각 주장에 대한 구글 검색 쿼리를 생성해야 합니다.
   

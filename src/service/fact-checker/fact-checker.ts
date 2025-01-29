@@ -1,14 +1,13 @@
 import { z } from "zod";
 import { Prompts } from "./prompt";
 import GoogleSearchService from "../google-search";
-import { GoogleSearchItemDto } from "@/dto/google-search";
 import EventEmitter from "events";
-import { generateObject, generateText, streamObject } from "ai";
+import { generateObject, streamObject } from "ai";
 import { createAIModel } from "@/helpers/ai";
 import LLMTokenUsageLogger from "@/infra/logger/llm-token-usage";
 import { formatDate } from "@/utils/date";
 import LLMPromptLogger from "@/infra/logger/llm-prompt";
-import { parseHtml } from "@/utils/html-parser";
+import Retriever, { RetrievedResult } from "../retriver";
 
 const DetectedClaimSchema = z.object({
 	content: z
@@ -36,24 +35,22 @@ const VerifiedClaimSchema = z.object({
 
 type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
 
-type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
+type RetrievedEvidence = Omit<RetrievedResult<string[]>, "tokenUsage">;
 
-interface RetrievedEvidence {
-	title: string;
-	content: string;
-	link: string;
-}
+type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
 
 enum EventType {
 	CLAIM_DETECTED = "CALIMES_DETECTED",
 	ALL_CALIMS_DETECTED = "ALL_CALIMS_DETECTED",
-	EVIDENCES_RETRIEVED_BY_CLAIM = "EVIDENCES_RETRIEVED_BY_CLAIM",
+	EVIDENCES_RETRIEVED_PER_CLAIM = "EVIDENCES_RETRIEVED_PER_CLAIM",
 	CLAIM_VERIFIED = "CLAIM_VERIFIED",
 	ALL_CLAIMS_VERIFIED = "ALL_CLAIMS_VERIFIED",
 }
 
 const TOKEN_USAGE_LOG_PATH = "logs/token-usage";
 const PROMPTY_LOG_PATH = "logs/prompt";
+const RETRIEVE_LOG_PATH = "logs/retrieve";
+
 const SEARCH_RESULT_COUNT = 3;
 
 export default class FactCheckerService {
@@ -76,7 +73,7 @@ export default class FactCheckerService {
 	constructor() {
 		this.detectClaims = this.detectClaims.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
-		this.retrieveEvidence = this.retrieveEvidence.bind(this);
+		// this.retrieveEvidence = this.retrieveEvidence.bind(this);
 		this.verifyClaim = this.verifyClaim.bind(this);
 	}
 
@@ -102,7 +99,7 @@ export default class FactCheckerService {
 
 		this.events
 			.on(EventType.ALL_CALIMS_DETECTED, this.retrieveEvidences)
-			.on(EventType.EVIDENCES_RETRIEVED_BY_CLAIM, this.verifyClaim)
+			.on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
 			.on(EventType.ALL_CLAIMS_VERIFIED, () => {});
 
 		await this.detectClaims(subtitle);
@@ -141,7 +138,16 @@ export default class FactCheckerService {
 					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
 				temperature: 0,
 				onFinish: (event) => {
-					this.events.emit(EventType.ALL_CALIMS_DETECTED, event.object);
+					const output = event.object;
+					if (!output) {
+						this.promptyLogger.error(
+							"DetectClaimsError",
+							new Error("Claims output is not generated"),
+							event,
+						);
+					}
+
+					this.events.emit(EventType.ALL_CALIMS_DETECTED, output);
 
 					const endedAt = new Date();
 					this.promptyLogger.log({
@@ -150,7 +156,7 @@ export default class FactCheckerService {
 						model: "gpt-4o",
 						system: Prompts.DETECT_CLAIMS,
 						prompt: subtitle,
-						output: event.object,
+						output,
 						generatationTime: endedAt.getTime() - startedAt.getTime(),
 					});
 
@@ -180,113 +186,80 @@ export default class FactCheckerService {
 		const search = GoogleSearchService.create();
 		const claimContents = claims.map((claim) => claim.content);
 
+		const retriever = new Retriever();
+
 		try {
-			const searchQueries = await this.generateSearchQueries(claimContents);
+			let idx = 0;
 
-			for (let idx = 0; idx < searchQueries.length; idx++) {
-				const query = searchQueries[idx];
-				const searchResult = await search.list(query, {
-					count: SEARCH_RESULT_COUNT,
-				});
+			for (const claimContent of claimContents) {
+				const startedAt = new Date();
 
-				const evidences = await Promise.all(
-					searchResult.items.map(this.retrieveEvidence),
+				const { tokenUsage, ...evidence } = await retriever.retrieve(
+					claimContent,
+					{
+						system: Prompts.RETRIVE_EVIDENCES,
+						mode: "json",
+						onCompleted: (result) => {
+							// logJsonFile(`${RETRIEVE_LOG_PATH}/${formatDate()}.json`, {
+							// 	text: result.response.text(),
+							// 	...result,
+							// });
+						},
+					},
 				);
 
-				this.events.emit(EventType.EVIDENCES_RETRIEVED_BY_CLAIM, {
-					claim: claims[idx],
-					evidences,
-					isLast: idx === searchQueries.length - 1,
+				console.log("evidence", evidence);
+
+				this.events.emit(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, {
+					claimContent,
+					evidence,
+					isLast: idx === claimContents.length - 1,
 				});
+
+				idx++;
+
+				this.promptyLogger.log({
+					model: "gemini-1.5-flash",
+					title: "Retrieve Evidences",
+					description: "Retrieve evidence from claims",
+					system: Prompts.RETRIVE_EVIDENCES,
+					prompt: claimContent,
+					output: evidence,
+					generatationTime: new Date().getTime() - startedAt.getTime(),
+				});
+
+				if (tokenUsage) {
+					this.tokenUsageLogger.log({
+						model: "gemini-1.5-flash",
+						title: "Retrieve Evidences",
+						description: "Retrieve evidence from claims",
+						createdAt: formatDate(),
+						promptTokens: tokenUsage.promptTokenCount,
+						completionTokens: tokenUsage.candidatesTokenCount,
+						totalTokens: tokenUsage.totalTokenCount,
+					});
+				}
 			}
 		} catch (error) {
-			console.error(error);
-		}
-	}
-
-	private async retrieveEvidence(
-		searchItem: GoogleSearchItemDto,
-	): Promise<RetrievedEvidence> {
-		const { title, link } = searchItem;
-
-		const res = await fetch(link);
-		const html = await res.text();
-		const parsed = parseHtml(html);
-
-		const log = {
-			title: "Parse HTML",
-			description: `${title}: ${link}`,
-			model: "gpt-4o-mini" as const,
-		};
-
-		try {
-			const startedAt = new Date();
-
-			const content = await generateText({
-				model: createAIModel("gpt-4o-mini"),
-				system: Prompts.PARSE_HTML,
-				prompt: parsed,
-				temperature: 0,
-			});
-
-			const endedAt = new Date();
-
-			this.promptyLogger.log({
-				...log,
-				system: Prompts.PARSE_HTML,
-				prompt: parsed,
-				output: content.text,
-				generatationTime: endedAt.getTime() - startedAt.getTime(),
-			});
-
-			this.tokenUsageLogger.log({
-				...log,
-				...content.usage,
-				createdAt: formatDate(),
-			});
-
-			return {
-				title,
-				content: content.text,
-				link,
-			};
-		} catch (error) {
-			const code = "RetrieveEvidenceError";
+			const code = "RetrieveEvidencesError";
 			await Promise.all([
-				this.promptyLogger
-					.error(code, error as Error, {
-						model: log.model,
-						title,
-						link,
-						prompt: {
-							length: parsed.length,
-							content: parsed,
-						},
-					})
-					.save(),
-				this.tokenUsageLogger
-					.error(code, error as Error, {
-						title,
-						model: log.model,
-					})
-					.save(),
+				this.promptyLogger.error(code, error as Error).save(),
+				this.tokenUsageLogger.error(code, error as Error).save(),
 			]);
-
-			throw error;
 		}
 	}
 
 	private async verifyClaim({
-		claim,
-		evidences,
+		claimContent,
+		evidence,
 		isLast,
 	}: {
-		claim: DetectedClaim;
-		evidences: RetrievedEvidence[];
+		claimContent: string;
+		evidence: RetrievedEvidence;
 		isLast?: boolean;
 	}): Promise<void> {
-		const prompt = `${claim.content}\n${evidences
-			.map((evidence, idx) => `${idx}.${evidence.content}`)
+		const prompt = `${claimContent}\n${evidence.content
+			.map((item, idx) => `${idx}.${item}`)
 			.join("\n")}`;
 
 		try {

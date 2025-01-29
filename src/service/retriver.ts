@@ -1,14 +1,21 @@
 import loadConfig from "@/config";
 import {
 	DynamicRetrievalMode,
+	GenerateContentResponse,
+	GenerateContentResult,
 	GenerativeModel,
 	GoogleGenerativeAI,
+	GroundingChunk,
 	GroundingChunkWeb,
+	GroundingMetadata,
+	ResponseSchema,
+	SchemaType,
 } from "@google/generative-ai";
 
-export interface RetrievedResult {
-	content: string;
+export interface RetrievedResult<Content = any> {
+	content: Content;
 	sources: GroundingChunkWeb[];
+	tokenUsage: GenerateContentResponse["usageMetadata"];
 }
 
 export default class Retriever {
@@ -35,10 +42,20 @@ export default class Retriever {
 		);
 	}
 
-	public async retrieve(
+	public async retrieve<OutputContent = any>(
 		query: string,
-		systemInstruction?: string,
-	): Promise<RetrievedResult> {
+		{
+			system,
+			temperature = 0,
+			mode = "text",
+			onCompleted,
+		}: {
+			system?: string;
+			temperature?: number;
+			mode?: "json" | "text";
+			onCompleted?: (result: GenerateContentResult) => void;
+		},
+	): Promise<RetrievedResult<OutputContent>> {
 		const result = await this.model.generateContent({
 			contents: [
 				{
@@ -46,23 +63,50 @@ export default class Retriever {
 					parts: [{ text: query }],
 				},
 			],
-			systemInstruction,
+			systemInstruction: system,
 			generationConfig: {
-				temperature: 0,
+				temperature,
 			},
+			tools: [
+				{
+					googleSearchRetrieval: {
+						dynamicRetrievalConfig: {
+							mode: DynamicRetrievalMode.MODE_DYNAMIC,
+							dynamicThreshold: 0,
+						},
+					},
+				},
+			],
 		});
+
+		onCompleted?.(result);
 
 		const sources =
 			result.response.candidates?.reduce((sources, candidate) => {
-				candidate.groundingMetadata?.groundingChuncks?.forEach(
-					(chunk) => chunk.web && sources.push(chunk.web),
-				);
+				const groundingMetadata = candidate.groundingMetadata as Omit<
+					GroundingMetadata,
+					"groundingChuncks"
+				> & {
+					groundingChunks: GroundingChunk[];
+				};
+				groundingMetadata.groundingChunks?.forEach((chunk) => {
+					if (chunk.web) sources.push(chunk.web);
+				});
+
 				return sources;
 			}, [] as GroundingChunkWeb[]) ?? [];
 
+		// console.log(JSON.stringify(result, null, 2));
+		const output = result.response.text();
+		const content =
+			mode === "json"
+				? JSON.parse(output.replace(/```json|```/g, "").trim())
+				: output;
+
 		return {
-			content: result.response.text(),
+			content,
 			sources,
+			tokenUsage: result.response.usageMetadata,
 		};
 	}
 }

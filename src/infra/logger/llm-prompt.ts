@@ -18,6 +18,7 @@ export interface PromptRecord {
 	system: string;
 	prompt: string;
 	output: any;
+	context?: Record<string, any>;
 	generatationTime: number; // ms
 	createdAt: string;
 }
