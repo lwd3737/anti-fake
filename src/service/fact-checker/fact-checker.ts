@@ -11,15 +11,6 @@ import Retriever, { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
 
-const DetectedClaimSchema = z.object({
-	content: z
-		.string()
-		.describe(
-			"탐지된 검증 가능한 주장 및 관련된 문장. 주장에 해당하는 문장뿐만 아니라 관련된 문장들도 함께 content에 포함시킬 수 있습니다",
-		),
-	reason: z.string().describe("해당 주장이 검증 가능한 주장으로 탐지된 이유"),
-});
-
 const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
 const VerifiedClaimSchema = z.object({
@@ -34,8 +25,6 @@ const VerifiedClaimSchema = z.object({
 		.describe("주장의 진실 여부 라벨"),
 	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
-
-// type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
 
 type RetrievedEvidence = Omit<RetrievedResult<string[]>, "tokenUsage">;
 
@@ -111,7 +100,7 @@ export default class FactCheckerService {
 		// .on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
 		// .on(EventType.ALL_CLAIMS_VERIFIED, () => {});
 
-		await this.new__detectClaims(subtitle);
+		await this.detectClaims(subtitle);
 		// await this.detectClaims(subtitle);
 	}
 
@@ -130,7 +119,7 @@ export default class FactCheckerService {
 	// 	return result;
 	// }
 
-	private async new__detectClaims(subtitle: string): Promise<void> {
+	private async detectClaims(subtitle: string): Promise<void> {
 		const isMock = loadConfig().useMockClaimDetection;
 		const claimDetector = new ClaimDetector({
 			devMode: isMock ?? this.devMode,
