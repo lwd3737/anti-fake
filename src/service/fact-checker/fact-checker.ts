@@ -8,6 +8,8 @@ import LLMTokenUsageLogger from "@/infra/logger/llm-token-usage";
 import { formatDate } from "@/utils/date";
 import LLMPromptLogger from "@/infra/logger/llm-prompt";
 import Retriever, { RetrievedResult } from "../retriver";
+import ClaimDetector, { DetectedClaim } from "../claim-detector";
+import loadConfig from "@/config";
 
 const DetectedClaimSchema = z.object({
 	content: z
@@ -33,7 +35,7 @@ const VerifiedClaimSchema = z.object({
 	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
 
-type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
+// type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
 
 type RetrievedEvidence = Omit<RetrievedResult<string[]>, "tokenUsage">;
 
@@ -41,7 +43,7 @@ type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
 
 enum EventType {
 	CLAIM_DETECTED = "CALIMES_DETECTED",
-	ALL_CALIMS_DETECTED = "ALL_CALIMS_DETECTED",
+	CLAIMS_DETECTECTION_FINISHED = "CALIMS_DETECTECTION_FINISHED",
 	EVIDENCES_RETRIEVED_PER_CLAIM = "EVIDENCES_RETRIEVED_PER_CLAIM",
 	CLAIM_VERIFIED = "CLAIM_VERIFIED",
 	ALL_CLAIMS_VERIFIED = "ALL_CLAIMS_VERIFIED",
@@ -76,7 +78,7 @@ export default class FactCheckerService {
 			this.devMode = options.devMode;
 		}
 
-		this.detectClaims = this.detectClaims.bind(this);
+		this.handleClaimDetected = this.handleClaimDetected.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
 		// this.retrieveEvidence = this.retrieveEvidence.bind(this);
 		this.verifyClaim = this.verifyClaim.bind(this);
@@ -99,15 +101,18 @@ export default class FactCheckerService {
 		return this;
 	}
 
-	public async execute(subtitle: string) {
+	public async start(subtitle: string) {
 		// await this.correctSubtitle(input.subtitle);
 
-		this.events
-			.on(EventType.ALL_CALIMS_DETECTED, this.retrieveEvidences)
-			.on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
-			.on(EventType.ALL_CLAIMS_VERIFIED, () => {});
+		// this.events.on(
+		// 	EventType.CLAIMS_DETECTECTION_FINISHED,
+		// 	this.retrieveEvidences,
+		// );
+		// .on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
+		// .on(EventType.ALL_CLAIMS_VERIFIED, () => {});
 
-		await this.detectClaims(subtitle);
+		await this.new__detectClaims(subtitle);
+		// await this.detectClaims(subtitle);
 	}
 
 	// private async correctSubtitle(subtitle: string): Promise<string> {
@@ -125,70 +130,66 @@ export default class FactCheckerService {
 	// 	return result;
 	// }
 
-	private async detectClaims(subtitle: string): Promise<void> {
-		// const subtitle = this.getStageResult("correctedSubtitle");
+	private async new__detectClaims(subtitle: string): Promise<void> {
+		const isMock = loadConfig().useMockClaimDetection;
+		const claimDetector = new ClaimDetector({
+			devMode: isMock ?? this.devMode,
+		});
 
-		try {
-			const startedAt = new Date();
+		const startedAt = new Date();
 
-			const result = await streamObject({
-				model: createAIModel("gpt-4o"),
-				system: Prompts.DETECT_CLAIMS,
-				prompt: subtitle,
-				mode: "json",
-				output: "array",
-				schema: DetectedClaimSchema,
-				schemaName: "DetectedClaims",
-				schemaDescription:
-					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
-				temperature: 0,
-				onFinish: (event) => {
-					const output = event.object;
-					if (!output) {
-						this.promptyLogger.error(
-							"DetectClaimsError",
-							new Error("Claims output is not generated"),
-							event,
-						);
-					}
+		claimDetector
+			.onClaimDetected(this.handleClaimDetected)
+			.onFinished(({ output: claims, usage }) => {
+				if (!claims) {
+					this.promptyLogger.error(
+						"DetectClaimsError",
+						new Error("Claims output is not generated"),
+					);
+					return;
+				}
 
-					this.events.emit(EventType.ALL_CALIMS_DETECTED, output);
+				this.handleClaimsDetectionFinished(claims);
 
-					if (!this.devMode) {
-						const endedAt = new Date();
-						this.promptyLogger.log({
-							title: "Detect Claims",
-							description: "Detect claims from subtitle",
-							model: "gpt-4o",
-							system: Prompts.DETECT_CLAIMS,
-							prompt: subtitle,
-							output,
-							generatationTime: endedAt.getTime() - startedAt.getTime(),
-						});
+				if (!claimDetector.isDevMode) {
+					const endedAt = new Date();
 
-						this.tokenUsageLogger.log({
-							...event.usage,
-							model: "gpt-4o-mini",
-							title: "Detect Claims",
-							description: "Detect claims from subtitle",
-							createdAt: formatDate(),
-						});
-					}
-				},
-			});
+					this.promptyLogger.log({
+						title: "Detect Claims",
+						description: "Detect claims from subtitle",
+						model: "gpt-4o",
+						system: Prompts.DETECT_CLAIMS,
+						prompt: subtitle,
+						output: claims,
+						generatationTime: endedAt.getTime() - startedAt.getTime(),
+					});
+					this.tokenUsageLogger.log({
+						...usage,
+						model: "gpt-4o-mini",
+						title: "Detect Claims",
+						description: "Detect claims from subtitle",
+						createdAt: formatDate(),
+					});
+				}
+			})
+			.onError(async (error) => {
+				if (claimDetector.isDevMode) return;
 
-			for await (const claim of result.elementStream) {
-				this.events.emit(EventType.CLAIM_DETECTED, claim);
-			}
-		} catch (error) {
-			if (this.devMode) return;
+				const code = "DetectClaimsError";
+				await Promise.all([
+					this.promptyLogger.error(code, error as Error).save(),
+					this.tokenUsageLogger.error(code, error as Error).save(),
+				]);
+			})
+			.start(subtitle);
+	}
 
-			const code = "DetectClaimsError";
-			await Promise.all([
-				this.promptyLogger.error(code, error as Error).save(),
-				this.tokenUsageLogger.error(code, error as Error).save(),
-			]);
-		}
+	private handleClaimDetected(claim: DetectedClaim): void {
+		this.events.emit(EventType.CLAIM_DETECTED, claim);
+	}
+
+	private handleClaimsDetectionFinished(claims: DetectedClaim[]): void {
+		this.events.emit(EventType.CLAIMS_DETECTECTION_FINISHED, claims);
 	}
 
 	private async retrieveEvidences(claims: DetectedClaim[]): Promise<void> {

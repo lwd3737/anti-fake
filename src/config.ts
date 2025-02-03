@@ -13,6 +13,8 @@ export default function loadConfig() {
 		GOOGLE_SEARCH_ENGINE_ID,
 		GEMINI_API_KEY,
 		DEV_MODE,
+		USE_MOCK_SUBTITLE,
+		USE_MOCK_CLAIM_DETECTION,
 	} = process.env;
 
 	if (!BASE_URL) throw new Error("BASE_URL is required");
@@ -32,6 +34,15 @@ export default function loadConfig() {
 		nodeEnv: process.env.NODE_ENV,
 		baseUrl: BASE_URL,
 		devMode: DEV_MODE === "true",
+		useMockSubtitle:
+			USE_MOCK_SUBTITLE === undefined
+				? undefined
+				: USE_MOCK_SUBTITLE === "true",
+		useMockClaimDetection:
+			USE_MOCK_CLAIM_DETECTION === undefined
+				? undefined
+				: USE_MOCK_CLAIM_DETECTION === "true",
+
 		openai: {
 			apiKey: OPENAI_API_KEY,
 			gptModel: GPT_MODEL,

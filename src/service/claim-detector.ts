@@ -19,12 +19,23 @@ const DetectedClaimSchema = z.object({
 	reason: z.string().describe("해당 주장이 검증 가능한 주장으로 탐지된 이유"),
 });
 
-type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
+export type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
 
+const STREAM_INTERVAL = 100;
 export default class ClaimDetector {
 	private events = new EventEmitter();
 
-	public async detect(text: string) {
+	constructor(private options?: { devMode?: boolean }) {}
+
+	public get isDevMode(): boolean {
+		return this.options?.devMode ?? false;
+	}
+
+	public async start(text: string): Promise<void> {
+		if (this.options?.devMode) {
+			return this.detectOnDevMode();
+		}
+
 		try {
 			const result = await streamObject({
 				model: createAIModel("gpt-4o"),
@@ -38,6 +49,7 @@ export default class ClaimDetector {
 					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
 				temperature: 0,
 				onFinish: (event) => {
+					console.log(event);
 					this.events.emit(EventType.FINISHED, {
 						output: event.object,
 						usage: event.usage,
@@ -46,11 +58,32 @@ export default class ClaimDetector {
 			});
 
 			for await (const claim of result.elementStream) {
+				console.log(claim);
 				this.events.emit(EventType.CLAIM_DETECTED, claim);
 			}
 		} catch (error) {
 			this.events.emit(EventType.ERROR, error as Error);
 		}
+	}
+
+	private async detectOnDevMode(): Promise<void> {
+		const mockData = await import("/mock/detected-claims.json");
+		const claims = mockData.claims;
+
+		for (const claim of claims) {
+			this.events.emit(EventType.CLAIM_DETECTED, claim);
+
+			await new Promise((resolve) => setTimeout(resolve, STREAM_INTERVAL));
+		}
+
+		this.events.emit(EventType.FINISHED, {
+			output: claims,
+			usage: {
+				promptTokens: 0,
+				completionTokens: 0,
+				totalTokens: 0,
+			},
+		});
 	}
 
 	public onClaimDetected(listener: (claim: DetectedClaim) => void): this {
@@ -60,7 +93,7 @@ export default class ClaimDetector {
 
 	public onFinished(
 		listener: (result: {
-			output?: DetectedClaim[];
+			output: DetectedClaim[] | undefined;
 			usage: LanguageModelUsage;
 		}) => void,
 	): this {
