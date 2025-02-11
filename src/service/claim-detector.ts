@@ -50,7 +50,6 @@ export default class ClaimDetector {
 					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
 				temperature: 0,
 				onFinish: (event) => {
-					console.log(event);
 					this.events.emit(EventType.FINISHED, {
 						output: event.object,
 						usage: event.usage,

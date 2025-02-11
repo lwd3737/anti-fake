@@ -37,12 +37,8 @@ export async function POST(req: NextRequest) {
 
 	await new Promise(async (resolve) => {
 		await factChecker
-			.onClaimDetected((claim) => {
-				// console.log(claim);
-			})
-			.onClaimVerified((verifiedClaim) => {
-				console.log(verifiedClaim);
-			})
+			.onClaimDetected((claim) => {})
+			.onClaimVerified((verifiedClaim) => {})
 			.onVerificationFinished(() => {
 				resolve(null);
 			})

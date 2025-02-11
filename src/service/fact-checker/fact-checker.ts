@@ -12,7 +12,7 @@ import loadConfig from "@/config";
 import EvidenceRetriever from "../evidence-retriever";
 import ClaimVerifier from "../claim-verifier";
 
-const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
+// const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
 const VerifiedClaimSchema = z.object({
 	verdictPrediction: z
@@ -68,7 +68,7 @@ export default class FactCheckerService {
 
 		this.handleClaimDetected = this.handleClaimDetected.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
-		this.new__verifyClaim = this.new__verifyClaim.bind(this);
+		this.verifyClaim = this.verifyClaim.bind(this);
 	}
 
 	public onClaimDetected(listener: (claim: DetectedClaim) => void): this {
@@ -91,7 +91,7 @@ export default class FactCheckerService {
 	public async start(subtitle: string) {
 		this.events
 			.on(EventType.CLAIMS_DETECTECTION_FINISHED, this.retrieveEvidences)
-			.on(EventType.EVIDENCE_RETRIEVED, this.new__verifyClaim)
+			.on(EventType.EVIDENCE_RETRIEVED, this.verifyClaim)
 			.on(EventType.VERIFICATION_FINISHED, () => {});
 
 		await this.detectClaims(subtitle);
@@ -222,7 +222,7 @@ export default class FactCheckerService {
 		}
 	}
 
-	private async new__verifyClaim({
+	private async verifyClaim({
 		claimContent,
 		evidence,
 		isLast,
@@ -252,7 +252,7 @@ export default class FactCheckerService {
 				]);
 			}
 
-			if (this.devMode && metadata) {
+			if (!this.devMode && metadata) {
 				const title = "Verify Claims";
 				const description = "Verify claims with evidence";
 
