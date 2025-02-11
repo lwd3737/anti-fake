@@ -37,11 +37,13 @@ export async function POST(req: NextRequest) {
 
 	await new Promise(async (resolve) => {
 		await factChecker
-			.onClaimsDetected((claim) => {
+			.onClaimDetected((claim) => {
 				// console.log(claim);
 			})
-			.onClaimVerified((verifiedClaim) => {})
-			.onAllClaimsVerified(() => {
+			.onClaimVerified((verifiedClaim) => {
+				console.log(verifiedClaim);
+			})
+			.onVerificationFinished(() => {
 				resolve(null);
 			})
 			.start(subtitle);

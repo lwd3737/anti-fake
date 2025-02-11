@@ -10,6 +10,7 @@ import { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
 import EvidenceRetriever from "../evidence-retriever";
+import ClaimVerifier from "../claim-verifier";
 
 const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
@@ -34,9 +35,8 @@ enum EventType {
 	CLAIM_DETECTED = "CALIMES_DETECTED",
 	CLAIMS_DETECTECTION_FINISHED = "CALIMS_DETECTECTION_FINISHED",
 	EVIDENCE_RETRIEVED = "EVIDENCE_RETRIEVED",
-	EVIDENCES_RETRIEVED_PER_CLAIM = "EVIDENCES_RETRIEVED_PER_CLAIM",
 	CLAIM_VERIFIED = "CLAIM_VERIFIED",
-	ALL_CLAIMS_VERIFIED = "ALL_CLAIMS_VERIFIED",
+	VERIFICATION_FINISHED = "VERIFICATION_FINISHED",
 }
 
 const TOKEN_USAGE_LOG_PATH = "logs/token-usage";
@@ -68,10 +68,10 @@ export default class FactCheckerService {
 
 		this.handleClaimDetected = this.handleClaimDetected.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
-		this.verifyClaim = this.verifyClaim.bind(this);
+		this.new__verifyClaim = this.new__verifyClaim.bind(this);
 	}
 
-	public onClaimsDetected(listener: (claim: DetectedClaim) => void): this {
+	public onClaimDetected(listener: (claim: DetectedClaim) => void): this {
 		this.events.on(EventType.CLAIM_DETECTED, listener);
 		return this;
 	}
@@ -83,25 +83,16 @@ export default class FactCheckerService {
 		return this;
 	}
 
-	public onAllClaimsVerified(listener: () => void): this {
-		this.events.on(EventType.ALL_CLAIMS_VERIFIED, listener);
+	public onVerificationFinished(listener: () => void): this {
+		this.events.on(EventType.VERIFICATION_FINISHED, listener);
 		return this;
 	}
 
 	public async start(subtitle: string) {
-		// this.events.on(
-		// 	EventType.CLAIMS_DETECTECTION_FINISHED,
-		// 	this.retrieveEvidences,
-		// );
-		// .on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
-		// .on(EventType.ALL_CLAIMS_VERIFIED, () => {});
-
-		this.events.on(
-			EventType.CLAIMS_DETECTECTION_FINISHED,
-			this.retrieveEvidences,
-		);
-
-		this.events.on(EventType.EVIDENCE_RETRIEVED, this.verifyClaim);
+		this.events
+			.on(EventType.CLAIMS_DETECTECTION_FINISHED, this.retrieveEvidences)
+			.on(EventType.EVIDENCE_RETRIEVED, this.new__verifyClaim)
+			.on(EventType.VERIFICATION_FINISHED, () => {});
 
 		await this.detectClaims(subtitle);
 	}
@@ -231,7 +222,7 @@ export default class FactCheckerService {
 		}
 	}
 
-	private async verifyClaim({
+	private async new__verifyClaim({
 		claimContent,
 		evidence,
 		isLast,
@@ -239,58 +230,50 @@ export default class FactCheckerService {
 		claimContent: string;
 		evidence: RetrievedEvidence;
 		isLast?: boolean;
-	}): Promise<void> {
-		const prompt = `${claimContent}\n${evidence.content
-			.map((item, idx) => `${idx}.${item}`)
-			.join("\n")}`;
+	}) {
+		const isMock = loadConfig().useMockClaimVerification;
+		const verifier = new ClaimVerifier({ devMode: isMock ?? this.devMode });
 
 		try {
 			const startedAt = new Date();
 
-			const log = {
-				title: "Verify Claims",
-				description: "Verify claims with evidence",
-			};
+			const { metadata, ...verified } = await verifier.verify(
+				claimContent,
+				evidence.content,
+			);
 
-			const result = await generateObject({
-				model: openai("gpt-4o"),
-				system: Prompts.VERIFY_CLAIM,
-				prompt,
-				mode: "json",
-				schema: VerifiedClaimSchema,
-				schemaName: "VerifiedClaims",
-				schemaDescription: "주장에 대한 검증 결과를 판단하세요.",
-				temperature: 0,
-			});
+			this.events.emit(EventType.CLAIM_VERIFIED, verified);
 
-			const endedAt = new Date();
-
-			this.events.emit(EventType.CLAIM_VERIFIED, result.object);
-
-			console.log("result", isLast, result);
 			if (isLast) {
-				this.events.emit(EventType.ALL_CLAIMS_VERIFIED);
+				this.events.emit(EventType.VERIFICATION_FINISHED);
 				await Promise.all([
 					this.promptyLogger.save(),
 					this.tokenUsageLogger.save(),
 				]);
 			}
 
-			this.promptyLogger.log({
-				...log,
-				model: "gpt-4o",
-				system: Prompts.VERIFY_CLAIM,
-				prompt,
-				output: result.object,
-				generatationTime: endedAt.getTime() - startedAt.getTime(),
-			});
+			if (this.devMode && metadata) {
+				const title = "Verify Claims";
+				const description = "Verify claims with evidence";
 
-			this.tokenUsageLogger.log({
-				...log,
-				...result.usage,
-				model: "gpt-4o-mini",
-				createdAt: formatDate(),
-			});
+				this.promptyLogger.log({
+					title,
+					description,
+					model: "gpt-4o",
+					system: Prompts.VERIFY_CLAIM,
+					prompt: metadata.prompt,
+					output: verified,
+					generatationTime: new Date().getTime() - startedAt.getTime(),
+				});
+
+				this.tokenUsageLogger.log({
+					title,
+					description,
+					...metadata.tokenUsage,
+					model: "gpt-4o-mini",
+					createdAt: formatDate(),
+				});
+			}
 		} catch (error) {
 			const code = "VerifyClaimError";
 			await Promise.all([
@@ -300,46 +283,47 @@ export default class FactCheckerService {
 		}
 	}
 
-	private async generateSearchQueries(claims: string[]): Promise<string[]> {
-		const log = {
-			title: "Generate Search Queries",
-			description: "Generate search queries from claims",
-		};
-		const prompt = claims.map((claim, i) => `${i}.${claim}`).join("\n");
+	// Deprecated
+	// private async generateSearchQueries(claims: string[]): Promise<string[]> {
+	// 	const log = {
+	// 		title: "Generate Search Queries",
+	// 		description: "Generate search queries from claims",
+	// 	};
+	// 	const prompt = claims.map((claim, i) => `${i}.${claim}`).join("\n");
 
-		const startedAt = new Date();
+	// 	const startedAt = new Date();
 
-		const result = await generateObject({
-			model: openai(AIModel.GPT_4O),
-			prompt,
-			output: "array",
-			mode: "json",
-			schema: SearchQuerySchema,
-			schemaName: "SearchQueries",
-			schemaDescription:
-				"각 주장에 대한 구글 검색 쿼리를 생성하세요. 검색 쿼리는 주장에 대한 핵심 내용을 잘 표현해야 합니다.",
-			temperature: 0,
-		});
+	// 	const result = await generateObject({
+	// 		model: openai(AIModel.GPT_4O),
+	// 		prompt,
+	// 		output: "array",
+	// 		mode: "json",
+	// 		schema: SearchQuerySchema,
+	// 		schemaName: "SearchQueries",
+	// 		schemaDescription:
+	// 			"각 주장에 대한 구글 검색 쿼리를 생성하세요. 검색 쿼리는 주장에 대한 핵심 내용을 잘 표현해야 합니다.",
+	// 		temperature: 0,
+	// 	});
 
-		const endedAt = new Date();
+	// 	const endedAt = new Date();
 
-		this.promptyLogger.log({
-			...log,
-			model: "gpt-4o-mini",
-			system: Prompts.GENERATE_SEARCH_QUERIES,
-			prompt,
-			output: result.object,
-			generatationTime: endedAt.getTime() - startedAt.getTime(),
-		});
+	// 	this.promptyLogger.log({
+	// 		...log,
+	// 		model: "gpt-4o-mini",
+	// 		system: Prompts.GENERATE_SEARCH_QUERIES,
+	// 		prompt,
+	// 		output: result.object,
+	// 		generatationTime: endedAt.getTime() - startedAt.getTime(),
+	// 	});
 
-		this.tokenUsageLogger.log({
-			...log,
-			...result.usage,
-			model: "gpt-4o-mini",
-			description: "Generate search queries from claims",
-			createdAt: formatDate(),
-		});
+	// 	this.tokenUsageLogger.log({
+	// 		...log,
+	// 		...result.usage,
+	// 		model: "gpt-4o-mini",
+	// 		description: "Generate search queries from claims",
+	// 		createdAt: formatDate(),
+	// 	});
 
-		return result.object;
-	}
+	// 	return result.object;
+	// }
 }

@@ -17,6 +17,7 @@ export default function loadConfig() {
 		USE_MOCK_SUBTITLE,
 		USE_MOCK_CLAIM_DETECTION,
 		USE_MOCK_EVIDENCE_RETRIEVAL,
+		USE_MOCK_CLAIM_VERIFICATION,
 	} = process.env;
 
 	if (!BASE_URL) throw new Error("BASE_URL is required");
@@ -47,6 +48,10 @@ export default function loadConfig() {
 			USE_MOCK_EVIDENCE_RETRIEVAL === undefined
 				? undefined
 				: USE_MOCK_EVIDENCE_RETRIEVAL === "true",
+		useMockClaimVerification:
+			USE_MOCK_CLAIM_VERIFICATION === undefined
+				? undefined
+				: USE_MOCK_CLAIM_VERIFICATION === "true",
 
 		openai: {
 			apiKey: OPENAI_API_KEY,
