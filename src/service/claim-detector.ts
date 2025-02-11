@@ -1,4 +1,4 @@
-import { createAIModel } from "@/helpers/ai";
+import { AIModel, openai } from "@/helpers/ai";
 import { LanguageModelUsage, streamObject } from "ai";
 import DETECT_CLAIM_PROMPT from "@/constants/prompts/detect-claim";
 import { z } from "zod";
@@ -22,6 +22,7 @@ const DetectedClaimSchema = z.object({
 export type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
 
 const STREAM_INTERVAL = 100;
+
 export default class ClaimDetector {
 	private events = new EventEmitter();
 
@@ -38,7 +39,7 @@ export default class ClaimDetector {
 
 		try {
 			const result = await streamObject({
-				model: createAIModel("gpt-4o"),
+				model: openai(AIModel.GPT_4O),
 				system: DETECT_CLAIM_PROMPT,
 				prompt: text,
 				mode: "json",
@@ -58,7 +59,6 @@ export default class ClaimDetector {
 			});
 
 			for await (const claim of result.elementStream) {
-				console.log(claim);
 				this.events.emit(EventType.CLAIM_DETECTED, claim);
 			}
 		} catch (error) {

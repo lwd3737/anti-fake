@@ -14,7 +14,7 @@ export type PromptHistory = (PromptRecord | PromptError)[];
 export interface PromptRecord {
 	title: string;
 	description?: string;
-	model: AIModel;
+	model: string;
 	system: string;
 	prompt: string;
 	output: any;

@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { Prompts } from "./prompt";
-import GoogleSearchService from "../google-search";
 import EventEmitter from "events";
 import { generateObject, streamObject } from "ai";
-import { createAIModel } from "@/helpers/ai";
+import { AIModel, openai } from "@/helpers/ai";
 import LLMTokenUsageLogger from "@/infra/logger/llm-token-usage";
 import { formatDate } from "@/utils/date";
 import LLMPromptLogger from "@/infra/logger/llm-prompt";
-import Retriever, { RetrievedResult } from "../retriver";
+import { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
+import EvidenceRetriever from "../evidence-retriever";
 
 const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
@@ -33,6 +33,7 @@ type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
 enum EventType {
 	CLAIM_DETECTED = "CALIMES_DETECTED",
 	CLAIMS_DETECTECTION_FINISHED = "CALIMS_DETECTECTION_FINISHED",
+	EVIDENCE_RETRIEVED = "EVIDENCE_RETRIEVED",
 	EVIDENCES_RETRIEVED_PER_CLAIM = "EVIDENCES_RETRIEVED_PER_CLAIM",
 	CLAIM_VERIFIED = "CLAIM_VERIFIED",
 	ALL_CLAIMS_VERIFIED = "ALL_CLAIMS_VERIFIED",
@@ -41,8 +42,6 @@ enum EventType {
 const TOKEN_USAGE_LOG_PATH = "logs/token-usage";
 const PROMPTY_LOG_PATH = "logs/prompt";
 const RETRIEVE_LOG_PATH = "logs/retrieve";
-
-const SEARCH_RESULT_COUNT = 3;
 
 export default class FactCheckerService {
 	private devMode = false;
@@ -69,7 +68,6 @@ export default class FactCheckerService {
 
 		this.handleClaimDetected = this.handleClaimDetected.bind(this);
 		this.retrieveEvidences = this.retrieveEvidences.bind(this);
-		// this.retrieveEvidence = this.retrieveEvidence.bind(this);
 		this.verifyClaim = this.verifyClaim.bind(this);
 	}
 
@@ -91,8 +89,6 @@ export default class FactCheckerService {
 	}
 
 	public async start(subtitle: string) {
-		// await this.correctSubtitle(input.subtitle);
-
 		// this.events.on(
 		// 	EventType.CLAIMS_DETECTECTION_FINISHED,
 		// 	this.retrieveEvidences,
@@ -100,24 +96,15 @@ export default class FactCheckerService {
 		// .on(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, this.verifyClaim)
 		// .on(EventType.ALL_CLAIMS_VERIFIED, () => {});
 
+		this.events.on(
+			EventType.CLAIMS_DETECTECTION_FINISHED,
+			this.retrieveEvidences,
+		);
+
+		this.events.on(EventType.EVIDENCE_RETRIEVED, this.verifyClaim);
+
 		await this.detectClaims(subtitle);
-		// await this.detectClaims(subtitle);
 	}
-
-	// private async correctSubtitle(subtitle: string): Promise<string> {
-	// 	const result = await this.ai.generateText({
-	// 		prompt: `subtitle: ${subtitle}`,
-	// 		config: {
-	// 			model: "gpt-4o-mini",
-	// 			system: PROMPTS.correctSubtitle,
-	// 			temperature: 0,
-	// 		},
-	// 	});
-
-	// 	this.stageResults.correctedSubtitle = result;
-
-	// 	return result;
-	// }
 
 	private async detectClaims(subtitle: string): Promise<void> {
 		const isMock = loadConfig().useMockClaimDetection;
@@ -143,9 +130,12 @@ export default class FactCheckerService {
 				if (!claimDetector.isDevMode) {
 					const endedAt = new Date();
 
+					const title = "Detect Claims";
+					const description = "Detect claims from subtitle";
+
 					this.promptyLogger.log({
-						title: "Detect Claims",
-						description: "Detect claims from subtitle",
+						title,
+						description,
 						model: "gpt-4o",
 						system: Prompts.DETECT_CLAIMS,
 						prompt: subtitle,
@@ -155,8 +145,8 @@ export default class FactCheckerService {
 					this.tokenUsageLogger.log({
 						...usage,
 						model: "gpt-4o-mini",
-						title: "Detect Claims",
-						description: "Detect claims from subtitle",
+						title,
+						description,
 						createdAt: formatDate(),
 					});
 				}
@@ -182,64 +172,57 @@ export default class FactCheckerService {
 	}
 
 	private async retrieveEvidences(claims: DetectedClaim[]): Promise<void> {
-		const search = GoogleSearchService.create();
+		const isMock = loadConfig().useMockEvidenceRetrieval;
+		const retriever = new EvidenceRetriever({
+			devMode: isMock ?? this.devMode,
+		});
+
 		const claimContents = claims.map((claim) => claim.content);
 
-		const retriever = new Retriever();
-
 		try {
-			let idx = 0;
+			for (let idx = 0; idx < claimContents.length; idx++) {
+				const claimContent = claimContents[idx];
 
-			for (const claimContent of claimContents) {
 				const startedAt = new Date();
 
-				const { tokenUsage, ...evidence } = await retriever.retrieve(
+				const { metadata, ...evidence } = await retriever.retrieve(
 					claimContent,
-					{
-						system: Prompts.RETRIVE_EVIDENCES,
-						mode: "json",
-						onCompleted: (result) => {
-							// logJsonFile(`${RETRIEVE_LOG_PATH}/${formatDate()}.json`, {
-							// 	text: result.response.text(),
-							// 	...result,
-							// });
-						},
-					},
 				);
 
-				console.log("evidence", evidence);
-
-				this.events.emit(EventType.EVIDENCES_RETRIEVED_PER_CLAIM, {
+				this.events.emit(EventType.EVIDENCE_RETRIEVED, {
 					claimContent,
 					evidence,
 					isLast: idx === claimContents.length - 1,
 				});
 
-				idx++;
+				if (!retriever.isDevMode && metadata) {
+					const { model, tokenUsage } = metadata;
 
-				this.promptyLogger.log({
-					model: "gemini-1.5-flash",
-					title: "Retrieve Evidences",
-					description: "Retrieve evidence from claims",
-					system: Prompts.RETRIVE_EVIDENCES,
-					prompt: claimContent,
-					output: evidence,
-					generatationTime: new Date().getTime() - startedAt.getTime(),
-				});
+					const title = "Retrieve Evidences";
+					const description = "Retrieve evidence from claims";
 
-				if (tokenUsage) {
+					this.promptyLogger.log({
+						model,
+						title,
+						description,
+						system: Prompts.RETRIVE_EVIDENCES,
+						prompt: claimContent,
+						output: evidence,
+						generatationTime: new Date().getTime() - startedAt.getTime(),
+					});
+
 					this.tokenUsageLogger.log({
-						model: "gemini-1.5-flash",
-						title: "Retrieve Evidences",
-						description: "Retrieve evidence from claims",
+						model,
+						title,
+						description,
 						createdAt: formatDate(),
-						promptTokens: tokenUsage.promptTokenCount,
-						completionTokens: tokenUsage.candidatesTokenCount,
-						totalTokens: tokenUsage.totalTokenCount,
+						...tokenUsage,
 					});
 				}
 			}
 		} catch (error) {
+			if (retriever.isDevMode) return;
+
 			const code = "RetrieveEvidencesError";
 			await Promise.all([
 				this.promptyLogger.error(code, error as Error).save(),
@@ -270,7 +253,7 @@ export default class FactCheckerService {
 			};
 
 			const result = await generateObject({
-				model: createAIModel("gpt-4o"),
+				model: openai("gpt-4o"),
 				system: Prompts.VERIFY_CLAIM,
 				prompt,
 				mode: "json",
@@ -284,6 +267,7 @@ export default class FactCheckerService {
 
 			this.events.emit(EventType.CLAIM_VERIFIED, result.object);
 
+			console.log("result", isLast, result);
 			if (isLast) {
 				this.events.emit(EventType.ALL_CLAIMS_VERIFIED);
 				await Promise.all([
@@ -326,7 +310,7 @@ export default class FactCheckerService {
 		const startedAt = new Date();
 
 		const result = await generateObject({
-			model: createAIModel("gpt-4o-mini"),
+			model: openai(AIModel.GPT_4O),
 			prompt,
 			output: "array",
 			mode: "json",

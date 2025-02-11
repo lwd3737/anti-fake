@@ -38,8 +38,7 @@ export async function POST(req: NextRequest) {
 	await new Promise(async (resolve) => {
 		await factChecker
 			.onClaimsDetected((claim) => {
-				console.log(claim);
-				resolve(null);
+				// console.log(claim);
 			})
 			.onClaimVerified((verifiedClaim) => {})
 			.onAllClaimsVerified(() => {

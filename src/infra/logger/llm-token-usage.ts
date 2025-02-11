@@ -19,7 +19,7 @@ export interface TokenUsageCost {
 }
 
 export type TokenUsageRecord = TokenUsage & {
-	model?: AIModel;
+	model?: string;
 	title: string;
 	description?: string;
 	cost?: TokenUsageCost;

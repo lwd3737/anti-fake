@@ -1,12 +1,12 @@
 import loadConfig from "@/config";
-import { openai } from "@ai-sdk/openai";
-import { LanguageModel } from "ai";
+import { createOpenAI } from "@ai-sdk/openai";
 
-export type AIModel = "gpt-4o" | "gpt-4o-mini" | "gemini-1.5-flash";
+export enum AIModel {
+	GPT_4O = "gpt-4o",
+	GPT_4O_MINI = "gpt-4o-mini",
+	GEMINI_1_5_FLASH = "gemini-1.5-flash",
+}
 
-export const createAIModel = (model?: AIModel): LanguageModel => {
-	const {
-		openai: { gptModel },
-	} = loadConfig();
-	return model ? openai(model) : openai(gptModel);
-};
+export const openai = createOpenAI({
+	apiKey: loadConfig().openai.apiKey,
+});

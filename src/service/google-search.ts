@@ -33,8 +33,6 @@ export default class GoogleSearchService {
 			num: options?.count ?? 10,
 		});
 
-		// console.log("search result", json(res.data));
-
 		const items = res.data.items?.map((item) => {
 			const { title, link } = item as GoogleSearchItemDto;
 			return { title, link };

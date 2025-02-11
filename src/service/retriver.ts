@@ -8,15 +8,18 @@ import {
 	GroundingChunk,
 	GroundingChunkWeb,
 	GroundingMetadata,
-	ResponseSchema,
-	SchemaType,
 } from "@google/generative-ai";
 
 export interface RetrievedResult<Content = any> {
 	content: Content;
-	sources: GroundingChunkWeb[];
-	tokenUsage: GenerateContentResponse["usageMetadata"];
+	sources: RetrievedSource[];
+	metadata: {
+		tokenUsage: GenerateContentResponse["usageMetadata"];
+		model: string;
+	};
 }
+
+export type RetrievedSource = GroundingChunkWeb;
 
 export default class Retriever {
 	private model: GenerativeModel;
@@ -96,7 +99,6 @@ export default class Retriever {
 				return sources;
 			}, [] as GroundingChunkWeb[]) ?? [];
 
-		// console.log(JSON.stringify(result, null, 2));
 		const output = result.response.text();
 		const content =
 			mode === "json"
@@ -106,7 +108,10 @@ export default class Retriever {
 		return {
 			content,
 			sources,
-			tokenUsage: result.response.usageMetadata,
+			metadata: {
+				tokenUsage: result.response.usageMetadata,
+				model: this.model.model,
+			},
 		};
 	}
 }

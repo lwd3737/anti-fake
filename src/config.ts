@@ -1,10 +1,11 @@
+import { use } from "react";
+
 export type Config = ReturnType<typeof loadConfig>;
 
 export default function loadConfig() {
 	const {
 		BASE_URL,
 		OPENAI_API_KEY,
-		GPT_MODEL,
 		GOOGLE_API_KEY,
 		GOOGLE_CLIENT_ID,
 		GOOGLE_SECRET_KEY,
@@ -15,19 +16,19 @@ export default function loadConfig() {
 		DEV_MODE,
 		USE_MOCK_SUBTITLE,
 		USE_MOCK_CLAIM_DETECTION,
+		USE_MOCK_EVIDENCE_RETRIEVAL,
 	} = process.env;
 
 	if (!BASE_URL) throw new Error("BASE_URL is required");
 	if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required");
-	if (!GPT_MODEL) throw new Error("GPT_MODEL is required");
 	if (!GOOGLE_API_KEY) throw new Error("GOOGLE_API_KEY is required");
 	if (!GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID is required");
 	if (!GOOGLE_SECRET_KEY) throw new Error("GOOGLE_SECRET_KEY is required");
 	if (!GOOGLE_REDIRECT_URL) throw new Error("GOOGLE_REDIRECT_URL is required");
-	if (!GOOGLE_CUSTOM_SEARCH_API_KEY)
-		throw new Error("GOOGLE_CUSTOM_SEARCH_API_KEY is required");
-	if (!GOOGLE_SEARCH_ENGINE_ID)
-		throw new Error("GOOGLE_SEARCH_ENGINE_ID is required");
+	// if (!GOOGLE_CUSTOM_SEARCH_API_KEY)
+	// 	throw new Error("GOOGLE_CUSTOM_SEARCH_API_KEY is required");
+	// if (!GOOGLE_SEARCH_ENGINE_ID)
+	// 	throw new Error("GOOGLE_SEARCH_ENGINE_ID is required");
 	if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required");
 
 	return {
@@ -42,10 +43,13 @@ export default function loadConfig() {
 			USE_MOCK_CLAIM_DETECTION === undefined
 				? undefined
 				: USE_MOCK_CLAIM_DETECTION === "true",
+		useMockEvidenceRetrieval:
+			USE_MOCK_EVIDENCE_RETRIEVAL === undefined
+				? undefined
+				: USE_MOCK_EVIDENCE_RETRIEVAL === "true",
 
 		openai: {
 			apiKey: OPENAI_API_KEY,
-			gptModel: GPT_MODEL,
 		},
 		google: {
 			apiKey: GOOGLE_API_KEY,
