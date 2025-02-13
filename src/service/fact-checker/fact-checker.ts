@@ -1,16 +1,15 @@
 import { z } from "zod";
 import { Prompts } from "./prompt";
 import EventEmitter from "events";
-import { generateObject, streamObject } from "ai";
-import { AIModel, openai } from "@/helpers/ai";
-import LLMTokenUsageLogger from "@/infra/logger/llm-token-usage";
+import LLMTokenUsageLogger from "@/logger/llm-token-usage";
 import { formatDate } from "@/utils/date";
-import LLMPromptLogger from "@/infra/logger/llm-prompt";
+import LLMPromptLogger from "@/logger/llm-prompt";
 import { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
 import EvidenceRetriever from "../evidence-retriever";
 import ClaimVerifier from "../claim-verifier";
+import LLMHistoryLogger from "@/logger/llm-history.logger";
 
 // const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
@@ -41,11 +40,13 @@ enum EventType {
 
 const TOKEN_USAGE_LOG_PATH = "logs/token-usage";
 const PROMPTY_LOG_PATH = "logs/prompt";
-const RETRIEVE_LOG_PATH = "logs/retrieve";
 
 export default class FactCheckerService {
 	private devMode = false;
 	private events = new EventEmitter();
+	private logger = new LLMHistoryLogger("fact-checker", {
+		title: "Fact Checker",
+	});
 	private promptyLogger = new LLMPromptLogger(
 		`${PROMPTY_LOG_PATH}/${formatDate()}.json`,
 		{
@@ -103,55 +104,42 @@ export default class FactCheckerService {
 			devMode: isMock ?? this.devMode,
 		});
 
-		const startedAt = new Date();
+		this.logger.new__monitor((log, error, save) =>
+			claimDetector
+				.onClaimDetected(this.handleClaimDetected)
+				.onFinished(({ output: claims, usage }) => {
+					if (!claims) {
+						error({
+							code: "DetectClaimsError",
+							error: new Error("Claims output is not generated"),
+						});
+						save();
+						return;
+					}
 
-		claimDetector
-			.onClaimDetected(this.handleClaimDetected)
-			.onFinished(({ output: claims, usage }) => {
-				if (!claims) {
-					this.promptyLogger.error(
-						"DetectClaimsError",
-						new Error("Claims output is not generated"),
-					);
-					return;
-				}
+					this.handleClaimsDetectionFinished(claims);
 
-				this.handleClaimsDetectionFinished(claims);
-
-				if (!claimDetector.isDevMode) {
-					const endedAt = new Date();
-
-					const title = "Detect Claims";
-					const description = "Detect claims from subtitle";
-
-					this.promptyLogger.log({
-						title,
-						description,
-						model: "gpt-4o",
-						system: Prompts.DETECT_CLAIMS,
-						prompt: subtitle,
-						output: claims,
-						generatationTime: endedAt.getTime() - startedAt.getTime(),
+					if (!claimDetector.isDevMode) {
+						log({
+							title: "Claims detection",
+							model: "gpt-4o",
+							prompt: subtitle,
+							output: claims,
+							tokenUsage: usage,
+						});
+						save();
+					}
+				})
+				.onError(async (err) => {
+					if (claimDetector.isDevMode) return;
+					error({
+						code: "DetectClaimsError",
+						error: err,
 					});
-					this.tokenUsageLogger.log({
-						...usage,
-						model: "gpt-4o-mini",
-						title,
-						description,
-						createdAt: formatDate(),
-					});
-				}
-			})
-			.onError(async (error) => {
-				if (claimDetector.isDevMode) return;
-
-				const code = "DetectClaimsError";
-				await Promise.all([
-					this.promptyLogger.error(code, error as Error).save(),
-					this.tokenUsageLogger.error(code, error as Error).save(),
-				]);
-			})
-			.start(subtitle);
+					save();
+				})
+				.start(subtitle),
+		);
 	}
 
 	private handleClaimDetected(claim: DetectedClaim): void {

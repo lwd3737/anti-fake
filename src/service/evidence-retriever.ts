@@ -1,6 +1,6 @@
 import RETRIEVE_EVIDENCES_PROMPT from "@/constants/prompts/retrieve-evidences";
 import Retriever, { RetrievedSource } from "./retriver";
-import { TokenUsage } from "@/infra/logger/llm-token-usage";
+import { TokenUsage } from "@/logger/llm-token-usage";
 
 export interface RetrievedEvidenceResult {
 	content: string[];

@@ -2,7 +2,7 @@ import { openai } from "@/helpers/ai";
 import { generateObject } from "ai";
 import { Prompts } from "./fact-checker/prompt";
 import { z } from "zod";
-import { TokenUsage } from "@/infra/logger/llm-token-usage";
+import { TokenUsage } from "@/logger/llm-token-usage";
 
 const VerifiedClaimSchema = z.object({
 	verdictPrediction: z
