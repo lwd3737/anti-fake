@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { Prompts } from "./prompt";
 import EventEmitter from "events";
-import LLMTokenUsageLogger from "@/logger/llm-token-usage";
 import { formatDate } from "@/utils/date";
-import LLMPromptLogger from "@/logger/llm-prompt";
 import { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
@@ -38,29 +36,12 @@ enum EventType {
 	VERIFICATION_FINISHED = "VERIFICATION_FINISHED",
 }
 
-const TOKEN_USAGE_LOG_PATH = "logs/token-usage";
-const PROMPTY_LOG_PATH = "logs/prompt";
-
 export default class FactCheckerService {
 	private devMode = false;
 	private events = new EventEmitter();
 	private logger = new LLMHistoryLogger("fact-checker", {
 		title: "Fact Checker",
 	});
-	private promptyLogger = new LLMPromptLogger(
-		`${PROMPTY_LOG_PATH}/${formatDate()}.json`,
-		{
-			title: "Fact Check",
-			description: "Fact Check process",
-		},
-	);
-	private tokenUsageLogger = new LLMTokenUsageLogger(
-		`${TOKEN_USAGE_LOG_PATH}/${formatDate()}.json`,
-		{
-			title: "Fact Check",
-			description: "Fact Check process",
-		},
-	);
 
 	constructor(options: { devMode?: boolean } = {}) {
 		if (options?.devMode) {
@@ -105,7 +86,7 @@ export default class FactCheckerService {
 			mockDataCount: 1,
 		});
 
-		this.logger.new__monitor((log, error, save) =>
+		this.logger.monitor((log, error, save) =>
 			claimDetector
 				.onClaimDetected(this.handleClaimDetected)
 				.onFinished(({ output: claims, usage }) => {
@@ -159,7 +140,7 @@ export default class FactCheckerService {
 
 		const claimContents = claims.map((claim) => claim.content);
 
-		this.logger.new__monitor(async (log, error, save) => {
+		this.logger.monitor(async (log, error, save) => {
 			for (let idx = 0; idx < claimContents.length; idx++) {
 				const claimContent = claimContents[idx];
 
@@ -209,7 +190,7 @@ export default class FactCheckerService {
 		const isMock = loadConfig().useMockClaimVerification;
 		const verifier = new ClaimVerifier({ devMode: isMock ?? this.devMode });
 
-		this.logger.new__monitor(async (log, error, save) => {
+		this.logger.monitor(async (log, error, save) => {
 			try {
 				const { metadata, ...verified } = await verifier.verify(
 					claimContent,

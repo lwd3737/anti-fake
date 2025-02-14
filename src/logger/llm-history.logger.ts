@@ -41,7 +41,7 @@ export default class LLMHistoryLogger {
 		this.save = this.save.bind(this);
 	}
 
-	public async new__monitor(
+	public async monitor(
 		task: (
 			log: (record: RawUsageRecord) => void,
 			error: (record: ErrorRecord) => void,
@@ -68,36 +68,6 @@ export default class LLMHistoryLogger {
 			},
 			this.save,
 		);
-	}
-
-	public async monitor(
-		task: () => Promise<
-			Omit<UsageRecord, "generationTime" | "createdAt"> | ErrorRecord
-		>,
-	) {
-		const startedAt = new Date();
-
-		const record = await task();
-		if (this.isError(record)) {
-			this.history = [...this.history, record];
-		}
-
-		const endedAt = new Date();
-
-		this.history = [
-			...this.history,
-			{
-				...record,
-				generationTime: endedAt.getTime() - startedAt.getTime(),
-				createdAt: new Date().toISOString(),
-			},
-		];
-	}
-
-	private isError(
-		record: Omit<HistoryRecord, "generationTime" | "createdAt">,
-	): record is ErrorRecord {
-		return (record as ErrorRecord).code !== undefined;
 	}
 
 	public async save(): Promise<void> {
