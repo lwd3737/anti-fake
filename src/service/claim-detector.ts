@@ -26,7 +26,9 @@ const STREAM_INTERVAL = 100;
 export default class ClaimDetector {
 	private events = new EventEmitter();
 
-	constructor(private options?: { devMode?: boolean }) {}
+	constructor(
+		private options?: { devMode?: boolean; mockDataCount?: number },
+	) {}
 
 	public get isDevMode(): boolean {
 		return this.options?.devMode ?? false;
@@ -67,7 +69,11 @@ export default class ClaimDetector {
 
 	private async detectOnDevMode(): Promise<void> {
 		const mockData = await import("/mock/detected-claims.json");
-		const claims = mockData.claims;
+		const { mockDataCount } = this.options ?? {};
+		const claims = mockData.claims.slice(
+			0,
+			mockDataCount ?? mockData.claims.length,
+		);
 
 		for (const claim of claims) {
 			this.events.emit(EventType.CLAIM_DETECTED, claim);

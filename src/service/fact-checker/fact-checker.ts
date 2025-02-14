@@ -102,6 +102,7 @@ export default class FactCheckerService {
 		const isMock = loadConfig().useMockClaimDetection;
 		const claimDetector = new ClaimDetector({
 			devMode: isMock ?? this.devMode,
+			mockDataCount: 1,
 		});
 
 		this.logger.new__monitor((log, error, save) =>
@@ -158,56 +159,42 @@ export default class FactCheckerService {
 
 		const claimContents = claims.map((claim) => claim.content);
 
-		try {
+		this.logger.new__monitor(async (log, error, save) => {
 			for (let idx = 0; idx < claimContents.length; idx++) {
 				const claimContent = claimContents[idx];
 
-				const startedAt = new Date();
+				try {
+					const { metadata, ...evidence } = await retriever.retrieve(
+						claimContent,
+					);
 
-				const { metadata, ...evidence } = await retriever.retrieve(
-					claimContent,
-				);
-
-				this.events.emit(EventType.EVIDENCE_RETRIEVED, {
-					claimContent,
-					evidence,
-					isLast: idx === claimContents.length - 1,
-				});
-
-				if (!retriever.isDevMode && metadata) {
-					const { model, tokenUsage } = metadata;
-
-					const title = "Retrieve Evidences";
-					const description = "Retrieve evidence from claims";
-
-					this.promptyLogger.log({
-						model,
-						title,
-						description,
-						system: Prompts.RETRIVE_EVIDENCES,
-						prompt: claimContent,
-						output: evidence,
-						generatationTime: new Date().getTime() - startedAt.getTime(),
+					this.events.emit(EventType.EVIDENCE_RETRIEVED, {
+						claimContent,
+						evidence,
+						isLast: idx === claimContents.length - 1,
 					});
 
-					this.tokenUsageLogger.log({
-						model,
-						title,
-						description,
-						createdAt: formatDate(),
-						...tokenUsage,
+					if (!retriever.isDevMode && metadata) {
+						const { model, tokenUsage } = metadata;
+
+						log({
+							title: "Retrieve Evidences",
+							model,
+							prompt: claimContent,
+							output: evidence,
+							tokenUsage,
+						});
+					}
+				} catch (err) {
+					if (retriever.isDevMode) return;
+
+					error({
+						code: "RetrieveEvidencesError",
+						error: err as Error,
 					});
 				}
 			}
-		} catch (error) {
-			if (retriever.isDevMode) return;
-
-			const code = "RetrieveEvidencesError";
-			await Promise.all([
-				this.promptyLogger.error(code, error as Error).save(),
-				this.tokenUsageLogger.error(code, error as Error).save(),
-			]);
-		}
+		});
 	}
 
 	private async verifyClaim({
@@ -222,53 +209,41 @@ export default class FactCheckerService {
 		const isMock = loadConfig().useMockClaimVerification;
 		const verifier = new ClaimVerifier({ devMode: isMock ?? this.devMode });
 
-		try {
-			const startedAt = new Date();
+		this.logger.new__monitor(async (log, error, save) => {
+			try {
+				const { metadata, ...verified } = await verifier.verify(
+					claimContent,
+					evidence.content,
+				);
 
-			const { metadata, ...verified } = await verifier.verify(
-				claimContent,
-				evidence.content,
-			);
+				this.events.emit(EventType.CLAIM_VERIFIED, verified);
 
-			this.events.emit(EventType.CLAIM_VERIFIED, verified);
+				if (isLast) {
+					this.events.emit(EventType.VERIFICATION_FINISHED);
+				}
 
-			if (isLast) {
-				this.events.emit(EventType.VERIFICATION_FINISHED);
-				await Promise.all([
-					this.promptyLogger.save(),
-					this.tokenUsageLogger.save(),
-				]);
-			}
+				if (!this.devMode && metadata) {
+					log({
+						title: "Claim Verification",
+						model: "gpt-4o",
+						prompt: metadata.prompt,
+						output: verified,
+						tokenUsage: metadata.tokenUsage,
+					});
+				}
+			} catch (err) {
+				const code = "VerifyClaimError";
 
-			if (!this.devMode && metadata) {
-				const title = "Verify Claims";
-				const description = "Verify claims with evidence";
-
-				this.promptyLogger.log({
-					title,
-					description,
-					model: "gpt-4o",
-					system: Prompts.VERIFY_CLAIM,
-					prompt: metadata.prompt,
-					output: verified,
-					generatationTime: new Date().getTime() - startedAt.getTime(),
+				error({
+					code,
+					error: err as Error,
 				});
-
-				this.tokenUsageLogger.log({
-					title,
-					description,
-					...metadata.tokenUsage,
-					model: "gpt-4o-mini",
-					createdAt: formatDate(),
-				});
+			} finally {
+				if (isLast) {
+					await save();
+				}
 			}
-		} catch (error) {
-			const code = "VerifyClaimError";
-			await Promise.all([
-				this.promptyLogger.error(code, error as Error).save(),
-				this.tokenUsageLogger.error(code, error as Error).save(),
-			]);
-		}
+		});
 	}
 
 	// Deprecated
