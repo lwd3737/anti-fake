@@ -109,7 +109,6 @@ export default class FactCheckerService {
 							output: claims,
 							tokenUsage: usage,
 						});
-						save();
 					}
 				})
 				.onError(async (err) => {

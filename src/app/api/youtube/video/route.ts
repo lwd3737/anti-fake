@@ -4,7 +4,6 @@ import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
 import FactCheckerService from "@/service/fact-checker/fact-checker";
 import YoutubeService from "@/service/youtube";
-import { ok } from "assert";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
