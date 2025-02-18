@@ -2,7 +2,7 @@ import { openai } from "@/helpers/ai";
 import { generateObject } from "ai";
 import { Prompts } from "./fact-checker/prompt";
 import { z } from "zod";
-import { TokenUsage } from "@/logger/llm-token-usage";
+import { TokenUsage } from "@/logger/llm-history.logger";
 
 const VerifiedClaimSchema = z.object({
 	verdictPrediction: z
@@ -28,7 +28,10 @@ type VerifiedClaimResult = VerifiedClaim & {
 type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
 
 export default class ClaimVerifier {
-	constructor(private options?: { devMode?: boolean }) {}
+	constructor(
+		private signal: AbortSignal,
+		private options?: { devMode?: boolean },
+	) {}
 
 	public get isDevMode(): boolean {
 		return this.options?.devMode ?? false;
@@ -53,6 +56,7 @@ export default class ClaimVerifier {
 			schemaName: "VerifiedClaims",
 			schemaDescription: "주장에 대한 검증 결과를 판단하세요.",
 			temperature: 0,
+			abortSignal: this.signal,
 		});
 
 		return {

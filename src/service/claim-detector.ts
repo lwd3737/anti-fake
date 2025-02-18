@@ -27,6 +27,7 @@ export default class ClaimDetector {
 	private events = new EventEmitter();
 
 	constructor(
+		private signal: AbortSignal,
 		private options?: { devMode?: boolean; mockDataCount?: number },
 	) {}
 
@@ -40,7 +41,7 @@ export default class ClaimDetector {
 		}
 
 		try {
-			const result = await streamObject({
+			const result = streamObject({
 				model: openai(AIModel.GPT_4O),
 				system: DETECT_CLAIM_PROMPT,
 				prompt: text,
@@ -57,6 +58,7 @@ export default class ClaimDetector {
 						usage: event.usage,
 					});
 				},
+				abortSignal: this.signal,
 			});
 
 			for await (const claim of result.elementStream) {

@@ -1,6 +1,6 @@
 import RETRIEVE_EVIDENCES_PROMPT from "@/constants/prompts/retrieve-evidences";
 import Retriever, { RetrievedSource } from "./retriver";
-import { TokenUsage } from "@/logger/llm-token-usage";
+import { TokenUsage } from "@/logger/llm-history.logger";
 
 export interface RetrievedEvidenceResult {
 	content: string[];
@@ -12,9 +12,11 @@ export interface RetrievedEvidenceResult {
 }
 
 export default class EvidenceRetriever {
-	private retriever = new Retriever();
+	private retriever;
 
-	constructor(private options?: { devMode?: boolean }) {}
+	constructor(signal: AbortSignal, private options?: { devMode?: boolean }) {
+		this.retriever = new Retriever(signal);
+	}
 
 	public get isDevMode(): boolean {
 		return this.options?.devMode ?? false;

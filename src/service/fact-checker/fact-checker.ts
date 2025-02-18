@@ -43,7 +43,10 @@ export default class FactCheckerService {
 		title: "Fact Checker",
 	});
 
-	constructor(options: { devMode?: boolean } = {}) {
+	constructor(
+		private signal: AbortSignal,
+		options: { devMode?: boolean } = {},
+	) {
 		if (options?.devMode) {
 			this.devMode = options.devMode;
 		}
@@ -79,9 +82,11 @@ export default class FactCheckerService {
 		await this.detectClaims(subtitle);
 	}
 
+	public stop() {}
+
 	private async detectClaims(subtitle: string): Promise<void> {
 		const isMock = loadConfig().useMockClaimDetection;
-		const claimDetector = new ClaimDetector({
+		const claimDetector = new ClaimDetector(this.signal, {
 			devMode: isMock ?? this.devMode,
 			mockDataCount: 1,
 		});
@@ -133,7 +138,7 @@ export default class FactCheckerService {
 
 	private async retrieveEvidences(claims: DetectedClaim[]): Promise<void> {
 		const isMock = loadConfig().useMockEvidenceRetrieval;
-		const retriever = new EvidenceRetriever({
+		const retriever = new EvidenceRetriever(this.signal, {
 			devMode: isMock ?? this.devMode,
 		});
 
@@ -187,7 +192,9 @@ export default class FactCheckerService {
 		isLast?: boolean;
 	}) {
 		const isMock = loadConfig().useMockClaimVerification;
-		const verifier = new ClaimVerifier({ devMode: isMock ?? this.devMode });
+		const verifier = new ClaimVerifier(this.signal, {
+			devMode: isMock ?? this.devMode,
+		});
 
 		this.logger.monitor(async (log, error, save) => {
 			try {

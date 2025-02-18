@@ -24,7 +24,7 @@ export type RetrievedSource = GroundingChunkWeb;
 export default class Retriever {
 	private model: GenerativeModel;
 
-	constructor() {
+	constructor(private signal: AbortSignal) {
 		const { google } = loadConfig();
 		const ai = new GoogleGenerativeAI(google.gemini.apiKey);
 		this.model = ai.getGenerativeModel(
@@ -59,28 +59,33 @@ export default class Retriever {
 			onCompleted?: (result: GenerateContentResult) => void;
 		},
 	): Promise<RetrievedResult<OutputContent>> {
-		const result = await this.model.generateContent({
-			contents: [
-				{
-					role: "user",
-					parts: [{ text: query }],
+		const result = await this.model.generateContent(
+			{
+				contents: [
+					{
+						role: "user",
+						parts: [{ text: query }],
+					},
+				],
+				systemInstruction: system,
+				generationConfig: {
+					temperature,
 				},
-			],
-			systemInstruction: system,
-			generationConfig: {
-				temperature,
-			},
-			tools: [
-				{
-					googleSearchRetrieval: {
-						dynamicRetrievalConfig: {
-							mode: DynamicRetrievalMode.MODE_DYNAMIC,
-							dynamicThreshold: 0,
+				tools: [
+					{
+						googleSearchRetrieval: {
+							dynamicRetrievalConfig: {
+								mode: DynamicRetrievalMode.MODE_DYNAMIC,
+								dynamicThreshold: 0,
+							},
 						},
 					},
-				},
-			],
-		});
+				],
+			},
+			{
+				signal: this.signal,
+			},
+		);
 
 		onCompleted?.(result);
 

@@ -4,7 +4,7 @@ import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
 import FactCheckerService from "@/service/fact-checker/fact-checker";
 import YoutubeService from "@/service/youtube";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
 	const { videoUrl } = (await req.json()) as FactCheckYouttubeVideoRequestDto;
@@ -32,19 +32,32 @@ export async function POST(req: NextRequest) {
 	const { devMode } = loadConfig();
 
 	const subtitle = await YoutubeService.getSubtitle(videoId);
-	const factChecker = new FactCheckerService({ devMode });
+	const factChecker = new FactCheckerService(req.signal, { devMode });
 
-	await new Promise(async (resolve) => {
-		await factChecker
-			.onClaimDetected((claim) => {})
-			.onClaimVerified((verifiedClaim) => {})
-			.onVerificationFinished(() => {
-				resolve(null);
-			})
-			.start(subtitle);
-	});
+	return new Response(
+		new ReadableStream({
+			async start(controller) {
+				req.signal.addEventListener("abort", () => {
+					factChecker.stop();
+					controller.close();
+				});
 
-	return NextResponse.json({
-		message: "success",
-	});
+				await factChecker
+					.onClaimDetected((claim) => {
+						controller.enqueue(claim);
+					})
+					.onClaimVerified((verified) => {
+						controller.enqueue(verified);
+					})
+					.onVerificationFinished(() => {
+						controller.close();
+					})
+					.start(subtitle);
+			},
+		}),
+	);
+
+	// return NextResponse.json({
+	// 	message: "success",
+	// });
 }
