@@ -1,13 +1,18 @@
 import loadConfig from "@/config";
-import { FactCheckYouttubeVideoRequestDto } from "@/dto/youttube";
+import {
+	DetectedClaimChunkDto,
+	PerformFactCheckRequestDto,
+	VerifiedClaimChunkDto,
+} from "@/dto/fact-check";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
 import FactCheckerService from "@/service/fact-checker/fact-checker";
 import YoutubeService from "@/service/youtube";
+import { json } from "@/utils/serialize";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-	const { videoUrl } = (await req.json()) as FactCheckYouttubeVideoRequestDto;
+	const { videoUrl } = (await req.json()) as PerformFactCheckRequestDto;
 	const url = new URL(videoUrl);
 
 	if (url.host !== "www.youtube.com" || url.pathname !== "/watch") {
@@ -44,10 +49,20 @@ export async function POST(req: NextRequest) {
 
 				await factChecker
 					.onClaimDetected((claim) => {
-						controller.enqueue(claim);
+						const dto = {
+							...claim,
+							type: "detectedClaim",
+						} as DetectedClaimChunkDto;
+
+						controller.enqueue(json(dto));
 					})
 					.onClaimVerified((verified) => {
-						controller.enqueue(verified);
+						const dto = {
+							...verified,
+							type: "verifiedClaim",
+						} as VerifiedClaimChunkDto;
+
+						controller.enqueue(json(dto));
 					})
 					.onVerificationFinished(() => {
 						controller.close();
@@ -56,8 +71,4 @@ export async function POST(req: NextRequest) {
 			},
 		}),
 	);
-
-	// return NextResponse.json({
-	// 	message: "success",
-	// });
 }

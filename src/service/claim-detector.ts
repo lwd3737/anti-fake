@@ -19,7 +19,9 @@ const DetectedClaimSchema = z.object({
 	reason: z.string().describe("해당 주장이 검증 가능한 주장으로 탐지된 이유"),
 });
 
-export type DetectedClaim = z.infer<typeof DetectedClaimSchema>;
+export type DetectedClaim = z.infer<typeof DetectedClaimSchema> & {
+	index: number;
+};
 
 const STREAM_INTERVAL = 100;
 
@@ -61,8 +63,10 @@ export default class ClaimDetector {
 				abortSignal: this.signal,
 			});
 
+			let idx = 0;
 			for await (const claim of result.elementStream) {
-				this.events.emit(EventType.CLAIM_DETECTED, claim);
+				this.events.emit(EventType.CLAIM_DETECTED, { ...claim, idx });
+				idx++;
 			}
 		} catch (error) {
 			this.events.emit(EventType.ERROR, error as Error);

@@ -1,32 +1,19 @@
-import { z } from "zod";
-import { Prompts } from "./prompt";
 import EventEmitter from "events";
-import { formatDate } from "@/utils/date";
-import { RetrievedResult } from "../retriver";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
-import EvidenceRetriever from "../evidence-retriever";
-import ClaimVerifier from "../claim-verifier";
+import EvidenceRetriever, {
+	RetrievedEvidenceWithMetadata,
+} from "../evidence-retriever";
+import ClaimVerifier, { VerifiedClaim } from "../claim-verifier";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 
 // const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
 
-const VerifiedClaimSchema = z.object({
-	verdictPrediction: z
-		.union([
-			z.literal("TRUE"),
-			z.literal("MOSTLY_TRUE"),
-			z.literal("MIXED"),
-			z.literal("MOSTLY_FALSE"),
-			z.literal("FALSE"),
-		])
-		.describe("주장의 진실 여부 라벨"),
-	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
-});
+type RetrievedEvidence = Omit<RetrievedEvidenceWithMetadata, "metadata">;
 
-type RetrievedEvidence = Omit<RetrievedResult<string[]>, "tokenUsage">;
-
-type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
+export type VerifiedClaimWithIndex = VerifiedClaim & {
+	claimIndex: number;
+};
 
 enum EventType {
 	CLAIM_DETECTED = "CALIMES_DETECTED",
@@ -62,7 +49,7 @@ export default class FactCheckerService {
 	}
 
 	public onClaimVerified(
-		listener: (verifiedClaim: VerifiedClaim) => void,
+		listener: (verifiedClaim: VerifiedClaimWithIndex) => void,
 	): this {
 		this.events.on(EventType.CLAIM_VERIFIED, listener);
 		return this;
@@ -142,21 +129,24 @@ export default class FactCheckerService {
 			devMode: isMock ?? this.devMode,
 		});
 
-		const claimContents = claims.map((claim) => claim.content);
-
 		this.logger.monitor(async (log, error, save) => {
-			for (let idx = 0; idx < claimContents.length; idx++) {
-				const claimContent = claimContents[idx];
+			for (let idx = 0; idx < claims.length; idx++) {
+				const claim = claims[idx];
 
 				try {
 					const { metadata, ...evidence } = await retriever.retrieve(
-						claimContent,
+						claim.content,
 					);
 
-					this.events.emit(EventType.EVIDENCE_RETRIEVED, {
-						claimContent,
+					// this.events.emit(EventType.EVIDENCE_RETRIEVED, {
+					// 	claim,
+					// 	evidence,
+					// 	isLast: idx === claims.length - 1,
+					// });
+					this.handleEvidenceRetrieved({
+						claim,
 						evidence,
-						isLast: idx === claimContents.length - 1,
+						isLast: idx === claims.length - 1,
 					});
 
 					if (!retriever.isDevMode && metadata) {
@@ -165,7 +155,7 @@ export default class FactCheckerService {
 						log({
 							title: "Retrieve Evidences",
 							model,
-							prompt: claimContent,
+							prompt: claim.content,
 							output: evidence,
 							tokenUsage,
 						});
@@ -182,12 +172,28 @@ export default class FactCheckerService {
 		});
 	}
 
-	private async verifyClaim({
-		claimContent,
+	private handleEvidenceRetrieved({
+		claim,
 		evidence,
 		isLast,
 	}: {
-		claimContent: string;
+		claim: DetectedClaim;
+		evidence: Omit<RetrievedEvidence, "metadata">;
+		isLast?: boolean;
+	}): void {
+		this.events.emit(EventType.EVIDENCE_RETRIEVED, {
+			claim,
+			evidence,
+			isLast,
+		});
+	}
+
+	private async verifyClaim({
+		claim,
+		evidence,
+		isLast,
+	}: {
+		claim: DetectedClaim;
 		evidence: RetrievedEvidence;
 		isLast?: boolean;
 	}) {
@@ -199,11 +205,12 @@ export default class FactCheckerService {
 		this.logger.monitor(async (log, error, save) => {
 			try {
 				const { metadata, ...verified } = await verifier.verify(
-					claimContent,
+					claim.content,
 					evidence.content,
 				);
 
-				this.events.emit(EventType.CLAIM_VERIFIED, verified);
+				// this.events.emit(EventType.CLAIM_VERIFIED, verified);
+				this.handleClaimVerified({ ...verified, claimIndex: claim.index });
 
 				if (isLast) {
 					this.events.emit(EventType.VERIFICATION_FINISHED);
@@ -231,6 +238,10 @@ export default class FactCheckerService {
 				}
 			}
 		});
+	}
+
+	private handleClaimVerified(verified: VerifiedClaimWithIndex): void {
+		this.events.emit(EventType.CLAIM_VERIFIED, verified);
 	}
 
 	// Deprecated

@@ -1,3 +1,3 @@
 export const json = (obj: Object) => {
-	return JSON.stringify(obj, null, 2);
+	return JSON.stringify(obj);
 };

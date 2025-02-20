@@ -1,7 +1,3 @@
-export interface FactCheckYouttubeVideoRequestDto {
-	videoUrl: string;
-}
-
 export interface VideoDto {
 	id: string;
 	title: string;

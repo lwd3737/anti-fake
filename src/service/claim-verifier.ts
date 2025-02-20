@@ -17,7 +17,7 @@ const VerifiedClaimSchema = z.object({
 	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
 
-type VerifiedClaimResult = VerifiedClaim & {
+export type VerifiedClaimResult = VerifiedClaim & {
 	metadata?: {
 		tokenUsage: TokenUsage;
 		model: string;
@@ -25,7 +25,7 @@ type VerifiedClaimResult = VerifiedClaim & {
 	};
 };
 
-type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
+export type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
 
 export default class ClaimVerifier {
 	constructor(

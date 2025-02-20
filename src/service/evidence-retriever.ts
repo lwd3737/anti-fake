@@ -2,7 +2,7 @@ import RETRIEVE_EVIDENCES_PROMPT from "@/constants/prompts/retrieve-evidences";
 import Retriever, { RetrievedSource } from "./retriver";
 import { TokenUsage } from "@/logger/llm-history.logger";
 
-export interface RetrievedEvidenceResult {
+export interface RetrievedEvidenceWithMetadata {
 	content: string[];
 	sources: RetrievedSource[];
 	metadata?: {
@@ -22,7 +22,7 @@ export default class EvidenceRetriever {
 		return this.options?.devMode ?? false;
 	}
 
-	public async retrieve(claim: string): Promise<RetrievedEvidenceResult> {
+	public async retrieve(claim: string): Promise<RetrievedEvidenceWithMetadata> {
 		if (this.isDevMode) return this.retrieveOnDevMode();
 
 		const { metadata, ...evidence } = await this.retriever.retrieve(claim, {
@@ -46,7 +46,7 @@ export default class EvidenceRetriever {
 		};
 	}
 
-	private async retrieveOnDevMode(): Promise<RetrievedEvidenceResult> {
+	private async retrieveOnDevMode(): Promise<RetrievedEvidenceWithMetadata> {
 		const { evidences } = await import("/mock/retrieved-evidence.json");
 		const idx = Math.floor(Math.random() * evidences.length);
 
