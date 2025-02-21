@@ -69,8 +69,6 @@ export default class FactCheckerService {
 		await this.detectClaims(subtitle);
 	}
 
-	public stop() {}
-
 	private async detectClaims(subtitle: string): Promise<void> {
 		const isMock = loadConfig().useMockClaimDetection;
 		const claimDetector = new ClaimDetector(this.signal, {

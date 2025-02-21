@@ -6,7 +6,7 @@ import {
 	VerifiedClaimChunkDto,
 } from "@/dto/fact-check";
 import { json } from "@/utils/serialize";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function FactCheck({
 	searchParams,
@@ -15,50 +15,68 @@ export default function FactCheck({
 }) {
 	const { videoUrl } = searchParams;
 
+	const aborterRef = useRef(new AbortController());
+
 	const [detectedClaims, setDetectedClaims] = useState<DetectedClaimChunkDto[]>(
 		[],
 	);
 	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimChunkDto[]>(
 		[],
 	);
+	const isLoadingRef = useRef(false);
 
 	useEffect(
 		function performFactCheckOnMount() {
+			const isLoading = isLoadingRef.current;
+			if (isLoading) return;
+
+			isLoadingRef.current = true;
+
+			const aborter = aborterRef.current;
+
 			fetch(`/api/fact-check`, {
 				method: "POST",
 				body: json({ videoUrl }),
-			}).then(async (res) => {
-				const stream = res.body;
-				if (!stream) {
-					alert("프로그램 오류입니다. 운영자에게 문의해주세요");
-					return;
-				}
-
-				const reader = stream.getReader();
-				const decoder = new TextDecoder();
-
-				while (true) {
-					const { done, value } = await reader.read();
-					if (done) {
-						break;
+				signal: aborter.signal,
+			})
+				.then(async (res) => {
+					const stream = res.body;
+					if (!stream) {
+						alert("프로그램 오류입니다. 운영자에게 문의해주세요");
+						return;
 					}
 
-					const chunk = JSON.parse(
-						decoder.decode(value, { stream: true }),
-					) as FactCheckChunkDto;
+					const reader = stream.getReader();
+					const decoder = new TextDecoder();
 
-					switch (chunk.type) {
-						case FactCheckChunkType.DETECTED_CLAIM:
-							setDetectedClaims((claims) => [...claims, chunk]);
+					while (true) {
+						const { done, value } = await reader.read();
+						if (done) {
 							break;
-						case FactCheckChunkType.VERIFIED_CLAIM:
-							setVerifiedClaims((claims) => [...claims, chunk]);
-							break;
-						default:
-							throw Error("Invalid chunk type");
+						}
+
+						const chunk = JSON.parse(
+							decoder.decode(value, { stream: true }),
+						) as FactCheckChunkDto;
+
+						switch (chunk.type) {
+							case FactCheckChunkType.DETECTED_CLAIM:
+								setDetectedClaims((claims) => [...claims, chunk]);
+								break;
+							case FactCheckChunkType.VERIFIED_CLAIM:
+								setVerifiedClaims((claims) => [...claims, chunk]);
+								break;
+							default:
+								throw Error("Invalid chunk type");
+						}
 					}
-				}
-			});
+				})
+				.catch((error) => {
+					if (error.name === "AbortError") {
+						return;
+					}
+				})
+				.finally(() => (isLoadingRef.current = false));
 		},
 		[videoUrl],
 	);

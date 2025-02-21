@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
 		new ReadableStream({
 			async start(controller) {
 				req.signal.addEventListener("abort", () => {
-					factChecker.stop();
 					controller.close();
 				});
 
