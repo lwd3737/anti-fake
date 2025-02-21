@@ -17,7 +17,7 @@ const VerifiedClaimSchema = z.object({
 	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
 
-export type VerifiedClaimResult = VerifiedClaim & {
+export type VerifiedClaimWithMetadata = VerifiedClaim & {
 	metadata?: {
 		tokenUsage: TokenUsage;
 		model: string;
@@ -40,7 +40,7 @@ export default class ClaimVerifier {
 	public async verify(
 		claim: string,
 		evidence: string[],
-	): Promise<VerifiedClaimResult> {
+	): Promise<VerifiedClaimWithMetadata> {
 		if (this.isDevMode) return this.verifyOnDevMode();
 
 		const prompt = `${claim}\n${evidence
@@ -69,9 +69,9 @@ export default class ClaimVerifier {
 		};
 	}
 
-	private async verifyOnDevMode(): Promise<VerifiedClaimResult> {
+	private async verifyOnDevMode(): Promise<VerifiedClaimWithMetadata> {
 		const { verifiedClaims } = await import("/mock/verified-claim.json");
 		const idx = Math.floor(Math.random() * verifiedClaims.length);
-		return verifiedClaims[idx] as VerifiedClaimResult;
+		return verifiedClaims[idx] as VerifiedClaimWithMetadata;
 	}
 }

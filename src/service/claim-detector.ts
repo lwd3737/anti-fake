@@ -56,16 +56,16 @@ export default class ClaimDetector {
 					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
 				temperature: 0,
 				onFinish: (event) => {
-					const claimsWithoutIndex = event.object;
-					if (!claimsWithoutIndex) assert(false, "claims is undefined");
+					const claims = event.object;
+					if (!claims) assert(false, "claims is undefined");
 
-					const claims = claimsWithoutIndex.map((claim, index) => ({
+					const claimsWithIndex = claims.map((claim, index) => ({
 						...claim,
 						index,
 					}));
 
 					this.events.emit(EventType.FINISHED, {
-						output: claims,
+						output: claimsWithIndex,
 						usage: event.usage,
 					});
 				},
@@ -99,8 +99,13 @@ export default class ClaimDetector {
 			await new Promise((resolve) => setTimeout(resolve, STREAM_INTERVAL));
 		}
 
+		const claimsWithIndex = claims.map((claim, index) => ({
+			...claim,
+			index,
+		}));
+
 		this.events.emit(EventType.FINISHED, {
-			output: claims,
+			output: claimsWithIndex,
 			usage: {
 				promptTokens: 0,
 				completionTokens: 0,
