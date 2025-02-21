@@ -3,6 +3,7 @@ import { LanguageModelUsage, streamObject } from "ai";
 import DETECT_CLAIM_PROMPT from "@/constants/prompts/detect-claim";
 import { z } from "zod";
 import EventEmitter from "events";
+import assert from "assert";
 
 enum EventType {
 	CLAIM_DETECTED = "CLAIM_DETECTED",
@@ -55,18 +56,28 @@ export default class ClaimDetector {
 					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
 				temperature: 0,
 				onFinish: (event) => {
+					const claimsWithoutIndex = event.object;
+					if (!claimsWithoutIndex) assert(false, "claims is undefined");
+
+					const claims = claimsWithoutIndex.map((claim, index) => ({
+						...claim,
+						index,
+					}));
+
 					this.events.emit(EventType.FINISHED, {
-						output: event.object,
+						output: claims,
 						usage: event.usage,
 					});
 				},
 				abortSignal: this.signal,
 			});
 
-			let idx = 0;
+			let index = 0;
 			for await (const claim of result.elementStream) {
-				this.events.emit(EventType.CLAIM_DETECTED, { ...claim, idx });
-				idx++;
+				this.events.emit(EventType.CLAIM_DETECTED, {
+					...claim,
+					index: index++,
+				});
 			}
 		} catch (error) {
 			this.events.emit(EventType.ERROR, error as Error);
@@ -81,8 +92,9 @@ export default class ClaimDetector {
 			mockDataCount ?? mockData.claims.length,
 		);
 
-		for (const claim of claims) {
-			this.events.emit(EventType.CLAIM_DETECTED, claim);
+		for (let index = 0; index < claims.length; index++) {
+			const claim = claims[index];
+			this.events.emit(EventType.CLAIM_DETECTED, { ...claim, index });
 
 			await new Promise((resolve) => setTimeout(resolve, STREAM_INTERVAL));
 		}

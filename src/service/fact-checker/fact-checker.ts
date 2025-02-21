@@ -136,11 +136,6 @@ export default class FactCheckerService {
 						claim.content,
 					);
 
-					// this.events.emit(EventType.EVIDENCE_RETRIEVED, {
-					// 	claim,
-					// 	evidence,
-					// 	isLast: idx === claims.length - 1,
-					// });
 					this.handleEvidenceRetrieved({
 						claim,
 						evidence,
@@ -207,7 +202,6 @@ export default class FactCheckerService {
 					evidence.content,
 				);
 
-				// this.events.emit(EventType.CLAIM_VERIFIED, verified);
 				this.handleClaimVerified({ ...verified, claimIndex: claim.index });
 
 				if (isLast) {
