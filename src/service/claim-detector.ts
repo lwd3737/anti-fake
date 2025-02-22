@@ -87,12 +87,10 @@ export default class ClaimDetector {
 	private async detectOnDevMode(): Promise<void> {
 		const mockData = await import("/mock/detected-claims.json");
 		const { mockDataCount } = this.options ?? {};
-		const claims = mockData.claims.slice(
-			0,
-			mockDataCount ?? mockData.claims.length,
-		);
+		const dataCount = mockDataCount ?? mockData.claims.length;
+		const claims = mockData.claims.slice(0, dataCount);
 
-		for (let index = 0; index < claims.length; index++) {
+		for (let index = 0; index < dataCount; index++) {
 			const claim = claims[index];
 			this.events.emit(EventType.CLAIM_DETECTED, { ...claim, index });
 

@@ -73,7 +73,7 @@ export default class FactCheckerService {
 		const isMock = loadConfig().useMockClaimDetection;
 		const claimDetector = new ClaimDetector(this.signal, {
 			devMode: isMock ?? this.devMode,
-			mockDataCount: 1,
+			mockDataCount: 4,
 		});
 
 		this.logger.monitor((log, error, save) =>

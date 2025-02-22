@@ -49,26 +49,36 @@ export default function FactCheck({
 					const reader = stream.getReader();
 					const decoder = new TextDecoder();
 
+					let incompletedChunk = "";
+
 					while (true) {
 						const { done, value } = await reader.read();
 						if (done) {
 							break;
 						}
 
-						const chunk = JSON.parse(
-							decoder.decode(value, { stream: true }),
-						) as FactCheckChunkDto;
+						const decoded = decoder.decode(value, { stream: true });
+						const chunks = decoded.split("\n");
+						incompletedChunk += chunks.pop();
 
-						switch (chunk.type) {
-							case FactCheckChunkType.DETECTED_CLAIM:
-								setDetectedClaims((claims) => [...claims, chunk]);
-								break;
-							case FactCheckChunkType.VERIFIED_CLAIM:
-								setVerifiedClaims((claims) => [...claims, chunk]);
-								break;
-							default:
-								throw Error("Invalid chunk type");
-						}
+						chunks.forEach((chunk, idx) => {
+							const completedChunk =
+								idx === 0 ? incompletedChunk + chunk : chunk;
+							incompletedChunk = "";
+
+							const parsed = JSON.parse(completedChunk) as FactCheckChunkDto;
+
+							switch (parsed.type) {
+								case FactCheckChunkType.DETECTED_CLAIM:
+									setDetectedClaims((claims) => [...claims, parsed]);
+									break;
+								case FactCheckChunkType.VERIFIED_CLAIM:
+									setVerifiedClaims((claims) => [...claims, parsed]);
+									break;
+								default:
+									throw Error("Invalid chunk type");
+							}
+						});
 					}
 				})
 				.catch((error) => {

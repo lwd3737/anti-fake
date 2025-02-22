@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 							type: "detectedClaim",
 						} as DetectedClaimChunkDto;
 
-						controller.enqueue(json(dto));
+						controller.enqueue(json(dto) + "\n");
 					})
 					.onClaimVerified((verified) => {
 						const dto = {
@@ -61,10 +61,11 @@ export async function POST(req: NextRequest) {
 							type: "verifiedClaim",
 						} as VerifiedClaimChunkDto;
 
-						controller.enqueue(json(dto));
+						controller.enqueue(json(dto) + "\n");
 					})
 					.onVerificationFinished(() => {
 						controller.close();
+						console.log("closed!!!!!");
 					})
 					.start(subtitle);
 			},

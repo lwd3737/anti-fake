@@ -1,5 +1,4 @@
 import { DetectedClaim } from "@/service/claim-detector";
-import { VerifiedClaim } from "@/service/claim-verifier";
 import { VerifiedClaimWithIndex } from "@/service/fact-checker/fact-checker";
 
 export interface PerformFactCheckRequestDto {
