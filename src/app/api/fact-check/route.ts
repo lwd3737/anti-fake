@@ -65,7 +65,6 @@ export async function POST(req: NextRequest) {
 					})
 					.onVerificationFinished(() => {
 						controller.close();
-						console.log("closed!!!!!");
 					})
 					.start(subtitle);
 			},

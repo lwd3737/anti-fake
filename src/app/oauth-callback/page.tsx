@@ -34,7 +34,6 @@ export default function OauthCallbackPage() {
 				.catch((e) => {
 					const error = e as Error;
 					if (error.name === "AbortError") {
-						console.log(error.message);
 						return;
 					}
 
