@@ -102,15 +102,15 @@ export default function FactCheck({
 					);
 
 					return (
-						<div key={claim.index}>
+						<div className="flex flex-col gap-y-4" key={claim.index}>
 							<h3>주장 {claim.index + 1}</h3>
 							<p>{claim.content}</p>
 							<p>이유: {claim.reason}</p>
 
 							<div className="h-[200px] overflow-y-auto">
 								{verified && (
-									<div>
-										<p>사실 여부: {verified.justificationProduction}</p>
+									<div className="flex flex-col gap-y-3">
+										<p>사실 여부: {verified.verdictPrediction}</p>
 										<p>근거: {verified.justificationProduction}</p>
 										<p>출처: </p>
 									</div>
