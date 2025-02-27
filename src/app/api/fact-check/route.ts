@@ -6,6 +6,7 @@ import {
 } from "@/dto/fact-check";
 import { ErrorCode } from "@/error/error-code";
 import { handleRouteError } from "@/error/reponse-error-handler";
+import { streamResponse } from "@/helpers/stream-response";
 import FactCheckerService from "@/service/fact-checker/fact-checker";
 import YoutubeService from "@/service/youtube";
 import { json } from "@/utils/serialize";
@@ -39,35 +40,27 @@ export async function POST(req: NextRequest) {
 	const subtitle = await YoutubeService.getSubtitle(videoId);
 	const factChecker = new FactCheckerService(req.signal, { devMode });
 
-	return new Response(
-		new ReadableStream({
-			async start(controller) {
-				req.signal.addEventListener("abort", () => {
-					controller.close();
-				});
+	return streamResponse(async ({ send, close }) => {
+		await factChecker
+			.onClaimDetected((claim) => {
+				const dto = {
+					...claim,
+					type: "detectedClaim",
+				} as DetectedClaimChunkDto;
 
-				await factChecker
-					.onClaimDetected((claim) => {
-						const dto = {
-							...claim,
-							type: "detectedClaim",
-						} as DetectedClaimChunkDto;
+				send(json(dto) + "\n");
+			})
+			.onClaimVerified((verified) => {
+				const dto = {
+					...verified,
+					type: "verifiedClaim",
+				} as VerifiedClaimChunkDto;
 
-						controller.enqueue(json(dto) + "\n");
-					})
-					.onClaimVerified((verified) => {
-						const dto = {
-							...verified,
-							type: "verifiedClaim",
-						} as VerifiedClaimChunkDto;
-
-						controller.enqueue(json(dto) + "\n");
-					})
-					.onVerificationFinished(() => {
-						controller.close();
-					})
-					.start(subtitle);
-			},
-		}),
-	);
+				send(json(dto) + "\n");
+			})
+			.onVerificationFinished(() => {
+				close();
+			})
+			.start(subtitle);
+	}, req.signal);
 }
