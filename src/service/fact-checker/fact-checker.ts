@@ -70,11 +70,7 @@ export default class FactCheckerService {
 	}
 
 	private async detectClaims(subtitle: string): Promise<void> {
-		const isMock = loadConfig().useMockClaimDetection;
-		const claimDetector = new ClaimDetector(this.signal, {
-			devMode: isMock ?? this.devMode,
-			mockDataCount: 4,
-		});
+		const claimDetector = new ClaimDetector(this.signal);
 
 		this.logger.monitor((log, error, save) =>
 			claimDetector
@@ -90,25 +86,8 @@ export default class FactCheckerService {
 					}
 
 					this.handleClaimsDetectionFinished(claims);
-
-					if (!claimDetector.isDevMode) {
-						log({
-							title: "Claims detection",
-							model: "gpt-4o",
-							prompt: subtitle,
-							output: claims,
-							tokenUsage: usage,
-						});
-					}
 				})
-				.onError(async (err) => {
-					if (claimDetector.isDevMode) return;
-					error({
-						code: "DetectClaimsError",
-						error: err,
-					});
-					save();
-				})
+				.onError(async (err) => {})
 				.start(subtitle),
 		);
 	}

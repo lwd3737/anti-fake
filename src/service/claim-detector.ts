@@ -4,6 +4,8 @@ import DETECT_CLAIM_PROMPT from "@/constants/prompts/detect-claim";
 import { z } from "zod";
 import EventEmitter from "events";
 import assert from "assert";
+import LLMHistoryLogger from "@/logger/llm-history.logger";
+import loadConfig from "@/config";
 
 enum EventType {
 	CLAIM_DETECTED = "CLAIM_DETECTED",
@@ -28,65 +30,81 @@ const STREAM_INTERVAL = 100;
 
 export default class ClaimDetector {
 	private events = new EventEmitter();
+	private logger = new LLMHistoryLogger("fact-checker", {
+		title: "Fact Checker",
+	});
 
-	constructor(
-		private signal: AbortSignal,
-		private options?: { devMode?: boolean; mockDataCount?: number },
-	) {}
-
-	public get isDevMode(): boolean {
-		return this.options?.devMode ?? false;
-	}
+	constructor(private signal: AbortSignal) {}
 
 	public async start(text: string): Promise<void> {
-		if (this.options?.devMode) {
+		if (this.isDevMode) {
 			return this.detectOnDevMode();
 		}
 
-		try {
-			const result = streamObject({
-				model: openai(AIModel.GPT_4O),
-				system: DETECT_CLAIM_PROMPT,
-				prompt: text,
-				mode: "json",
-				output: "array",
-				schema: DetectedClaimSchema,
-				schemaName: "DetectedClaims",
-				schemaDescription:
-					"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
-				temperature: 0,
-				onFinish: (event) => {
-					const claims = event.object;
-					if (!claims) assert(false, "claims is undefined");
+		this.logger.monitor(async (log, error, save) => {
+			try {
+				const result = streamObject({
+					model: openai(AIModel.GPT_4O),
+					system: DETECT_CLAIM_PROMPT,
+					prompt: text,
+					mode: "json",
+					output: "array",
+					schema: DetectedClaimSchema,
+					schemaName: "DetectedClaims",
+					schemaDescription:
+						"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
+					temperature: 0,
+					onFinish: (event) => {
+						const claims = event.object;
+						if (!claims) {
+							assert(false, "claims is undefined");
+						}
 
-					const claimsWithIndex = claims.map((claim, index) => ({
-						...claim,
-						index,
-					}));
+						const claimsWithIndex = claims.map((claim, index) => ({
+							...claim,
+							index,
+						}));
 
-					this.events.emit(EventType.FINISHED, {
-						output: claimsWithIndex,
-						usage: event.usage,
-					});
-				},
-				abortSignal: this.signal,
-			});
+						this.events.emit(EventType.FINISHED);
 
-			let index = 0;
-			for await (const claim of result.elementStream) {
-				this.events.emit(EventType.CLAIM_DETECTED, {
-					...claim,
-					index: index++,
+						log({
+							title: "Claims detection",
+							model: "gpt-4o",
+							prompt: text,
+							output: claimsWithIndex,
+							tokenUsage: event.usage,
+						});
+						save();
+					},
+					abortSignal: this.signal,
 				});
+
+				let index = 0;
+				for await (const claim of result.elementStream) {
+					this.events.emit(EventType.CLAIM_DETECTED, {
+						...claim,
+						index: index++,
+					});
+				}
+			} catch (e) {
+				error({
+					code: "DetectClaimsError",
+					error: e as Error,
+				});
+				this.events.emit(EventType.ERROR, e as Error);
 			}
-		} catch (error) {
-			this.events.emit(EventType.ERROR, error as Error);
-		}
+		});
+	}
+
+	private get isDevMode(): boolean {
+		const { new__devMode } = loadConfig();
+		return new__devMode.claimDetection ?? new__devMode.default;
 	}
 
 	private async detectOnDevMode(): Promise<void> {
 		const mockData = await import("/mock/detected-claims.json");
-		const { mockDataCount } = this.options ?? {};
+		const { mockDataCount } = loadConfig();
+
 		const dataCount = mockDataCount ?? mockData.claims.length;
 		const claims = mockData.claims.slice(0, dataCount);
 
@@ -104,11 +122,6 @@ export default class ClaimDetector {
 
 		this.events.emit(EventType.FINISHED, {
 			output: claimsWithIndex,
-			usage: {
-				promptTokens: 0,
-				completionTokens: 0,
-				totalTokens: 0,
-			},
 		});
 	}
 
