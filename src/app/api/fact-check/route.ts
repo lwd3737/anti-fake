@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
 	const { devMode } = loadConfig();
 
-	const subtitle = await YoutubeService.getSubtitle(videoId);
+	const subtitle = await YoutubeService.downloadSubtitle(videoId);
 	const factChecker = new FactCheckerService(req.signal, { devMode });
 
 	return streamResponse(async ({ send, close }) => {

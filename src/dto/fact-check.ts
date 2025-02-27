@@ -5,6 +5,10 @@ export interface PerformFactCheckRequestDto {
 	videoUrl: string;
 }
 
+export interface New__PerformFactCheckRequestDto {
+	videoId: string;
+}
+
 export type FactCheckChunkDto = DetectedClaimChunkDto | VerifiedClaimChunkDto;
 
 export enum FactCheckChunkType {

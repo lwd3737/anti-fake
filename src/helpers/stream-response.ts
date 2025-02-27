@@ -1,3 +1,5 @@
+import { json } from "@/utils/serialize";
+
 export const streamResponse = (
 	callback: (helpers: {
 		send: (chunk: any) => void;
@@ -14,7 +16,7 @@ export const streamResponse = (
 
 				callback({
 					send(chunk) {
-						controller.enqueue(chunk);
+						controller.enqueue(`${json(chunk)}\n`);
 					},
 					close() {
 						controller.close();

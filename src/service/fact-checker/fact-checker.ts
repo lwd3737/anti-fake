@@ -72,24 +72,11 @@ export default class FactCheckerService {
 	private async detectClaims(subtitle: string): Promise<void> {
 		const claimDetector = new ClaimDetector(this.signal);
 
-		this.logger.monitor((log, error, save) =>
-			claimDetector
-				.onClaimDetected(this.handleClaimDetected)
-				.onFinished(({ output: claims, usage }) => {
-					if (!claims) {
-						error({
-							code: "DetectClaimsError",
-							error: new Error("Claims output is not generated"),
-						});
-						save();
-						return;
-					}
-
-					this.handleClaimsDetectionFinished(claims);
-				})
-				.onError(async (err) => {})
-				.start(subtitle),
-		);
+		claimDetector
+			.onClaimDetected(this.handleClaimDetected)
+			.onFinished(() => {})
+			.onError(async (err) => {})
+			.start(subtitle);
 	}
 
 	private handleClaimDetected(claim: DetectedClaim): void {

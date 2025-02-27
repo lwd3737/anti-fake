@@ -1,5 +1,5 @@
 import { AIModel, openai } from "@/helpers/ai";
-import { LanguageModelUsage, streamObject } from "ai";
+import { streamObject } from "ai";
 import DETECT_CLAIM_PROMPT from "@/constants/prompts/detect-claim";
 import { z } from "zod";
 import EventEmitter from "events";
@@ -130,12 +130,7 @@ export default class ClaimDetector {
 		return this;
 	}
 
-	public onFinished(
-		listener: (result: {
-			output: DetectedClaim[] | undefined;
-			usage: LanguageModelUsage;
-		}) => void,
-	): this {
+	public onFinished(listener: () => void): this {
 		this.events.on(EventType.FINISHED, listener);
 		return this;
 	}

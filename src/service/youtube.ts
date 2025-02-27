@@ -18,10 +18,13 @@ export default class YoutubeService {
 		);
 	}
 
-	public static async getSubtitle(videoId: string): Promise<string> {
-		const { devMode, YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE: useMockSubtitle } =
-			loadConfig();
-		if (useMockSubtitle || devMode) {
+	public static async downloadSubtitle(videoId: string): Promise<string> {
+		const {
+			devMode,
+			YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE: useMockSubtitle,
+			new__devMode,
+		} = loadConfig();
+		if (new__devMode.youtubeSubtitleDownload ?? new__devMode.default) {
 			const mock = await import("/mock/subtitle.json");
 			return mock.subtitle;
 		}
