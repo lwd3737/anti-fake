@@ -41,17 +41,18 @@ export default class LLMHistoryLogger {
 		this.save = this.save.bind(this);
 	}
 
-	public async monitor(
+	public async monitor<R = unknown>(
 		task: (
-			log: (record: RawUsageRecord) => void,
-			error: (record: ErrorRecord) => void,
+			log: (record: RawUsageRecord) => Promise<void>,
+			error: (record: ErrorRecord) => Promise<void>,
 			save: () => Promise<void>,
-		) => Promise<void>,
-	): Promise<void> {
+		) => Promise<R>,
+	): Promise<R> {
 		const startedAt = new Date();
 
-		await task(
-			(record) => {
+		return await task(
+			// log
+			async (record) => {
 				const endedAt = new Date();
 
 				this.history = [
@@ -63,9 +64,11 @@ export default class LLMHistoryLogger {
 					},
 				];
 			},
-			(record) => {
+			// error
+			async (record) => {
 				this.history = [...this.history, record];
 			},
+
 			this.save,
 		);
 	}

@@ -30,8 +30,8 @@ const STREAM_INTERVAL = 100;
 
 export default class ClaimDetector {
 	private events = new EventEmitter();
-	private logger = new LLMHistoryLogger("fact-checker", {
-		title: "Fact Checker",
+	private logger = new LLMHistoryLogger("detect-claims", {
+		title: "Detect claims",
 	});
 
 	constructor(private signal: AbortSignal) {}

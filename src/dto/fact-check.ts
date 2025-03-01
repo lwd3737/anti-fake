@@ -5,8 +5,15 @@ export interface PerformFactCheckRequestDto {
 	videoUrl: string;
 }
 
-export interface New__PerformFactCheckRequestDto {
+export interface DetectClaimsRequestDto {
 	videoId: string;
+}
+
+export interface VerifyClaimsRequestDto {
+	claims: {
+		index: number;
+		content: string;
+	}[];
 }
 
 export type FactCheckChunkDto = DetectedClaimChunkDto | VerifiedClaimChunkDto;

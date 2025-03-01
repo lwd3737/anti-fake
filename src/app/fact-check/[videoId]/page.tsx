@@ -62,8 +62,8 @@ export default function FactCheck({
 				parseInt(key.split("-")[1]),
 			);
 			const selectedClaims = selectedIndexes.map((index) => {
-				const claim = detectedClaims[index];
-				assert(claim, "Claim not found");
+				const content = detectedClaims[index];
+				assert(content, "Claim not found");
 
 				return { index, claim: detectedClaims[index].content };
 			});

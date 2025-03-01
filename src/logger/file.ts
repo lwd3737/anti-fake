@@ -15,7 +15,7 @@ export const logJsonFile = async (pathName: string, data: any) => {
 	}
 
 	return new Promise((resolve, reject) => {
-		fs.writeFile(absolutePath, json(data), (err) => {
+		fs.writeFile(absolutePath, json(data, true), (err) => {
 			if (err) {
 				reject(err);
 				return;

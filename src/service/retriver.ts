@@ -1,7 +1,7 @@
 import loadConfig from "@/config";
+import { TokenUsage } from "@/logger/llm-history.logger";
 import {
 	DynamicRetrievalMode,
-	GenerateContentResponse,
 	GenerateContentResult,
 	GenerativeModel,
 	GoogleGenerativeAI,
@@ -10,11 +10,11 @@ import {
 	GroundingMetadata,
 } from "@google/generative-ai";
 
-export interface RetrievedResult<Content = any> {
+export interface RetrievedResult<Content = unknown> {
 	content: Content;
 	sources: RetrievedSource[];
 	metadata: {
-		tokenUsage: GenerateContentResponse["usageMetadata"];
+		tokenUsage: TokenUsage;
 		model: string;
 	};
 }
@@ -109,12 +109,18 @@ export default class Retriever {
 			mode === "json"
 				? JSON.parse(output.replace(/```json|```/g, "").trim())
 				: output;
+		const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
+			result.response.usageMetadata ?? {};
 
 		return {
 			content,
 			sources,
 			metadata: {
-				tokenUsage: result.response.usageMetadata,
+				tokenUsage: {
+					promptTokens: promptTokenCount ?? 0,
+					completionTokens: candidatesTokenCount ?? 0,
+					totalTokens: totalTokenCount ?? 0,
+				},
 				model: this.model.model,
 			},
 		};

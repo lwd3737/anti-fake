@@ -1,15 +1,11 @@
 import EventEmitter from "events";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
-import EvidenceRetriever, {
-	RetrievedEvidenceWithMetadata,
-} from "../evidence-retriever";
+import EvidenceRetriever, { RetrievedEvidence } from "../evidence-retriever";
 import ClaimVerifier, { VerifiedClaim } from "../claim-verifier";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 
 // const SearchQuerySchema = z.string().describe("검색 쿼리 문자열");
-
-type RetrievedEvidence = Omit<RetrievedEvidenceWithMetadata, "metadata">;
 
 export type VerifiedClaimWithIndex = VerifiedClaim & {
 	claimIndex: number;
@@ -88,45 +84,42 @@ export default class FactCheckerService {
 	}
 
 	private async retrieveEvidences(claims: DetectedClaim[]): Promise<void> {
-		const isMock = loadConfig().useMockEvidenceRetrieval;
-		const retriever = new EvidenceRetriever(this.signal, {
-			devMode: isMock ?? this.devMode,
-		});
+		const retriever = new EvidenceRetriever(this.signal);
 
 		this.logger.monitor(async (log, error, save) => {
 			for (let idx = 0; idx < claims.length; idx++) {
 				const claim = claims[idx];
 
-				try {
-					const { metadata, ...evidence } = await retriever.retrieve(
-						claim.content,
-					);
+				// try {
+				// 	const { metadata, ...evidence } = await retriever.retrieve(
+				// 		claim.content,
+				// 	);
 
-					this.handleEvidenceRetrieved({
-						claim,
-						evidence,
-						isLast: idx === claims.length - 1,
-					});
+				// 	this.handleEvidenceRetrieved({
+				// 		claim,
+				// 		evidence,
+				// 		isLast: idx === claims.length - 1,
+				// 	});
 
-					if (!retriever.isDevMode && metadata) {
-						const { model, tokenUsage } = metadata;
+				// 	if (!retriever.isDevMode && metadata) {
+				// 		const { model, tokenUsage } = metadata;
 
-						log({
-							title: "Retrieve Evidences",
-							model,
-							prompt: claim.content,
-							output: evidence,
-							tokenUsage,
-						});
-					}
-				} catch (err) {
-					if (retriever.isDevMode) return;
+				// 		log({
+				// 			title: "Retrieve Evidences",
+				// 			model,
+				// 			prompt: claim.content,
+				// 			output: evidence,
+				// 			tokenUsage,
+				// 		});
+				// 	}
+				// } catch (err) {
+				// 	if (retriever.isDevMode) return;
 
-					error({
-						code: "RetrieveEvidencesError",
-						error: err as Error,
-					});
-				}
+				// 	error({
+				// 		code: "RetrieveEvidencesError",
+				// 		error: err as Error,
+				// 	});
+				// }
 			}
 		});
 	}
@@ -161,41 +154,41 @@ export default class FactCheckerService {
 			devMode: isMock ?? this.devMode,
 		});
 
-		this.logger.monitor(async (log, error, save) => {
-			try {
-				const { metadata, ...verified } = await verifier.verify(
-					claim.content,
-					evidence.content,
-				);
+		// this.logger.monitor(async (log, error, save) => {
+		// 	try {
+		// 		const { metadata, ...verified } = await verifier.verify(
+		// 			claim.content,
+		// 			evidence.content,
+		// 		);
 
-				this.handleClaimVerified({ ...verified, claimIndex: claim.index });
+		// 		this.handleClaimVerified({ ...verified, claimIndex: claim.index });
 
-				if (isLast) {
-					this.events.emit(EventType.VERIFICATION_FINISHED);
-				}
+		// 		if (isLast) {
+		// 			this.events.emit(EventType.VERIFICATION_FINISHED);
+		// 		}
 
-				if (!this.devMode && metadata) {
-					log({
-						title: "Claim Verification",
-						model: "gpt-4o",
-						prompt: metadata.prompt,
-						output: verified,
-						tokenUsage: metadata.tokenUsage,
-					});
-				}
-			} catch (err) {
-				const code = "VerifyClaimError";
+		// 		if (!this.devMode && metadata) {
+		// 			log({
+		// 				title: "Claim Verification",
+		// 				model: "gpt-4o",
+		// 				prompt: metadata.prompt,
+		// 				output: verified,
+		// 				tokenUsage: metadata.tokenUsage,
+		// 			});
+		// 		}
+		// 	} catch (err) {
+		// 		const code = "VerifyClaimError";
 
-				error({
-					code,
-					error: err as Error,
-				});
-			} finally {
-				if (isLast) {
-					await save();
-				}
-			}
-		});
+		// 		error({
+		// 			code,
+		// 			error: err as Error,
+		// 		});
+		// 	} finally {
+		// 		if (isLast) {
+		// 			await save();
+		// 		}
+		// 	}
+		// });
 	}
 
 	private handleClaimVerified(verified: VerifiedClaimWithIndex): void {
