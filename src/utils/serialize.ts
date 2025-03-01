@@ -1,3 +1,3 @@
-export const json = (obj: Object) => {
-	return JSON.stringify(obj);
+export const json = (data: any) => {
+	return JSON.stringify(data);
 };

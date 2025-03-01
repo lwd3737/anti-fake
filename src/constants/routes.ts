@@ -7,6 +7,10 @@ export const API_ROUTES = {
 		generateToken: "/api/auth/generate-token",
 		logout: "/api/auth/logout",
 	},
+	factCheck: {
+		detectClaims: "/api/fact-check/detect-claims",
+		verifyClaims: "/api/fact-check/verify-claims",
+	},
 };
 
 export const PAGE_ROUTES = {
