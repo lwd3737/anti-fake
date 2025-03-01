@@ -40,8 +40,15 @@ export default function FactCheck({
 		},
 	);
 
+	const isMountedRef = useRef(false);
+
 	useEffect(
 		function detectClaimsOnMount() {
+			if (isMountedRef.current) {
+				return;
+			}
+			isMountedRef.current = true;
+
 			startStreaming("detect-claims", { videoId });
 		},
 		[startStreaming, videoId],
@@ -51,7 +58,7 @@ export default function FactCheck({
 		<main>
 			<h1 className="text-2xl">팩트 체크 결과</h1>
 
-			<section className="py-5">
+			<section className="flex flex-col gap-y-10 py-5">
 				{detectedClaims.map((claim) => {
 					const verified = verifiedClaims.find(
 						(verified) => verified.claimIndex === claim.index,
