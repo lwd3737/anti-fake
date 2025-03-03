@@ -77,7 +77,7 @@ export default class EvidenceRetriever {
 						},
 					);
 
-					log({
+					await log({
 						...metadata,
 						title: "Retrieve Evidences",
 						prompt: claim,
@@ -86,7 +86,7 @@ export default class EvidenceRetriever {
 
 					return evidence;
 				} catch (e) {
-					error({
+					await error({
 						code: "RetrieveEvidencesError",
 						error: e as Error,
 					});
@@ -98,7 +98,7 @@ export default class EvidenceRetriever {
 			},
 		);
 
-		if (isCompleted) this.logger.save();
+		if (isCompleted) await this.logger.save();
 
 		return result;
 	}

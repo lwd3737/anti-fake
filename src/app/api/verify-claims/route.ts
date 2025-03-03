@@ -27,10 +27,13 @@ export async function POST(req: NextRequest) {
 			if (EvidenceRetriever.isError(retrieved)) {
 				console.error(retrieved.error);
 			} else {
-				const verifed = await claimVerifier.verify({
-					claim: claim.content,
-					evidence: retrieved.content,
-				});
+				const verifed = await claimVerifier.verify(
+					{
+						claim: claim.content,
+						evidence: retrieved.content,
+					},
+					isCompleted,
+				);
 				const dto = {
 					...verifed,
 					type: FactCheckResponseType.VERIFIED_CLAIM,

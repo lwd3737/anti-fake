@@ -4,6 +4,7 @@ import {
 	FactCheckResponseDto,
 	FactCheckResponseType,
 	VerifiedClaimPayload,
+	VerifyClaimsRequestDto,
 } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
 import assert from "assert";
@@ -67,13 +68,16 @@ export default function FactCheck({
 				parseInt(key.split("-")[1]),
 			);
 			const selectedClaims = selectedIndexes.map((index) => {
-				const content = detectedClaims[index];
-				assert(content, "Claim not found");
+				const claim = detectedClaims[index];
+				assert(claim, "Claim not found");
 
-				return { index, claim: detectedClaims[index].content };
+				return { index, content: claim.content };
 			});
 
-			await startStreaming("verify-claims", { claims: selectedClaims });
+			const dto = {
+				claims: selectedClaims,
+			} as VerifyClaimsRequestDto;
+			await startStreaming("verify-claims", dto);
 		},
 		[detectedClaims, startStreaming],
 	);
