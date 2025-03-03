@@ -9,6 +9,6 @@ export async function POST(req: NextRequest) {
 	const evidenceRetriever = new EvidenceRetriever(req.signal);
 
 	return streamResponse(({ send, close }) => {
-		evidenceRetriever.onRetrieved((evidence) => {});
+		evidenceRetriever.onRetrieved((evidence) => {}).start(claims);
 	});
 }

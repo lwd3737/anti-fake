@@ -79,6 +79,11 @@ export default class EvidenceRetriever {
 
 				return { ...evidence, claimIndex: claim.index };
 			} catch (e) {
+				error({
+					code: "RetrieveEvidencesError",
+					error: e as Error,
+				});
+
 				return {
 					claimIndex: claim.index,
 					error: "증거 조회 중에 에러가 발생했습니다.",
