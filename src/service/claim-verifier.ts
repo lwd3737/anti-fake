@@ -1,9 +1,9 @@
 import { openai } from "@/helpers/ai";
 import { generateObject } from "ai";
-import { Prompts } from "./fact-checker/prompt";
 import { z } from "zod";
-import LLMHistoryLogger, { TokenUsage } from "@/logger/llm-history.logger";
+import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
+import VERIFY_CLAIM_PROMPT from "@/constants/prompts/verify-claim";
 
 const VerifiedClaimSchema = z.object({
 	verdictPrediction: z
@@ -51,7 +51,7 @@ export default class ClaimVerifier {
 
 			const result = await generateObject({
 				model: openai("gpt-4o"),
-				system: Prompts.VERIFY_CLAIM,
+				system: VERIFY_CLAIM_PROMPT,
 				prompt,
 				mode: "json",
 				schema: VerifiedClaimSchema,

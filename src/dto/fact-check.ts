@@ -1,6 +1,7 @@
 import { DetectedClaim } from "@/service/claim-detector";
-import { VerifiedClaimWithIndex } from "@/service/fact-checker/fact-checker";
+import { VerifiedClaim } from "@/service/claim-verifier";
 
+// Request
 export interface PerformFactCheckRequestDto {
 	videoUrl: string;
 }
@@ -16,17 +17,25 @@ export interface VerifyClaimsRequestDto {
 	}[];
 }
 
-export type FactCheckChunkDto = DetectedClaimChunkDto | VerifiedClaimChunkDto;
+// Response
+export type FactCheckResponseDto =
+	| DetectedClaimResponseDto
+	| VerifiedClaimResponseDto;
 
-export enum FactCheckChunkType {
+export enum FactCheckResponseType {
 	DETECTED_CLAIM = "detectedClaim",
 	VERIFIED_CLAIM = "verifiedClaim",
 }
 
-export interface DetectedClaimChunkDto extends DetectedClaim {
-	type: FactCheckChunkType.DETECTED_CLAIM;
+export interface DetectedClaimResponseDto extends DetectedClaim {
+	type: FactCheckResponseType.DETECTED_CLAIM;
 }
 
-export interface VerifiedClaimChunkDto extends VerifiedClaimWithIndex {
-	type: FactCheckChunkType.VERIFIED_CLAIM;
+export type DetectedClaimPayload = Omit<DetectedClaimResponseDto, "type">;
+
+export interface VerifiedClaimResponseDto extends VerifiedClaim {
+	type: FactCheckResponseType.VERIFIED_CLAIM;
+	claimIndex: number;
 }
+
+export type VerifiedClaimPayload = Omit<VerifiedClaimResponseDto, "type">;

@@ -23,3 +23,5 @@ const VERIFY_CLAIM_PROMPT = `
   0.화성의 지표에 생명체의 흔적이 발견되었다.
   1.화성의 지하에서 생명체의 존재가 확인되었다.   
   `;
+
+export default VERIFY_CLAIM_PROMPT;

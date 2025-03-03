@@ -1,5 +1,5 @@
 import {
-	DetectedClaimChunkDto,
+	DetectedClaimResponseDto,
 	DetectClaimsRequestDto,
 } from "@/dto/fact-check";
 import { streamResponse } from "@/helpers/stream-response";
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 				const dto = {
 					...claim,
 					type: "detectedClaim",
-				} as DetectedClaimChunkDto;
+				} as DetectedClaimResponseDto;
 
 				send(dto);
 			})

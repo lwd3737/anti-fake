@@ -1,8 +1,11 @@
 "use client";
-import { FactCheckChunkDto, FactCheckChunkType } from "@/dto/fact-check";
+import {
+	DetectedClaimPayload,
+	FactCheckResponseDto,
+	FactCheckResponseType,
+	VerifiedClaimPayload,
+} from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
-import { DetectedClaim } from "@/service/claim-detector";
-import { VerifiedClaimWithIndex } from "@/service/fact-checker/fact-checker";
 import assert from "assert";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
@@ -11,23 +14,25 @@ export default function FactCheck({
 }: {
 	params: { videoId: string };
 }) {
-	const [detectedClaims, setDetectedClaims] = useState<DetectedClaim[]>([]);
-	const [verifiedClaims, setVerifiedClaims] = useState<
-		VerifiedClaimWithIndex[]
-	>([]);
+	const [detectedClaims, setDetectedClaims] = useState<DetectedClaimPayload[]>(
+		[],
+	);
+	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimPayload[]>(
+		[],
+	);
 
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
-			const dtos = chunks as FactCheckChunkDto[];
+			const dtos = chunks as FactCheckResponseDto[];
 
 			dtos.forEach((dto) => {
 				switch (dto.type) {
-					case FactCheckChunkType.DETECTED_CLAIM: {
+					case FactCheckResponseType.DETECTED_CLAIM: {
 						const { type, ...data } = dto;
 						setDetectedClaims((claims) => [...claims, data]);
 						break;
 					}
-					case FactCheckChunkType.VERIFIED_CLAIM: {
+					case FactCheckResponseType.VERIFIED_CLAIM: {
 						const { type, ...data } = dto;
 						setVerifiedClaims((claims) => [...claims, data]);
 						break;
@@ -94,15 +99,15 @@ export default function FactCheck({
 								<p>{claim.content}</p>
 								<p>이유: {claim.reason}</p>
 
-								{/* <div className="h-[200px] overflow-y-auto">
-								{verified && (
-									<div className="flex flex-col gap-y-3">
-										<p>사실 여부: {verified.verdictPrediction}</p>
-										<p>근거: {verified.justificationProduction}</p>
-										<p>출처: </p>
-									</div>
-								)}
-							</div> */}
+								<div className="h-[200px] overflow-y-auto">
+									{verified && (
+										<div className="flex flex-col gap-y-3">
+											<p>사실 여부: {verified.verdictPrediction}</p>
+											<p>근거: {verified.justificationProduction}</p>
+											<p>출처: </p>
+										</div>
+									)}
+								</div>
 							</div>
 						);
 					})}
