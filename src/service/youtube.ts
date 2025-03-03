@@ -19,7 +19,7 @@ export default class YoutubeService {
 	}
 
 	public static async downloadSubtitle(videoId: string): Promise<string> {
-		const { new__devMode } = loadConfig();
+		const { devMode: new__devMode } = loadConfig();
 
 		if (new__devMode.youtubeSubtitleDownload ?? new__devMode.default) {
 			const mock = await import("/mock/subtitle.json");

@@ -5,8 +5,8 @@ import { generateServerUrl } from "./utils/url";
 import loadConfig from "./config";
 
 export async function middleware(req: NextRequest) {
-	const { devMode } = loadConfig();
-	if (devMode) return NextResponse.next();
+	const { devMode: new__devMode } = loadConfig();
+	if (new__devMode.default) return NextResponse.next();
 
 	if (isPublic(req.nextUrl.pathname)) return NextResponse.next();
 

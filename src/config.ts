@@ -37,9 +37,8 @@ export default function loadConfig() {
 	return {
 		nodeEnv: process.env.NODE_ENV,
 		baseUrl: BASE_URL,
-		devMode: DEFAULT_DEV_MODE === "true",
 		mockDataCount: MOCK_DATA_COUNT ? parseInt(MOCK_DATA_COUNT) : undefined,
-		new__devMode: {
+		devMode: {
 			default: DEFAULT_DEV_MODE === "true",
 			youtubeSubtitleDownload:
 				YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE === undefined
@@ -58,23 +57,6 @@ export default function loadConfig() {
 					? undefined
 					: CLAIM_VERIFICATION_DEV_MODE === "true",
 		},
-		YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE:
-			YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE === undefined
-				? undefined
-				: YOUTUBE_SUBTITLE_DOWNLOAD_DEV_MODE === "true",
-		useClaimDetectionMock:
-			CLAIM_DETECTION_DEV_MODE === undefined
-				? undefined
-				: CLAIM_DETECTION_DEV_MODE === "true",
-		useMockEvidenceRetrieval:
-			EVIDENCE_RETRIEVAL_DEV_MODE === undefined
-				? undefined
-				: EVIDENCE_RETRIEVAL_DEV_MODE === "true",
-		useMockClaimVerification:
-			CLAIM_VERIFICATION_DEV_MODE === undefined
-				? undefined
-				: CLAIM_VERIFICATION_DEV_MODE === "true",
-
 		openai: {
 			apiKey: OPENAI_API_KEY,
 		},

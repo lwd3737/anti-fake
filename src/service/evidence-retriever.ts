@@ -31,7 +31,7 @@ export default class EvidenceRetriever {
 	}
 
 	private get isDevMode(): boolean {
-		const { new__devMode } = loadConfig();
+		const { devMode: new__devMode } = loadConfig();
 		return new__devMode.claimVerification ?? new__devMode.default;
 	}
 

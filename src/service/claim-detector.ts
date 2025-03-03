@@ -97,7 +97,7 @@ export default class ClaimDetector {
 	}
 
 	private get isDevMode(): boolean {
-		const { new__devMode } = loadConfig();
+		const { devMode: new__devMode } = loadConfig();
 		return new__devMode.claimDetection ?? new__devMode.default;
 	}
 
