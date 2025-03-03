@@ -1,7 +1,9 @@
 import EventEmitter from "events";
 import ClaimDetector, { DetectedClaim } from "../claim-detector";
 import loadConfig from "@/config";
-import EvidenceRetriever, { RetrievedEvidence } from "../evidence-retriever";
+import EvidenceRetriever, {
+	RetrievedEvidenceResult,
+} from "../evidence-retriever";
 import ClaimVerifier, { VerifiedClaim } from "../claim-verifier";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 
@@ -130,7 +132,7 @@ export default class FactCheckerService {
 		isLast,
 	}: {
 		claim: DetectedClaim;
-		evidence: Omit<RetrievedEvidence, "metadata">;
+		evidence: Omit<RetrievedEvidenceResult, "metadata">;
 		isLast?: boolean;
 	}): void {
 		this.events.emit(EventType.EVIDENCE_RETRIEVED, {
@@ -146,13 +148,11 @@ export default class FactCheckerService {
 		isLast,
 	}: {
 		claim: DetectedClaim;
-		evidence: RetrievedEvidence;
+		evidence: RetrievedEvidenceResult;
 		isLast?: boolean;
 	}) {
 		const isMock = loadConfig().useMockClaimVerification;
-		const verifier = new ClaimVerifier(this.signal, {
-			devMode: isMock ?? this.devMode,
-		});
+		const verifier = new ClaimVerifier(this.signal);
 
 		// this.logger.monitor(async (log, error, save) => {
 		// 	try {

@@ -1,19 +1,21 @@
 import RETRIEVE_EVIDENCES_PROMPT from "@/constants/prompts/retrieve-evidences";
 import Retriever, { RetrievedSource } from "./retriver";
-import LLMHistoryLogger, { TokenUsage } from "@/logger/llm-history.logger";
+import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
 import EventEmitter from "events";
 
-export type RetrievedEvidence =
-	| { claimIndex: number } & (
-			| {
-					content: string[];
-					sources: RetrievedSource[];
-			  }
-			| {
-					error: string;
-			  }
-	  );
+export type RetrievedEvidenceResult = RetrievedEvidence | RetrievedError;
+
+interface RetrievedEvidence {
+	claimIndex: number;
+	content: string[];
+	sources: RetrievedSource[];
+}
+
+interface RetrievedError {
+	claimIndex: number;
+	error: string;
+}
 
 interface Claim {
 	index: number;
@@ -52,47 +54,59 @@ export default class EvidenceRetriever {
 		this.logger.save();
 	}
 
-	public onRetrieved(listener: (evidence: RetrievedEvidence) => void): this {
+	public onRetrieved(
+		listener: (evidence: RetrievedEvidenceResult) => void,
+	): this {
 		this.events.on(EventType.RETRIEVED, listener);
 		return this;
 	}
 
-	private async retrieve(claim: Claim): Promise<RetrievedEvidence> {
-		if (this.isDevMode) return this.retrieveOnDevMode(claim);
-
-		return this.logger.monitor<RetrievedEvidence>(async (log, error, save) => {
-			try {
-				const { metadata, ...evidence } = await this.retriever.retrieve(
-					claim.content,
-					{
-						system: RETRIEVE_EVIDENCES_PROMPT,
-						mode: "json",
-					},
-				);
-
-				log({
-					...metadata,
-					title: "Retrieve Evidences",
-					prompt: claim.content,
-					output: evidence,
-				});
-
-				return { ...evidence, claimIndex: claim.index };
-			} catch (e) {
-				error({
-					code: "RetrieveEvidencesError",
-					error: e as Error,
-				});
-
-				return {
-					claimIndex: claim.index,
-					error: "증거 조회 중에 에러가 발생했습니다.",
-				};
-			}
-		});
+	public static isError(
+		result: RetrievedEvidenceResult,
+	): result is RetrievedError {
+		return "error" in result;
 	}
 
-	private async retrieveOnDevMode(claim: Claim): Promise<RetrievedEvidence> {
+	private async retrieve(claim: Claim): Promise<RetrievedEvidenceResult> {
+		if (this.isDevMode) return this.retrieveOnDevMode(claim);
+
+		return this.logger.monitor<RetrievedEvidenceResult>(
+			async (log, error, save) => {
+				try {
+					const { metadata, ...evidence } = await this.retriever.retrieve(
+						claim.content,
+						{
+							system: RETRIEVE_EVIDENCES_PROMPT,
+							mode: "json",
+						},
+					);
+
+					log({
+						...metadata,
+						title: "Retrieve Evidences",
+						prompt: claim.content,
+						output: evidence,
+					});
+
+					return { ...evidence, claimIndex: claim.index };
+				} catch (e) {
+					error({
+						code: "RetrieveEvidencesError",
+						error: e as Error,
+					});
+
+					return {
+						claimIndex: claim.index,
+						error: "증거 조회 중에 에러가 발생했습니다.",
+					};
+				}
+			},
+		);
+	}
+
+	private async retrieveOnDevMode(
+		claim: Claim,
+	): Promise<RetrievedEvidenceResult> {
 		const { evidences } = await import("/mock/retrieved-evidence.json");
 		const idx = Math.floor(Math.random() * evidences.length);
 
