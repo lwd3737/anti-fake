@@ -2,19 +2,21 @@ import { DetectedClaim } from "@/service/claim-detector";
 import { VerifiedClaim } from "@/service/claim-verifier";
 
 // Request
-export interface PerformFactCheckRequestDto {
-	videoUrl: string;
-}
-
 export interface DetectClaimsRequestDto {
 	videoId: string;
 }
 
 export interface VerifyClaimsRequestDto {
-	claims: {
-		index: number;
-		content: string;
-	}[];
+	claims: ClaimDto[];
+}
+
+export interface VerifyClaimRequestDto {
+	claim: ClaimDto;
+}
+
+export interface ClaimDto {
+	index: number;
+	content: string;
 }
 
 // Response
