@@ -1,93 +1,30 @@
 "use client";
-import {
-	DetectedClaimPayload,
-	FactCheckResponseDto,
-	FactCheckResponseType,
-	VerifiedClaimPayload,
-	VerifyClaimsRequestDto,
-} from "@/dto/fact-check";
-import useStreamingResponse from "@/hooks/useStreamingResponse";
-import assert from "assert";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import useFactCheck from "./hooks/useFactCheck";
 
-export default function FactCheck({
+export default function FactCheckPage({
 	params: { videoId },
 }: {
 	params: { videoId: string };
 }) {
-	const [detectedClaims, setDetectedClaims] = useState<DetectedClaimPayload[]>(
-		[],
-	);
-	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimPayload[]>(
-		[],
-	);
-
-	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
-		(chunks: unknown[]) => {
-			const dtos = chunks as FactCheckResponseDto[];
-
-			dtos.forEach((dto) => {
-				switch (dto.type) {
-					case FactCheckResponseType.DETECTED_CLAIM: {
-						const { type, ...data } = dto;
-						setDetectedClaims((claims) => [...claims, data]);
-						break;
-					}
-					case FactCheckResponseType.VERIFIED_CLAIM: {
-						const { type, ...data } = dto;
-						setVerifiedClaims((claims) => [...claims, data]);
-						break;
-					}
-					default:
-						throw Error("Invalid chunk type");
-				}
-			});
-		},
-	);
-
-	const isMountedRef = useRef(false);
-
-	useEffect(
-		function detectClaimsOnMount() {
-			if (isMountedRef.current) {
-				return;
-			}
-			isMountedRef.current = true;
-			startStreaming("detect-claims", { videoId });
-		},
-		[startStreaming, videoId],
-	);
-
-	const handleSubmit = useCallback(
-		async (ev: FormEvent<HTMLFormElement>) => {
-			ev.preventDefault();
-
-			const formData = new FormData(ev.currentTarget);
-
-			const selectedIndexes = Array.from(formData.keys()).map((key) =>
-				parseInt(key.split("-")[1]),
-			);
-			const selectedClaims = selectedIndexes.map((index) => {
-				const claim = detectedClaims[index];
-				assert(claim, "Claim not found");
-
-				return { index, content: claim.content };
-			});
-
-			const dto = {
-				claims: selectedClaims,
-			} as VerifyClaimsRequestDto;
-			await startStreaming("verify-claims", dto);
-		},
-		[detectedClaims, startStreaming],
-	);
+	const {
+		detectedClaims,
+		verifiedClaims,
+		isLoading,
+		handleStartVerificationSubmit,
+		stop,
+		isBatchVerificationMode,
+		handleSwitchToBatchVerificationModeClick,
+	} = useFactCheck(videoId);
 
 	return (
 		<main>
 			<h1 className="text-2xl">팩트 체크 결과</h1>
 
 			<section>
-				<form className="flex flex-col gap-y-10 py-5" onSubmit={handleSubmit}>
+				<form
+					className="flex flex-col gap-y-10 py-5"
+					onSubmit={handleStartVerificationSubmit}
+				>
 					{detectedClaims.map((claim) => {
 						const claimId = `claim-${claim.index}`;
 						const verified = verifiedClaims.find(
@@ -97,8 +34,14 @@ export default function FactCheck({
 						return (
 							<div className="flex flex-col gap-y-4" key={claim.index}>
 								<h3>
-									<input id={claimId} type="checkbox" name={claimId} />
-									<label htmlFor={claimId}>주장 {claim.index + 1}</label>
+									{isBatchVerificationMode ? (
+										<>
+											<input id={claimId} type="checkbox" name={claimId} />
+											<label htmlFor={claimId}>주장 {claim.index + 1}</label>
+										</>
+									) : (
+										`주장 ${claim.index + 1}`
+									)}
 								</h3>
 								<p>{claim.content}</p>
 								<p>이유: {claim.reason}</p>
@@ -116,7 +59,22 @@ export default function FactCheck({
 						);
 					})}
 
-					<button type="submit">선택한 주장 검증하기</button>
+					<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
+						{isBatchVerificationMode ? (
+							isLoading ? (
+								<button disabled>검증 중...</button>
+							) : (
+								<button type="submit">선택한 주장 검증하기</button>
+							)
+						) : (
+							<button
+								type="button"
+								onClick={handleSwitchToBatchVerificationModeClick}
+							>
+								미검증 주장 일괄 검증하기
+							</button>
+						)}
+					</div>
 				</form>
 			</section>
 		</main>
