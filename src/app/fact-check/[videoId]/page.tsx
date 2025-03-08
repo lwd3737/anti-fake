@@ -12,6 +12,11 @@ export default function FactCheckPage({
 
 	const {
 		verifiedClaims,
+
+		claimsChecked,
+		handleClaimCheckedChange,
+		handleAllClaimsCheckedChange,
+
 		isBatchVerificationMode,
 		isBatchVerificationLoading,
 		switchToBatchMode,
@@ -38,17 +43,25 @@ export default function FactCheckPage({
 						const verified = verifiedClaims.find(
 							(verified) => verified.claimIndex === claim.index,
 						);
-
 						const isVerfied = verifiedClaims.some(
 							(verified) => verified.claimIndex === claim.index,
 						);
+						const checked = claimsChecked[claim.index];
 
 						return (
 							<div className="flex flex-col gap-y-4" key={claim.index}>
 								<h3>
 									{isBatchVerificationMode && !isVerfied ? (
 										<>
-											<input id={claimId} type="checkbox" name={claimId} />
+											<input
+												id={claimId}
+												type="checkbox"
+												name={claimId}
+												checked={checked}
+												onChange={(ev) =>
+													handleClaimCheckedChange(ev, claim.index)
+												}
+											/>
 											<label htmlFor={claimId}>주장 {claim.index + 1}</label>
 										</>
 									) : (
@@ -76,7 +89,13 @@ export default function FactCheckPage({
 							isBatchVerificationLoading ? (
 								<button disabled>검증 중...</button>
 							) : (
-								<button type="submit">선택한 주장 검증하기</button>
+								<div>
+									<input
+										type="checkbox"
+										onChange={handleAllClaimsCheckedChange}
+									/>
+									<button type="submit">선택한 주장 검증하기</button>
+								</div>
 							)
 						) : (
 							<button type="button" onClick={handleSwitchToBatchModeClick}>

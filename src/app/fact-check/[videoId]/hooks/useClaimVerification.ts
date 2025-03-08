@@ -4,8 +4,13 @@ import {
 	VerifyClaimsRequestDto,
 } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
-import assert from "assert";
-import { FormEvent, useCallback, useState } from "react";
+import {
+	ChangeEvent,
+	FormEvent,
+	useCallback,
+	useEffect,
+	useState,
+} from "react";
 
 const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimPayload[]>(
@@ -29,41 +34,71 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 		setIsBatchMode(true);
 	}, []);
 
+	const [claimsChecked, setClaimsChecked] = useState<boolean[]>([]);
+
+	useEffect(
+		function initClaimsCheckedOnClaimsUpdated() {
+			setClaimsChecked(claims.map(() => false));
+		},
+		[claims],
+	);
+
+	const handleClaimCheckedChange = useCallback(
+		(ev: ChangeEvent, index: number) => {
+			const el = ev.target as HTMLInputElement;
+
+			setClaimsChecked((prev) =>
+				prev.map((checked, _index) =>
+					_index === index ? el.checked : checked,
+				),
+			);
+		},
+		[],
+	);
+
+	const handleAllClaimsCheckedChange = useCallback((ev: ChangeEvent) => {
+		const el = ev.target as HTMLInputElement;
+
+		if (el.checked) {
+			setClaimsChecked((prev) => prev.map(() => true));
+		} else {
+			setClaimsChecked((prev) => prev.map(() => false));
+		}
+	}, []);
+
 	const handleStartBatchSubmit = useCallback(
 		async (ev: FormEvent<HTMLFormElement>) => {
 			ev.preventDefault();
 
 			if (!isBatchMode) return;
 
-			const formData = new FormData(ev.currentTarget);
-
-			const selectedIndexes = Array.from(formData.keys()).map((key) =>
-				parseInt(key.split("-")[1]),
-			);
-			if (selectedIndexes.length === 0) {
+			const hasCheckedClaim = claimsChecked.some((checked) => checked);
+			if (!hasCheckedClaim) {
 				alert("검증할 주장을 선택해주세요!");
 				return;
 			}
 
-			const selectedClaims = selectedIndexes.map((index) => {
-				const claim = claims[index];
-				assert(claim, "Claim not found");
-
-				return { index, content: claim.content };
-			});
+			const checkedClaims = claimsChecked
+				.map((checked, idx) => checked && claims[idx])
+				.filter(Boolean) as DetectedClaimPayload[];
 
 			const dto = {
-				claims: selectedClaims,
+				claims: checkedClaims,
 			} as VerifyClaimsRequestDto;
 			await startBatch("verify-claims", dto);
 
 			setIsBatchMode(false);
 		},
-		[claims, isBatchMode, startBatch],
+		[claims, claimsChecked, isBatchMode, startBatch],
 	);
 
 	return {
 		verifiedClaims,
+
+		claimsChecked,
+		handleClaimCheckedChange,
+		handleAllClaimsCheckedChange,
+
 		isBatchVerificationMode: isBatchMode,
 		isBatchVerificationLoading: isBatchLoading,
 		switchToBatchMode: switchToBatchMode,
