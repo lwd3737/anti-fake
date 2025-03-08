@@ -14,6 +14,7 @@ export default function FactCheckPage({
 		verifiedClaims,
 
 		claimsChecked,
+		allClaimsChecked,
 		handleClaimCheckedChange,
 		handleAllClaimsCheckedChange,
 
@@ -93,13 +94,14 @@ export default function FactCheckPage({
 					<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
 						{isBatchVerificationMode ? (
 							isBatchVerificationLoading ? (
-								<button disabled>검증 중...</button>
+								<button onClick={stopBatchVerification}>중단</button>
 							) : (
 								<div className="flex justify-between w-full">
 									<div>
 										<input
 											id="all-selector"
 											type="checkbox"
+											checked={allClaimsChecked}
 											onChange={handleAllClaimsCheckedChange}
 										/>
 										<label htmlFor="all-selector">전체 선택</label>

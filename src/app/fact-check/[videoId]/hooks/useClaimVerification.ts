@@ -11,6 +11,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { set } from "zod";
 
 const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimPayload[]>(
@@ -28,17 +29,8 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 		]);
 	});
 
-	const [isBatchMode, setIsBatchMode] = useState(false);
-
-	const switchToBatchMode = useCallback(() => {
-		setIsBatchMode(true);
-	}, []);
-
-	const cancelBatchMode = useCallback(() => {
-		setIsBatchMode(false);
-	}, []);
-
 	const [claimsChecked, setClaimsChecked] = useState<boolean[]>([]);
+	const [allClaimsChecked, setAllClaimsChecked] = useState(false);
 
 	useEffect(
 		function initClaimsCheckedOnClaimsUpdated() {
@@ -60,14 +52,42 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 		[],
 	);
 
-	const handleAllClaimsCheckedChange = useCallback((ev: ChangeEvent) => {
-		const el = ev.target as HTMLInputElement;
+	const isClaimVerified = useCallback(
+		(index: number): boolean => {
+			return verifiedClaims.some((verified) => verified.claimIndex === index);
+		},
+		[verifiedClaims],
+	);
 
-		if (el.checked) {
-			setClaimsChecked((prev) => prev.map(() => true));
-		} else {
-			setClaimsChecked((prev) => prev.map(() => false));
-		}
+	const handleAllClaimsCheckedChange = useCallback(
+		(ev: ChangeEvent) => {
+			const el = ev.target as HTMLInputElement;
+
+			setAllClaimsChecked(el.checked);
+
+			if (el.checked) {
+				setClaimsChecked((prev) =>
+					prev.map((_, index) => (isClaimVerified(index) ? false : true)),
+				);
+			} else {
+				setClaimsChecked((prev) => prev.map(() => false));
+			}
+		},
+		[isClaimVerified],
+	);
+
+	const [isBatchMode, setIsBatchMode] = useState(false);
+
+	const switchToBatchMode = useCallback(() => {
+		setIsBatchMode(true);
+		setAllClaimsChecked(true);
+		setClaimsChecked((prev) =>
+			prev.map((_, index) => (isClaimVerified(index) ? false : true)),
+		);
+	}, [isClaimVerified]);
+
+	const cancelBatchMode = useCallback(() => {
+		setIsBatchMode(false);
 	}, []);
 
 	const handleStartBatchSubmit = useCallback(
@@ -100,6 +120,7 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 		verifiedClaims,
 
 		claimsChecked,
+		allClaimsChecked,
 		handleClaimCheckedChange,
 		handleAllClaimsCheckedChange,
 
