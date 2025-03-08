@@ -1,20 +1,28 @@
 "use client";
-import useFactCheck from "./hooks/useFactCheck";
+import { MouseEvent } from "react";
+import useClaimVerification from "./hooks/useClaimVerification";
+import useClaimDetection from "./hooks/useClaimDetection";
 
 export default function FactCheckPage({
 	params: { videoId },
 }: {
 	params: { videoId: string };
 }) {
+	const { detectedClaims, stopDetectingClaim } = useClaimDetection(videoId);
+
 	const {
-		detectedClaims,
 		verifiedClaims,
-		isLoading,
-		handleStartVerificationSubmit,
-		stop,
 		isBatchVerificationMode,
-		handleSwitchToBatchVerificationModeClick,
-	} = useFactCheck(videoId);
+		isBatchVerificationLoading,
+		switchToBatchMode,
+		handleStartBatchVerficationSubmit,
+		stopBatchVerification,
+	} = useClaimVerification(detectedClaims);
+
+	const handleSwitchToBatchModeClick = (ev: MouseEvent) => {
+		ev.preventDefault();
+		switchToBatchMode();
+	};
 
 	return (
 		<main>
@@ -23,7 +31,7 @@ export default function FactCheckPage({
 			<section>
 				<form
 					className="flex flex-col gap-y-10 py-5"
-					onSubmit={handleStartVerificationSubmit}
+					onSubmit={handleStartBatchVerficationSubmit}
 				>
 					{detectedClaims.map((claim) => {
 						const claimId = `claim-${claim.index}`;
@@ -61,16 +69,13 @@ export default function FactCheckPage({
 
 					<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
 						{isBatchVerificationMode ? (
-							isLoading ? (
+							isBatchVerificationLoading ? (
 								<button disabled>검증 중...</button>
 							) : (
 								<button type="submit">선택한 주장 검증하기</button>
 							)
 						) : (
-							<button
-								type="button"
-								onClick={handleSwitchToBatchVerificationModeClick}
-							>
+							<button type="button" onClick={handleSwitchToBatchModeClick}>
 								미검증 주장 일괄 검증하기
 							</button>
 						)}

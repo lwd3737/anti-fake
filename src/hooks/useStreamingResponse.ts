@@ -56,8 +56,6 @@ const useStreamingResponse = (onCompleted: (chunk: unknown[]) => void) => {
 					});
 
 					memoizedOnCompleted.current(parsedChunks);
-
-					// setChunks((prev) => [...prev, ...parsedChunks]);
 				}
 
 				isLoadingRef.current = false;
