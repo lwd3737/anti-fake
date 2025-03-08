@@ -89,11 +89,15 @@ export default function FactCheckPage({
 							isBatchVerificationLoading ? (
 								<button disabled>검증 중...</button>
 							) : (
-								<div>
-									<input
-										type="checkbox"
-										onChange={handleAllClaimsCheckedChange}
-									/>
+								<div className="flex justify-between w-full">
+									<span>
+										<input
+											id="all-selector"
+											type="checkbox"
+											onChange={handleAllClaimsCheckedChange}
+										/>
+										<label htmlFor="all-selector">전체 선택</label>
+									</span>
 									<button type="submit">선택한 주장 검증하기</button>
 								</div>
 							)
