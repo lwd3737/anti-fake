@@ -19,14 +19,20 @@ export default function FactCheckPage({
 
 		isBatchVerificationMode,
 		isBatchVerificationLoading,
-		switchToBatchMode,
+		switchToBatchVerificationMode,
+		cancelBatchVerificationMode,
 		handleStartBatchVerficationSubmit,
 		stopBatchVerification,
 	} = useClaimVerification(detectedClaims);
 
-	const handleSwitchToBatchModeClick = (ev: MouseEvent) => {
+	const handleSwitchToBatchVerificationModeClick = (ev: MouseEvent) => {
 		ev.preventDefault();
-		switchToBatchMode();
+		switchToBatchVerificationMode();
+	};
+
+	const handleCancelBatchVerificationModeClick = (ev: MouseEvent) => {
+		ev.preventDefault();
+		cancelBatchVerificationMode();
 	};
 
 	return (
@@ -90,19 +96,30 @@ export default function FactCheckPage({
 								<button disabled>검증 중...</button>
 							) : (
 								<div className="flex justify-between w-full">
-									<span>
+									<div>
 										<input
 											id="all-selector"
 											type="checkbox"
 											onChange={handleAllClaimsCheckedChange}
 										/>
 										<label htmlFor="all-selector">전체 선택</label>
-									</span>
-									<button type="submit">선택한 주장 검증하기</button>
+									</div>
+									<div className="flex gap-x-3">
+										<button type="submit">선택한 주장 검증하기</button>
+										<button
+											type="button"
+											onClick={handleCancelBatchVerificationModeClick}
+										>
+											취소
+										</button>
+									</div>
 								</div>
 							)
 						) : (
-							<button type="button" onClick={handleSwitchToBatchModeClick}>
+							<button
+								type="button"
+								onClick={handleSwitchToBatchVerificationModeClick}
+							>
 								미검증 주장 일괄 검증하기
 							</button>
 						)}

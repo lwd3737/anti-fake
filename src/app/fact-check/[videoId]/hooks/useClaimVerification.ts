@@ -34,6 +34,10 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 		setIsBatchMode(true);
 	}, []);
 
+	const cancelBatchMode = useCallback(() => {
+		setIsBatchMode(false);
+	}, []);
+
 	const [claimsChecked, setClaimsChecked] = useState<boolean[]>([]);
 
 	useEffect(
@@ -101,7 +105,8 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 
 		isBatchVerificationMode: isBatchMode,
 		isBatchVerificationLoading: isBatchLoading,
-		switchToBatchMode: switchToBatchMode,
+		switchToBatchVerificationMode: switchToBatchMode,
+		cancelBatchVerificationMode: cancelBatchMode,
 		handleStartBatchVerficationSubmit: handleStartBatchSubmit,
 		stopBatchVerification: stopBatch,
 	};
