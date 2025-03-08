@@ -39,10 +39,14 @@ export default function FactCheckPage({
 							(verified) => verified.claimIndex === claim.index,
 						);
 
+						const isVerfied = verifiedClaims.some(
+							(verified) => verified.claimIndex === claim.index,
+						);
+
 						return (
 							<div className="flex flex-col gap-y-4" key={claim.index}>
 								<h3>
-									{isBatchVerificationMode ? (
+									{isBatchVerificationMode && !isVerfied ? (
 										<>
 											<input id={claimId} type="checkbox" name={claimId} />
 											<label htmlFor={claimId}>주장 {claim.index + 1}</label>
