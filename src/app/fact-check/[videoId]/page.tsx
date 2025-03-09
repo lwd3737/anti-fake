@@ -1,8 +1,8 @@
 "use client";
-import { ChangeEvent, MouseEvent } from "react";
-import useClaimVerification from "./hooks/useClaimVerification";
+import { MouseEvent } from "react";
 import useClaimDetection from "./hooks/useClaimDetection";
 import ClaimCard from "./components/ClaimCard";
+import useClaimVerification from "./hooks/useClaimVerification";
 
 export default function FactCheckPage({
 	params: { videoId },
@@ -11,30 +11,16 @@ export default function FactCheckPage({
 }) {
 	const { detectedClaims, stopDetectingClaim } = useClaimDetection(videoId);
 
-	const {
-		verifiedClaims,
-
-		claimsChecked,
-		allClaimsChecked,
-		handleClaimCheckedChange,
-		handleAllClaimsCheckedChange,
-
-		isBatchVerificationMode,
-		isBatchVerificationLoading,
-		switchToBatchVerificationMode,
-		cancelBatchVerificationMode,
-		handleStartBatchVerficationSubmit,
-		stopBatchVerification,
-	} = useClaimVerification(detectedClaims);
+	const verification = useClaimVerification(detectedClaims);
 
 	const handleSwitchToBatchVerificationModeClick = (ev: MouseEvent) => {
 		ev.preventDefault();
-		switchToBatchVerificationMode();
+		verification.switchToBatchMode();
 	};
 
 	const handleCancelBatchVerificationModeClick = (ev: MouseEvent) => {
 		ev.preventDefault();
-		cancelBatchVerificationMode();
+		verification.cancelBatchMode();
 	};
 
 	return (
@@ -44,38 +30,38 @@ export default function FactCheckPage({
 			<section>
 				<form
 					className="flex flex-col gap-y-10 py-5"
-					onSubmit={handleStartBatchVerficationSubmit}
+					onSubmit={verification.handleStartBatchSubmit}
 				>
 					{detectedClaims.map((claim) => {
-						const verified = verifiedClaims.find(
+						const verified = verification.verifiedClaims.find(
 							(verified) => verified.claimIndex === claim.index,
 						);
-						const isChecked = claimsChecked[claim.index];
+						const isChecked = verification.claimsChecked[claim.index];
 
 						return (
 							<ClaimCard
 								key={claim.index}
 								claim={claim}
 								verifiedResult={verified}
-								isBatchVerificationMode={isBatchVerificationMode}
+								isBatchVerificationMode={verification.isBatchMode}
 								isChecked={isChecked}
-								onCheckedChange={handleClaimCheckedChange}
+								onCheckedChange={verification.handleClaimCheckedChange}
 							/>
 						);
 					})}
 
 					<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
-						{isBatchVerificationMode ? (
-							isBatchVerificationLoading ? (
-								<button onClick={stopBatchVerification}>중단</button>
+						{verification.isBatchMode ? (
+							verification.isBatchLoading ? (
+								<button onClick={verification.stopBatch}>중단</button>
 							) : (
 								<div className="flex justify-between w-full">
 									<div>
 										<input
 											id="all-selector"
 											type="checkbox"
-											checked={allClaimsChecked}
-											onChange={handleAllClaimsCheckedChange}
+											checked={verification.allClaimsChecked}
+											onChange={verification.handleAllClaimsCheckedChange}
 										/>
 										<label htmlFor="all-selector">전체 선택</label>
 									</div>
