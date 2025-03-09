@@ -28,13 +28,11 @@ const useClaimVerificationBatch = ({
 		[verifiedClaims],
 	);
 
-	const {
-		isLoading: isBatchLoading,
-		startStreaming: startBatch,
-		stopStreaming: stopBatch,
-	} = useStreamingResponse((chunks: unknown[]) => {
-		updateVerifiedClaims(chunks as VerifiedClaimPayload[]);
-	});
+	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
+		(chunks: unknown[]) => {
+			updateVerifiedClaims(chunks as VerifiedClaimPayload[]);
+		},
+	);
 
 	const [claimsChecked, setClaimsChecked] = useState<boolean[]>([]);
 	const [allClaimsChecked, setAllClaimsChecked] = useState(false);
@@ -109,11 +107,11 @@ const useClaimVerificationBatch = ({
 			const dto = {
 				claims: checkedClaims,
 			} as VerifyClaimsRequestDto;
-			await startBatch("verify-claims", dto);
+			await startStreaming("verify-claims", dto);
 
 			setIsBatchMode(false);
 		},
-		[claims, claimsChecked, isBatchMode, startBatch],
+		[claims, claimsChecked, isBatchMode, startStreaming],
 	);
 
 	return {
@@ -123,11 +121,11 @@ const useClaimVerificationBatch = ({
 		handleAllClaimsCheckedChange,
 
 		isBatchMode,
-		isBatchLoading,
+		isBatchLoading: isLoading,
 		switchToBatchMode,
 		cancelBatchMode,
 		handleStartBatchSubmit,
-		stopBatch,
+		stopBatch: stopStreaming,
 	};
 };
 

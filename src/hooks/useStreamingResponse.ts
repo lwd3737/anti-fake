@@ -2,8 +2,8 @@ import { json } from "@/utils/serialize";
 import assert from "assert";
 import { useCallback, useRef, useState } from "react";
 
-const useStreamingResponse = (onCompleted: (chunk: unknown[]) => void) => {
-	const memoizedOnCompleted = useRef(onCompleted);
+const useStreamingResponse = (onChunk: (chunk: unknown[]) => void) => {
+	const memoizedOnChunk = useRef(onChunk);
 
 	const aborterRef = useRef(new AbortController());
 	const aborter = aborterRef.current;
@@ -55,7 +55,7 @@ const useStreamingResponse = (onCompleted: (chunk: unknown[]) => void) => {
 						return JSON.parse(completedChunk);
 					});
 
-					memoizedOnCompleted.current(parsedChunks);
+					memoizedOnChunk.current(parsedChunks);
 				}
 
 				isLoadingRef.current = false;
