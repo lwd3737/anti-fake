@@ -1,7 +1,8 @@
 "use client";
-import { MouseEvent } from "react";
+import { ChangeEvent, MouseEvent } from "react";
 import useClaimVerification from "./hooks/useClaimVerification";
 import useClaimDetection from "./hooks/useClaimDetection";
+import ClaimCard from "./components/ClaimCard";
 
 export default function FactCheckPage({
 	params: { videoId },
@@ -46,48 +47,20 @@ export default function FactCheckPage({
 					onSubmit={handleStartBatchVerficationSubmit}
 				>
 					{detectedClaims.map((claim) => {
-						const claimId = `claim-${claim.index}`;
 						const verified = verifiedClaims.find(
 							(verified) => verified.claimIndex === claim.index,
 						);
-						const isVerfied = verifiedClaims.some(
-							(verified) => verified.claimIndex === claim.index,
-						);
-						const checked = claimsChecked[claim.index];
+						const isChecked = claimsChecked[claim.index];
 
 						return (
-							<div className="flex flex-col gap-y-4" key={claim.index}>
-								<h3>
-									{isBatchVerificationMode && !isVerfied ? (
-										<>
-											<input
-												id={claimId}
-												type="checkbox"
-												name={claimId}
-												checked={checked}
-												onChange={(ev) =>
-													handleClaimCheckedChange(ev, claim.index)
-												}
-											/>
-											<label htmlFor={claimId}>주장 {claim.index + 1}</label>
-										</>
-									) : (
-										`주장 ${claim.index + 1}`
-									)}
-								</h3>
-								<p>{claim.content}</p>
-								<p>이유: {claim.reason}</p>
-
-								<div className="h-[200px] overflow-y-auto">
-									{verified && (
-										<div className="flex flex-col gap-y-3">
-											<p>사실 여부: {verified.verdictPrediction}</p>
-											<p>근거: {verified.justificationProduction}</p>
-											<p>출처: </p>
-										</div>
-									)}
-								</div>
-							</div>
+							<ClaimCard
+								key={claim.index}
+								claim={claim}
+								verifiedResult={verified}
+								isBatchVerificationMode={isBatchVerificationMode}
+								isChecked={isChecked}
+								onCheckedChange={handleClaimCheckedChange}
+							/>
 						);
 					})}
 
