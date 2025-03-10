@@ -4,38 +4,49 @@ import { ChangeEvent } from "react";
 interface Props {
 	claim: DetectedClaimPayload;
 	verifiedResult?: VerifiedClaimPayload;
-	isBatchVerificationMode: boolean;
-	isChecked: boolean;
-	onCheckedChange: (ev: ChangeEvent, index: number) => void;
+	isVerificationBatchMode: boolean;
+	isVerificationBatchLoading: boolean;
+	isVerificattionSelected: boolean;
+	onVerficationSelectionChange: (ev: ChangeEvent, index: number) => void;
 }
 
-// TODO: checkbox를 바깥으로 빼기
 export default function ClaimCard({
 	claim,
 	verifiedResult,
-	isBatchVerificationMode,
-	isChecked,
-	onCheckedChange,
+	isVerificationBatchMode,
+	isVerificationBatchLoading,
+	isVerificattionSelected,
+	onVerficationSelectionChange,
 }: Props) {
 	const claimId = `claim-${claim.index}`;
 	const isVerified = !!verifiedResult;
+
+	const status = isVerified
+		? "verified"
+		: isVerificattionSelected && isVerificationBatchLoading
+		? "loading"
+		: "notVerified";
 
 	return (
 		<div className="flex items-start gap-x-2 gap-y-1" key={claim.index}>
 			<input
 				className={`${
-					isBatchVerificationMode && !isVerified ? "visible" : "invisible"
+					isVerificationBatchMode && !isVerified ? "visible" : "invisible"
 				} mt-[1px]`}
 				id={claimId}
 				type="checkbox"
 				name={claimId}
-				checked={isChecked}
-				onChange={(ev) => onCheckedChange(ev, claim.index)}
+				checked={isVerificattionSelected}
+				onChange={(ev) => onVerficationSelectionChange(ev, claim.index)}
 			/>
 
 			<article className="flex flex-col gap-y-4">
-				<h3>주장 {claim.index + 1}</h3>
-				<p>{claim.content}</p>
+				<div className="flex items-center gap-x-2">
+					<span>{status}</span>
+					<h3>
+						{claim.index + 1}. {claim.content}
+					</h3>
+				</div>
 				<p>이유: {claim.reason}</p>
 
 				<div className="h-[200px] overflow-y-auto">

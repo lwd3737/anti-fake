@@ -10,7 +10,6 @@ export default function FactCheckPage({
 	params: { videoId: string };
 }) {
 	const { detectedClaims, stopDetectingClaim } = useClaimDetection(videoId);
-
 	const verification = useClaimVerification(detectedClaims);
 
 	const handleSwitchToBatchVerificationModeClick = (ev: MouseEvent) => {
@@ -43,9 +42,12 @@ export default function FactCheckPage({
 								key={claim.index}
 								claim={claim}
 								verifiedResult={verified}
-								isBatchVerificationMode={verification.isBatchMode}
-								isChecked={isChecked}
-								onCheckedChange={verification.handleClaimCheckedChange}
+								isVerificationBatchMode={verification.isBatchMode}
+								isVerificationBatchLoading={verification.isBatchLoading}
+								isVerificattionSelected={isChecked}
+								onVerficationSelectionChange={
+									verification.handleClaimCheckedChange
+								}
 							/>
 						);
 					})}
