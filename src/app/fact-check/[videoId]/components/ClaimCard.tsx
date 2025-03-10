@@ -9,6 +9,7 @@ interface Props {
 	onCheckedChange: (ev: ChangeEvent, index: number) => void;
 }
 
+// TODO: checkbox를 바깥으로 빼기
 export default function ClaimCard({
 	claim,
 	verifiedResult,
@@ -20,35 +21,33 @@ export default function ClaimCard({
 	const isVerified = !!verifiedResult;
 
 	return (
-		<div className="flex flex-col gap-y-4" key={claim.index}>
-			<h3>
-				{isBatchVerificationMode && !isVerified ? (
-					<>
-						<input
-							id={claimId}
-							type="checkbox"
-							name={claimId}
-							checked={isChecked}
-							onChange={(ev) => onCheckedChange(ev, claim.index)}
-						/>
-						<label htmlFor={claimId}>주장 {claim.index + 1}</label>
-					</>
-				) : (
-					`주장 ${claim.index + 1}`
-				)}
-			</h3>
-			<p>{claim.content}</p>
-			<p>이유: {claim.reason}</p>
+		<div className="flex items-start gap-x-2 gap-y-1" key={claim.index}>
+			<input
+				className={`${
+					isBatchVerificationMode && !isVerified ? "visible" : "invisible"
+				} mt-[1px]`}
+				id={claimId}
+				type="checkbox"
+				name={claimId}
+				checked={isChecked}
+				onChange={(ev) => onCheckedChange(ev, claim.index)}
+			/>
 
-			<div className="h-[200px] overflow-y-auto">
-				{isVerified && (
-					<div className="flex flex-col gap-y-3">
-						<p>사실 여부: {verifiedResult.verdictPrediction}</p>
-						<p>근거: {verifiedResult.justificationProduction}</p>
-						<p>출처: </p>
-					</div>
-				)}
-			</div>
+			<article className="flex flex-col gap-y-4">
+				<h3>주장 {claim.index + 1}</h3>
+				<p>{claim.content}</p>
+				<p>이유: {claim.reason}</p>
+
+				<div className="h-[200px] overflow-y-auto">
+					{isVerified && (
+						<div className="flex flex-col gap-y-3">
+							<p>사실 여부: {verifiedResult.verdictPrediction}</p>
+							<p>근거: {verifiedResult.justificationProduction}</p>
+							<p>출처: </p>
+						</div>
+					)}
+				</div>
+			</article>
 		</div>
 	);
 }
