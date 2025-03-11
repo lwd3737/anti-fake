@@ -1,21 +1,23 @@
 import {
-	DetectedClaimPayload,
-	VerifiedClaimPayload,
+	ClaimDetectionPayload,
+	ClaimVerificationPayload,
 	VerifyClaimsRequestDto,
 } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
 import { useCallback, useEffect, useState } from "react";
 
 const useClaimVerificationBatch = ({
-	claims,
+	claimDetectionResults,
 	updateVerifiedClaims,
 }: {
-	claims: DetectedClaimPayload[];
-	updateVerifiedClaims: (verifiedClaims: VerifiedClaimPayload[]) => void;
+	claimDetectionResults: ClaimDetectionPayload[];
+	updateVerifiedClaims: (
+		verificationResults: ClaimVerificationPayload[],
+	) => void;
 }) => {
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
-			updateVerifiedClaims(chunks as VerifiedClaimPayload[]);
+			updateVerifiedClaims(chunks as ClaimVerificationPayload[]);
 		},
 	);
 
@@ -27,9 +29,11 @@ const useClaimVerificationBatch = ({
 
 	useEffect(
 		function initClaimsCheckedOnClaimsUpdated() {
-			setClaimIndexesToVerify(new Set(claims.map((_, index) => index)));
+			setClaimIndexesToVerify(
+				new Set(claimDetectionResults.map((_, index) => index)),
+			);
 		},
-		[claims],
+		[claimDetectionResults],
 	);
 
 	const updateClaimToVerifiy = useCallback(
@@ -61,8 +65,10 @@ const useClaimVerificationBatch = ({
 	const switchToBatchMode = useCallback(() => {
 		setIsBatchMode(true);
 		setIsAllClaimsToVerifySelected(true);
-		setClaimIndexesToVerify(new Set(claims.map((_, index) => index)));
-	}, [claims]);
+		setClaimIndexesToVerify(
+			new Set(claimDetectionResults.map((_, index) => index)),
+		);
+	}, [claimDetectionResults]);
 
 	const cancelBatchMode = useCallback(() => {
 		setIsBatchMode(false);
@@ -78,7 +84,7 @@ const useClaimVerificationBatch = ({
 		}
 
 		const claimsToVerify = Array.from(claimIndexesToVerifiy.values()).map(
-			(index) => claims[index],
+			(index) => claimDetectionResults[index],
 		);
 
 		const dto = {
@@ -87,7 +93,12 @@ const useClaimVerificationBatch = ({
 		await startStreaming("verify-claims", dto);
 
 		setIsBatchMode(false);
-	}, [claimIndexesToVerifiy, claims, isBatchMode, startStreaming]);
+	}, [
+		claimIndexesToVerifiy,
+		claimDetectionResults,
+		isBatchMode,
+		startStreaming,
+	]);
 
 	return {
 		isAllClaimsToVerifySelected,

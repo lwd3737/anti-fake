@@ -1,5 +1,5 @@
-import { DetectedClaim } from "@/service/claim-detector";
-import { VerifiedClaim } from "@/service/claim-verifier";
+import { ClaimDetectionResult } from "@/service/claim-detector";
+import { ClaimVerificationResult } from "@/service/claim-verifier";
 
 // Request
 export interface DetectClaimsRequestDto {
@@ -20,24 +20,19 @@ export interface ClaimDto {
 }
 
 // Response
-export type FactCheckResponseDto =
-	| DetectedClaimResponseDto
-	| VerifiedClaimResponseDto;
 
-export enum FactCheckResponseType {
-	DETECTED_CLAIM = "detectedClaim",
-	VERIFIED_CLAIM = "verifiedClaim",
+export interface ClaimDetectionResponseDto extends ClaimDetectionResult {
+	type: "claimDetectionResult";
 }
 
-export interface DetectedClaimResponseDto extends DetectedClaim {
-	type: FactCheckResponseType.DETECTED_CLAIM;
-}
+export type ClaimDetectionPayload = Omit<ClaimDetectionResponseDto, "type">;
 
-export type DetectedClaimPayload = Omit<DetectedClaimResponseDto, "type">;
-
-export interface VerifiedClaimResponseDto extends VerifiedClaim {
-	type: FactCheckResponseType.VERIFIED_CLAIM;
+export interface ClaimVerificationResponseDto extends ClaimVerificationResult {
+	type: "claimVerificationResult";
 	claimIndex: number;
 }
 
-export type VerifiedClaimPayload = Omit<VerifiedClaimResponseDto, "type">;
+export type ClaimVerificationPayload = Omit<
+	ClaimVerificationResponseDto,
+	"type"
+>;

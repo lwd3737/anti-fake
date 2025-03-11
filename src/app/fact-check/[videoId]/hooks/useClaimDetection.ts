@@ -1,17 +1,17 @@
-import { DetectedClaimPayload } from "@/dto/fact-check";
+import { ClaimDetectionPayload } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
 import { useEffect, useRef, useState } from "react";
 
 const useClaimDetection = (videoId: string) => {
-	const [detectedClaims, setDetectedClaims] = useState<DetectedClaimPayload[]>(
-		[],
-	);
+	const [claimDetectionResults, setClaimDetectionResults] = useState<
+		ClaimDetectionPayload[]
+	>([]);
 
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
-			setDetectedClaims((prev) => [
+			setClaimDetectionResults((prev) => [
 				...prev,
-				...(chunks as DetectedClaimPayload[]),
+				...(chunks as ClaimDetectionPayload[]),
 			]);
 		},
 	);
@@ -30,7 +30,7 @@ const useClaimDetection = (videoId: string) => {
 	);
 
 	return {
-		detectedClaims,
+		claimDetectionResults,
 		isDetectingClaim: isLoading,
 		stopDetectingClaim: stopStreaming,
 	};

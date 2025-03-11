@@ -13,7 +13,7 @@ enum EventType {
 	ERROR = "ERROR",
 }
 
-const DetectedClaimSchema = z.object({
+const ClaimDetectionResultSchema = z.object({
 	content: z
 		.string()
 		.describe(
@@ -22,7 +22,9 @@ const DetectedClaimSchema = z.object({
 	reason: z.string().describe("해당 주장이 검증 가능한 주장으로 탐지된 이유"),
 });
 
-export type DetectedClaim = z.infer<typeof DetectedClaimSchema> & {
+export type ClaimDetectionResult = z.infer<
+	typeof ClaimDetectionResultSchema
+> & {
 	index: number;
 };
 
@@ -49,7 +51,7 @@ export default class ClaimDetector {
 					prompt: text,
 					mode: "json",
 					output: "array",
-					schema: DetectedClaimSchema,
+					schema: ClaimDetectionResultSchema,
 					schemaName: "DetectedClaims",
 					schemaDescription:
 						"자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.",
@@ -102,11 +104,11 @@ export default class ClaimDetector {
 	}
 
 	private async detectOnDevMode(): Promise<void> {
-		const mockData = await import("/mock/detected-claims.json");
+		const mockData = await import("/mock/claim-detection-results.json");
 		const { mockDataCount } = loadConfig();
 
-		const dataCount = mockDataCount ?? mockData.claims.length;
-		const claims = mockData.claims.slice(0, dataCount);
+		const dataCount = mockDataCount ?? mockData.claimDetectionResults.length;
+		const claims = mockData.claimDetectionResults.slice(0, dataCount);
 
 		for (let index = 0; index < dataCount; index++) {
 			const claim = claims[index];
@@ -125,7 +127,9 @@ export default class ClaimDetector {
 		});
 	}
 
-	public onClaimDetected(listener: (claim: DetectedClaim) => void): this {
+	public onClaimDetected(
+		listener: (claim: ClaimDetectionResult) => void,
+	): this {
 		this.events.on(EventType.CLAIM_DETECTED, listener);
 		return this;
 	}

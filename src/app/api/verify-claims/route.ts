@@ -1,6 +1,5 @@
 import {
-	FactCheckResponseType,
-	VerifiedClaimResponseDto,
+	ClaimVerificationResponseDto,
 	VerifyClaimsRequestDto,
 } from "@/dto/fact-check";
 import { streamResponse } from "@/helpers/stream-response";
@@ -36,9 +35,9 @@ export async function POST(req: NextRequest) {
 				);
 				const dto = {
 					...verifed,
-					type: FactCheckResponseType.VERIFIED_CLAIM,
+					type: "claimVerificationResult",
 					claimIndex: claim.index,
-				} as VerifiedClaimResponseDto;
+				} as ClaimVerificationResponseDto;
 
 				send(dto);
 			}

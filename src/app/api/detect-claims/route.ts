@@ -1,5 +1,5 @@
 import {
-	DetectedClaimResponseDto,
+	ClaimDetectionResponseDto,
 	DetectClaimsRequestDto,
 } from "@/dto/fact-check";
 import { streamResponse } from "@/helpers/stream-response";
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
 			.onClaimDetected((claim) => {
 				const dto = {
 					...claim,
-					type: "detectedClaim",
-				} as DetectedClaimResponseDto;
+					type: "claimDetectionResult",
+				} as ClaimDetectionResponseDto;
 
 				send(dto);
 			})

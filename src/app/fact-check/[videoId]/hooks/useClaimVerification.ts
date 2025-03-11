@@ -1,26 +1,31 @@
-import { DetectedClaimPayload, VerifiedClaimPayload } from "@/dto/fact-check";
+import {
+	ClaimDetectionPayload,
+	ClaimVerificationPayload,
+} from "@/dto/fact-check";
 import { useCallback, useState } from "react";
 import useClaimVerificationBatch from "./useClaimVerificationBatch";
 
-const useClaimVerification = (claims: DetectedClaimPayload[]) => {
-	const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaimPayload[]>(
-		[],
-	);
+const useClaimVerification = (
+	claimDetectionResults: ClaimDetectionPayload[],
+) => {
+	const [verificationResults, setVerificationResults] = useState<
+		ClaimVerificationPayload[]
+	>([]);
 
 	const updateVerifiedClaims = useCallback(
-		(verifiedClaims: VerifiedClaimPayload[]) => {
-			setVerifiedClaims((prev) => [...prev, ...verifiedClaims]);
+		(verificationResults: ClaimVerificationPayload[]) => {
+			setVerificationResults((prev) => [...prev, ...verificationResults]);
 		},
 		[],
 	);
 
 	const batch = useClaimVerificationBatch({
-		claims,
+		claimDetectionResults,
 		updateVerifiedClaims,
 	});
 
 	return {
-		verifiedClaims,
+		verificationResults,
 		...batch,
 	};
 };

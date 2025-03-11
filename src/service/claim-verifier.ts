@@ -5,7 +5,7 @@ import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
 import VERIFY_CLAIM_PROMPT from "@/constants/prompts/verify-claim";
 
-const VerifiedClaimSchema = z.object({
+const ClaimVerificationResultSchema = z.object({
 	verdictPrediction: z
 		.union([
 			z.literal("TRUE"),
@@ -18,7 +18,9 @@ const VerifiedClaimSchema = z.object({
 	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
 
-export type VerifiedClaim = z.infer<typeof VerifiedClaimSchema>;
+export type ClaimVerificationResult = z.infer<
+	typeof ClaimVerificationResultSchema
+>;
 
 export default class ClaimVerifier {
 	private logger = new LLMHistoryLogger("claim-verifier", {
@@ -28,8 +30,8 @@ export default class ClaimVerifier {
 	constructor(private signal: AbortSignal) {}
 
 	private get isDevMode(): boolean {
-		const { devMode: new__devMode } = loadConfig();
-		return new__devMode.claimVerification ?? new__devMode.default;
+		const { devMode } = loadConfig();
+		return devMode.claimVerification ?? devMode.default;
 	}
 
 	public async verify(
@@ -41,10 +43,10 @@ export default class ClaimVerifier {
 			evidence: string[];
 		},
 		isCompleted?: boolean,
-	): Promise<VerifiedClaim> {
+	): Promise<ClaimVerificationResult> {
 		if (this.isDevMode) return this.verifyOnDevMode();
 
-		const result = this.logger.monitor<VerifiedClaim>(async () => {
+		const result = this.logger.monitor<ClaimVerificationResult>(async () => {
 			const prompt = `${claim}\n${evidence
 				.map((item, idx) => `${idx}.${item}`)
 				.join("\n")}`;
@@ -54,8 +56,8 @@ export default class ClaimVerifier {
 				system: VERIFY_CLAIM_PROMPT,
 				prompt,
 				mode: "json",
-				schema: VerifiedClaimSchema,
-				schemaName: "VerifiedClaims",
+				schema: ClaimVerificationResultSchema,
+				schemaName: "ClaimVerificationResult",
 				schemaDescription: "주장에 대한 검증 결과를 판단하세요.",
 				temperature: 0,
 				abortSignal: this.signal,
@@ -69,9 +71,11 @@ export default class ClaimVerifier {
 		return result;
 	}
 
-	private async verifyOnDevMode(): Promise<VerifiedClaim> {
-		const { verifiedClaims } = await import("/mock/verified-claim.json");
-		const idx = Math.floor(Math.random() * verifiedClaims.length);
-		return verifiedClaims[idx] as VerifiedClaim;
+	private async verifyOnDevMode(): Promise<ClaimVerificationResult> {
+		const { claimVerificationResults } = await import(
+			"/mock/claim-verification-results.json"
+		);
+		const idx = Math.floor(Math.random() * claimVerificationResults.length);
+		return claimVerificationResults[idx] as ClaimVerificationResult;
 	}
 }

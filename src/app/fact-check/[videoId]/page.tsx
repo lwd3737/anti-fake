@@ -1,7 +1,9 @@
 "use client";
 import { ChangeEvent, MouseEvent } from "react";
 import useClaimDetection from "./hooks/useClaimDetection";
-import ClaimCard, { VerificationStatus } from "./components/ClaimCard";
+import DetectionClaimResultCard, {
+	VerificationStatus,
+} from "./components/DetectionClaimResultCard";
 import useClaimVerification from "./hooks/useClaimVerification";
 import CheckBox from "@/app/components/form-controls/CheckBox";
 
@@ -10,7 +12,8 @@ export default function FactCheckPage({
 }: {
 	params: { videoId: string };
 }) {
-	const { detectedClaims, stopDetectingClaim } = useClaimDetection(videoId);
+	const { claimDetectionResults: detectedClaims, stopDetectingClaim } =
+		useClaimDetection(videoId);
 	const verification = useClaimVerification(detectedClaims);
 
 	const handleSwitchToBatchVerificationModeClick = (ev: MouseEvent) => {
@@ -38,7 +41,7 @@ export default function FactCheckPage({
 
 			<section className="flex flex-col gap-y-10 py-5">
 				{detectedClaims.map((claim) => {
-					const verified = verification.verifiedClaims.find(
+					const verified = verification.verificationResults.find(
 						(verified) => verified.claimIndex === claim.index,
 					);
 					const shouldVerify = verification.claimIndexesToVerifiy.has(
@@ -65,10 +68,10 @@ export default function FactCheckPage({
 									)
 								}
 							/>
-							<ClaimCard
+							<DetectionClaimResultCard
 								key={claim.index}
-								claim={claim}
-								verifiedResult={verified}
+								claimDetectionResult={claim}
+								verificationResult={verified}
 								status={status}
 							/>
 						</div>
