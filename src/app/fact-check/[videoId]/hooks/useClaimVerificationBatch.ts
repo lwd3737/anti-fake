@@ -4,127 +4,102 @@ import {
 	VerifyClaimsRequestDto,
 } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
-import {
-	ChangeEvent,
-	FormEvent,
-	useCallback,
-	useEffect,
-	useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const useClaimVerificationBatch = ({
 	claims,
-	verifiedClaims,
 	updateVerifiedClaims,
 }: {
 	claims: DetectedClaimPayload[];
-	verifiedClaims: VerifiedClaimPayload[];
 	updateVerifiedClaims: (verifiedClaims: VerifiedClaimPayload[]) => void;
 }) => {
-	const isClaimVerified = useCallback(
-		(index: number): boolean => {
-			return verifiedClaims.some((verified) => verified.claimIndex === index);
-		},
-		[verifiedClaims],
-	);
-
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
 			updateVerifiedClaims(chunks as VerifiedClaimPayload[]);
 		},
 	);
 
-	const [claimsChecked, setClaimsChecked] = useState<boolean[]>([]);
-	const [allClaimsChecked, setAllClaimsChecked] = useState(false);
+	const [claimIndexesToVerifiy, setClaimIndexesToVerify] = useState<
+		Set<number>
+	>(new Set());
+	const [isAllClaimsToVerifySelected, setIsAllClaimsToVerifySelected] =
+		useState(false);
 
 	useEffect(
 		function initClaimsCheckedOnClaimsUpdated() {
-			setClaimsChecked(claims.map(() => false));
+			setClaimIndexesToVerify(new Set(claims.map((_, index) => index)));
 		},
 		[claims],
 	);
 
-	const handleClaimCheckedChange = useCallback(
-		(ev: ChangeEvent, index: number) => {
-			const el = ev.target as HTMLInputElement;
-
-			setClaimsChecked((prev) =>
-				prev.map((checked, _index) =>
-					_index === index ? el.checked : checked,
-				),
+	const updateClaimToVerifiy = useCallback(
+		(index: number, isSelected: boolean) => {
+			setClaimIndexesToVerify((prev) =>
+				isSelected
+					? new Set([...Array.from(prev), index])
+					: new Set([...Array.from(prev).filter((_index) => _index !== index)]),
 			);
 		},
 		[],
 	);
 
-	const handleAllClaimsCheckedChange = useCallback(
-		(ev: ChangeEvent) => {
-			const el = ev.target as HTMLInputElement;
-
-			setAllClaimsChecked(el.checked);
-
-			if (el.checked) {
-				setClaimsChecked((prev) =>
-					prev.map((_, index) => (isClaimVerified(index) ? false : true)),
-				);
-			} else {
-				setClaimsChecked((prev) => prev.map(() => false));
-			}
+	const updateClaimsToVerifiyBulk = useCallback(
+		(indexes: number[], isSelected: boolean) => {
+			setClaimIndexesToVerify((prev) =>
+				isSelected
+					? new Set([...Array.from(prev), ...indexes])
+					: new Set([
+							...Array.from(prev).filter((_index) => !indexes.includes(_index)),
+					  ]),
+			);
 		},
-		[isClaimVerified],
+		[],
 	);
 
 	const [isBatchMode, setIsBatchMode] = useState(false);
 
 	const switchToBatchMode = useCallback(() => {
 		setIsBatchMode(true);
-		setAllClaimsChecked(true);
-		setClaimsChecked((prev) =>
-			prev.map((_, index) => (isClaimVerified(index) ? false : true)),
-		);
-	}, [isClaimVerified]);
+		setIsAllClaimsToVerifySelected(true);
+		setClaimIndexesToVerify(new Set(claims.map((_, index) => index)));
+	}, [claims]);
 
 	const cancelBatchMode = useCallback(() => {
 		setIsBatchMode(false);
 	}, []);
 
-	const handleStartBatchSubmit = useCallback(
-		async (ev: FormEvent<HTMLFormElement>) => {
-			ev.preventDefault();
+	const startBatch = useCallback(async () => {
+		if (!isBatchMode) return;
 
-			if (!isBatchMode) return;
+		const hasClaimToVerify = claimIndexesToVerifiy.size > 0;
+		if (!hasClaimToVerify) {
+			alert("검증할 주장을 선택해주세요!");
+			return;
+		}
 
-			const hasCheckedClaim = claimsChecked.some((checked) => checked);
-			if (!hasCheckedClaim) {
-				alert("검증할 주장을 선택해주세요!");
-				return;
-			}
+		const claimsToVerify = Array.from(claimIndexesToVerifiy.values()).map(
+			(index) => claims[index],
+		);
 
-			const checkedClaims = claimsChecked
-				.map((checked, idx) => checked && claims[idx])
-				.filter(Boolean) as DetectedClaimPayload[];
+		const dto = {
+			claims: claimsToVerify,
+		} as VerifyClaimsRequestDto;
+		await startStreaming("verify-claims", dto);
 
-			const dto = {
-				claims: checkedClaims,
-			} as VerifyClaimsRequestDto;
-			await startStreaming("verify-claims", dto);
-
-			setIsBatchMode(false);
-		},
-		[claims, claimsChecked, isBatchMode, startStreaming],
-	);
+		setIsBatchMode(false);
+	}, [claimIndexesToVerifiy, claims, isBatchMode, startStreaming]);
 
 	return {
-		claimsChecked,
-		allClaimsChecked,
-		handleClaimCheckedChange,
-		handleAllClaimsCheckedChange,
+		isAllClaimsToVerifySelected,
+		claimIndexesToVerifiy,
+		updateClaimToVerifiy,
+		updateClaimsToVerifiyBulk,
 
 		isBatchMode,
 		isBatchLoading: isLoading,
 		switchToBatchMode,
 		cancelBatchMode,
-		handleStartBatchSubmit,
+		startBatch,
 		stopBatch: stopStreaming,
 	};
 };

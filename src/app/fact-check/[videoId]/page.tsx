@@ -1,8 +1,9 @@
 "use client";
-import { MouseEvent } from "react";
+import { ChangeEvent, MouseEvent } from "react";
 import useClaimDetection from "./hooks/useClaimDetection";
-import ClaimCard from "./components/ClaimCard";
+import ClaimCard, { VerificationStatus } from "./components/ClaimCard";
 import useClaimVerification from "./hooks/useClaimVerification";
+import CheckBox from "@/app/components/form-controls/CheckBox";
 
 export default function FactCheckPage({
 	params: { videoId },
@@ -22,72 +23,89 @@ export default function FactCheckPage({
 		verification.cancelBatchMode();
 	};
 
+	const handleAllSelectedForVerificationChange = (ev: ChangeEvent) => {
+		const el = ev.target as HTMLInputElement;
+
+		verification.updateClaimsToVerifiyBulk(
+			detectedClaims.map((claim) => claim.index),
+			el.checked,
+		);
+	};
+
 	return (
 		<main>
 			<h1 className="text-2xl">팩트 체크 결과</h1>
 
-			<section>
-				<form
-					className="flex flex-col gap-y-10 py-5"
-					onSubmit={verification.handleStartBatchSubmit}
-				>
-					{detectedClaims.map((claim) => {
-						const verified = verification.verifiedClaims.find(
-							(verified) => verified.claimIndex === claim.index,
-						);
-						const isChecked = verification.claimsChecked[claim.index];
+			<section className="flex flex-col gap-y-10 py-5">
+				{detectedClaims.map((claim) => {
+					const verified = verification.verifiedClaims.find(
+						(verified) => verified.claimIndex === claim.index,
+					);
+					const shouldVerify = verification.claimIndexesToVerifiy.has(
+						claim.index,
+					);
+					const status = verified
+						? VerificationStatus.VERIFIED
+						: shouldVerify && verification.isBatchLoading
+						? VerificationStatus.LOADING
+						: VerificationStatus.NOT_VERIFIED;
+					const isVerfiable =
+						verification.isBatchMode &&
+						status === VerificationStatus.NOT_VERIFIED;
 
-						return (
+					return (
+						<div className="flex items-start gap-x-2 gap-y-1" key={claim.index}>
+							<CheckBox
+								className={`${isVerfiable ? "visible" : "invisible"} mt-[1px]`}
+								checked={shouldVerify}
+								onChange={(ev) =>
+									verification.updateClaimToVerifiy(
+										claim.index,
+										ev.target.checked,
+									)
+								}
+							/>
 							<ClaimCard
 								key={claim.index}
 								claim={claim}
 								verifiedResult={verified}
-								isVerificationBatchMode={verification.isBatchMode}
-								isVerificationBatchLoading={verification.isBatchLoading}
-								isVerificattionSelected={isChecked}
-								onVerficationSelectionChange={
-									verification.handleClaimCheckedChange
-								}
+								status={status}
 							/>
-						);
-					})}
+						</div>
+					);
+				})}
 
-					<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
-						{verification.isBatchMode ? (
-							verification.isBatchLoading ? (
-								<button onClick={verification.stopBatch}>중단</button>
-							) : (
-								<div className="flex justify-between w-full">
-									<div>
-										<input
-											id="all-selector"
-											type="checkbox"
-											checked={verification.allClaimsChecked}
-											onChange={verification.handleAllClaimsCheckedChange}
-										/>
-										<label htmlFor="all-selector">전체 선택</label>
-									</div>
-									<div className="flex gap-x-3">
-										<button type="submit">선택한 주장 검증하기</button>
-										<button
-											type="button"
-											onClick={handleCancelBatchVerificationModeClick}
-										>
-											취소
-										</button>
-									</div>
-								</div>
-							)
+				<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
+					{verification.isBatchMode ? (
+						verification.isBatchLoading ? (
+							<button onClick={verification.stopBatch}>중단</button>
 						) : (
-							<button
-								type="button"
-								onClick={handleSwitchToBatchVerificationModeClick}
-							>
-								미검증 주장 일괄 검증하기
-							</button>
-						)}
-					</div>
-				</form>
+							<div className="flex justify-between w-full">
+								<div>
+									<input
+										id="all-selector"
+										type="checkbox"
+										checked={verification.isAllClaimsToVerifySelected}
+										onChange={handleAllSelectedForVerificationChange}
+									/>
+									<label htmlFor="all-selector">전체 선택</label>
+								</div>
+								<div className="flex gap-x-3">
+									<button onClick={verification.startBatch}>
+										선택한 주장 검증하기
+									</button>
+									<button onClick={handleCancelBatchVerificationModeClick}>
+										취소
+									</button>
+								</div>
+							</div>
+						)
+					) : (
+						<button onClick={handleSwitchToBatchVerificationModeClick}>
+							미검증 주장 일괄 검증하기
+						</button>
+					)}
+				</div>
 			</section>
 		</main>
 	);

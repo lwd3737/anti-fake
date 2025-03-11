@@ -16,7 +16,6 @@ const useClaimVerification = (claims: DetectedClaimPayload[]) => {
 
 	const batch = useClaimVerificationBatch({
 		claims,
-		verifiedClaims,
 		updateVerifiedClaims,
 	});
 
