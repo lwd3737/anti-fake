@@ -4,7 +4,7 @@ import {
 } from "@/dto/fact-check";
 
 interface Props {
-	claimDetectionResult: ClaimDetectionPayload;
+	detectionResult: ClaimDetectionPayload;
 	verificationResult?: ClaimVerificationPayload;
 	status: VerificationStatus;
 }
@@ -15,8 +15,8 @@ export enum VerificationStatus {
 	NOT_VERIFIED = "NOT_VERIFIED",
 }
 
-export default function DetectionClaimResultCard({
-	claimDetectionResult,
+export default function ClaimDetectionResultCard({
+	detectionResult,
 	verificationResult,
 	status,
 }: Props) {
@@ -25,10 +25,10 @@ export default function DetectionClaimResultCard({
 			<div className="flex items-center gap-x-2">
 				<span>{status}</span>
 				<h3>
-					{claimDetectionResult.index + 1}. {claimDetectionResult.content}
+					{detectionResult.index + 1}. {detectionResult.content}
 				</h3>
 			</div>
-			<p>이유: {claimDetectionResult.reason}</p>
+			<p>이유: {detectionResult.reason}</p>
 
 			<div className="h-[200px] overflow-y-auto">
 				{status === VerificationStatus.VERIFIED && (
