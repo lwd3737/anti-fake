@@ -1,5 +1,5 @@
 "use client";
-import CheckBox from "@/app/components/form-controls/CheckBox";
+import CheckBox from "@/app/components/inputs/CheckBox";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
 import FactCheckItemCard, { VerificationStatus } from "./FactCheckItemCard";
