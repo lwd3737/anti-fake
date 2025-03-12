@@ -1,9 +1,11 @@
 "use client";
 import { ClaimDetectionPayload } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
+import assert from "assert";
 import {
 	createContext,
 	ReactNode,
+	useCallback,
 	useContext,
 	useEffect,
 	useMemo,
@@ -15,13 +17,12 @@ export interface IClaimDetection {
 	data: ClaimDetectionPayload[];
 	isLoading: boolean;
 	stop: () => void;
+	remove: (index: number) => void;
 }
 
-const ClaimDetectionContext = createContext<IClaimDetection>({
-	data: [] as ClaimDetectionPayload[],
-	isLoading: false,
-	stop: () => {},
-});
+const ClaimDetectionContext = createContext<IClaimDetection | undefined>(
+	undefined,
+);
 
 export default function ClaimDetectionProvider({
 	videoId,
@@ -51,22 +52,29 @@ export default function ClaimDetectionProvider({
 		[startStreaming, videoId],
 	);
 
-	const contextValue = useMemo(
+	const remove = useCallback((index: number) => {
+		setData((prev) => prev.filter((_, i) => i !== index));
+	}, []);
+
+	const value: IClaimDetection = useMemo(
 		() => ({
 			data: data,
 			isLoading,
 			stop: stopStreaming,
+			remove,
 		}),
-		[data, isLoading, stopStreaming],
+		[data, isLoading, remove, stopStreaming],
 	);
 
 	return (
-		<ClaimDetectionContext.Provider value={contextValue}>
+		<ClaimDetectionContext.Provider value={value}>
 			{children}
 		</ClaimDetectionContext.Provider>
 	);
 }
 
 export const useClaimDetection = () => {
-	return useContext(ClaimDetectionContext);
+	const value = useContext(ClaimDetectionContext);
+	assert(value, `${ClaimDetectionProvider.name} not found`);
+	return value;
 };

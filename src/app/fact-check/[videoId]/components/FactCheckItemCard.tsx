@@ -7,6 +7,7 @@ interface Props {
 	detectionResult: ClaimDetectionPayload;
 	verificationResult?: ClaimVerificationPayload;
 	status: VerificationStatus;
+	onRemove: () => void;
 }
 
 export enum VerificationStatus {
@@ -15,20 +16,23 @@ export enum VerificationStatus {
 	NOT_VERIFIED = "NOT_VERIFIED",
 }
 
-export default function ClaimDetectionResultCard({
+export default function FactCheckItemCard({
 	detectionResult,
 	verificationResult,
 	status,
+	onRemove,
 }: Props) {
 	return (
-		<article className="flex flex-col gap-y-4">
-			<div className="flex items-center gap-x-2">
-				<span>{status}</span>
-				<h3>
-					{detectionResult.index + 1}. {detectionResult.content}
-				</h3>
+		<article className="flex flex-col flex-1 gap-y-4">
+			<div className="flex justify-between items-center gap-x-10">
+				<div className="flex items-center gap-x-2">
+					<span>{status}</span>
+					<h3>
+						{detectionResult.index + 1}. {detectionResult.content}
+					</h3>
+				</div>
+				<button onClick={onRemove}>삭제</button>
 			</div>
-			<p>이유: {detectionResult.reason}</p>
 
 			<div className="h-[200px] overflow-y-auto">
 				{status === VerificationStatus.VERIFIED && (

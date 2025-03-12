@@ -3,9 +3,7 @@ import { ChangeEvent, MouseEvent } from "react";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
 
-interface Props {}
-
-export default function ControlHorizontalBar({}: Props) {
+export default function ControlHorizontalBar() {
 	const { data: detectionResults } = useClaimDetection();
 	const {
 		start: startBatch,

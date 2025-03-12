@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useClaimDetection } from "./ClaimDetectionProvider";
 import { useClaimVerification } from "./ClaimVerificationProvider";
+import assert from "assert";
 
 export interface IClaimVerificationBatch {
 	data: ClaimVerificationPayload[];
@@ -31,20 +32,9 @@ export interface IClaimVerificationBatch {
 	updateClaimsToVerifiyBulk: (indexes: number[], isSelected: boolean) => void;
 }
 
-const ClaimVerificationBatchContext = createContext<IClaimVerificationBatch>({
-	data: [] as ClaimVerificationPayload[],
-	isLoading: false,
-	start: () => {},
-	stop: () => {},
-
-	isBatchMode: false,
-	switchToBatchMode: () => {},
-	cancelBatchMode: () => {},
-
-	claimIndexesToVerifiy: new Set(),
-	updateClaimToVerifiy: () => {},
-	updateClaimsToVerifiyBulk: () => {},
-});
+const ClaimVerificationBatchContext = createContext<
+	IClaimVerificationBatch | undefined
+>(undefined);
 
 export default function ClaimVerificationBatchProvider({
 	children,
@@ -62,8 +52,6 @@ export default function ClaimVerificationBatchProvider({
 	const [claimIndexesToVerifiy, setClaimIndexesToVerify] = useState<
 		Set<number>
 	>(new Set());
-	const [isAllClaimsToVerifySelected, setIsAllClaimsToVerifySelected] =
-		useState(false);
 
 	useEffect(
 		function initClaimsCheckedOnClaimsUpdated() {
@@ -100,7 +88,6 @@ export default function ClaimVerificationBatchProvider({
 
 	const switchToBatchMode = useCallback(() => {
 		setIsBatchMode(true);
-		setIsAllClaimsToVerifySelected(true);
 		setClaimIndexesToVerify(new Set(data.map((_, index) => index)));
 	}, [data]);
 
@@ -132,7 +119,7 @@ export default function ClaimVerificationBatchProvider({
 		setIsBatchMode(false);
 	}, [claimIndexesToVerifiy, detectionResults, isBatchMode, startStreaming]);
 
-	const contextValue: IClaimVerificationBatch = useMemo(
+	const value: IClaimVerificationBatch = useMemo(
 		() => ({
 			data,
 			isLoading,
@@ -162,12 +149,17 @@ export default function ClaimVerificationBatchProvider({
 	);
 
 	return (
-		<ClaimVerificationBatchContext.Provider value={contextValue}>
+		<ClaimVerificationBatchContext.Provider value={value}>
 			{children}
 		</ClaimVerificationBatchContext.Provider>
 	);
 }
 
 export const useClaimVerificationBatch = () => {
-	return useContext(ClaimVerificationBatchContext);
+	const value = useContext(ClaimVerificationBatchContext);
+	assert(
+		value,
+		`${ClaimVerificationBatchProvider.name} not found in the hierarchy`,
+	);
+	return value;
 };

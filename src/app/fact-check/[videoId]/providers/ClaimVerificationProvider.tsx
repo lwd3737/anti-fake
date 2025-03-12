@@ -1,5 +1,6 @@
 "use client";
 import { ClaimVerificationPayload } from "@/dto/fact-check";
+import assert from "assert";
 import {
 	createContext,
 	ReactNode,
@@ -12,12 +13,12 @@ import {
 export interface IClaimVerification {
 	data: ClaimVerificationPayload[];
 	append: (data: ClaimVerificationPayload[]) => void;
+	remove: (index: number) => void;
 }
 
-const ClaimVerificationContext = createContext<IClaimVerification>({
-	data: [],
-	append: () => {},
-});
+const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
+	undefined,
+);
 
 export default function ClaimVerificationProvider({
 	children,
@@ -30,18 +31,24 @@ export default function ClaimVerificationProvider({
 		setData((prev) => [...prev, ...data]);
 	}, []);
 
-	const contextValue: IClaimVerification = useMemo(
-		() => ({ data, append }),
-		[append, data],
+	const remove = useCallback((index: number) => {
+		setData((prev) => prev.filter((_, i) => i !== index));
+	}, []);
+
+	const value: IClaimVerification = useMemo(
+		() => ({ data, append, remove }),
+		[append, data, remove],
 	);
 
 	return (
-		<ClaimVerificationContext.Provider value={contextValue}>
+		<ClaimVerificationContext.Provider value={value}>
 			{children}
 		</ClaimVerificationContext.Provider>
 	);
 }
 
 export const useClaimVerification = () => {
-	return useContext(ClaimVerificationContext);
+	const value = useContext(ClaimVerificationContext);
+	assert(value, `${ClaimVerificationProvider.name} not found in the hierarchy`);
+	return value;
 };

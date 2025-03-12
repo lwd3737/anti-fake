@@ -2,19 +2,25 @@
 import CheckBox from "@/app/components/form-controls/CheckBox";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
-import ClaimDetectionResultCard, {
-	VerificationStatus,
-} from "./ClaimDetectionResultCard";
+import FactCheckItemCard, { VerificationStatus } from "./FactCheckItemCard";
+import { useClaimVerification } from "../providers/ClaimVerificationProvider";
 
-export default function ClaimDetectionResultList() {
-	const { data: detectionResults } = useClaimDetection();
+export default function FactCheckList() {
+	const { data: detectionResults, remove: removeDetectionResult } =
+		useClaimDetection();
+	const { data: verificationResults, remove: removeVerficationResult } =
+		useClaimVerification();
 	const {
-		data: verificationResults,
 		isLoading: isBatchLoading,
 		isBatchMode,
 		claimIndexesToVerifiy,
 		updateClaimToVerifiy,
 	} = useClaimVerificationBatch();
+
+	const removeItem = (index: number) => {
+		removeDetectionResult(index);
+		removeVerficationResult(index);
+	};
 
 	return (
 		<div className="contents">
@@ -32,10 +38,7 @@ export default function ClaimDetectionResultList() {
 					isBatchMode && status === VerificationStatus.NOT_VERIFIED;
 
 				return (
-					<div
-						className="flex items-start gap-x-2 gap-y-1"
-						key={detectionResult.index}
-					>
+					<div className="flex gap-x-3 gap-y-1" key={detectionResult.index}>
 						<CheckBox
 							className={`${isVerfiable ? "visible" : "invisible"} mt-[1px]`}
 							checked={shouldVerify}
@@ -43,12 +46,15 @@ export default function ClaimDetectionResultList() {
 								updateClaimToVerifiy(detectionResult.index, ev.target.checked)
 							}
 						/>
-						<ClaimDetectionResultCard
-							key={detectionResult.index}
-							detectionResult={detectionResult}
-							verificationResult={verified}
-							status={status}
-						/>
+						<div className="flex-1">
+							<FactCheckItemCard
+								key={detectionResult.index}
+								detectionResult={detectionResult}
+								verificationResult={verified}
+								status={status}
+								onRemove={() => removeItem(detectionResult.index)}
+							/>
+						</div>
 					</div>
 				);
 			})}
