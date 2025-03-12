@@ -41,6 +41,11 @@ export default function ControlHorizontalBar() {
 	};
 
 	const handleRetryDetectionClick = () => {
+		const ok = confirm(
+			"주장 탐지 재시도는 모든 항목들을 초기화합니다. 계속하시겠습니까?",
+		);
+		if (!ok) return;
+
 		retryDetection();
 		clearVerficationResults();
 	};
