@@ -2,6 +2,7 @@ import {
 	ClaimDetectionPayload,
 	ClaimVerificationPayload,
 } from "@/dto/fact-check";
+import Link from "next/link";
 
 interface Props {
 	detectionResult: ClaimDetectionPayload;
@@ -37,9 +38,30 @@ export default function FactCheckItemCard({
 			<div className="h-[200px] overflow-y-auto">
 				{status === VerificationStatus.VERIFIED && (
 					<div className="flex flex-col gap-y-3">
-						<p>사실 여부: {verificationResult!.verdictPrediction}</p>
-						<p>근거: {verificationResult!.justificationProduction}</p>
-						<p>출처: </p>
+						<p>{verificationResult!.verdict}</p>
+						<p>판결 근거: {verificationResult!.reason}</p>
+
+						<div>
+							<p>증거</p>
+							<ol className="flex flex-col gap-y-2">
+								{verificationResult!.evidence.contents.map((content, index) => (
+									<li key={index}>{content}</li>
+								))}
+							</ol>
+						</div>
+
+						<div>
+							<p>출처</p>
+							<ol className="flex flex-col gap-y-2">
+								{verificationResult!.evidence.sources.map(
+									({ title, uri }, index) => (
+										<Link key={index} href={uri!}>
+											{title}
+										</Link>
+									),
+								)}
+							</ol>
+						</div>
 					</div>
 				)}
 			</div>

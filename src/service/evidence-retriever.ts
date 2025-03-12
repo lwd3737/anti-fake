@@ -4,14 +4,14 @@ import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
 import EventEmitter from "events";
 
-export type EvidenceRetrievalResult = RetrievedEvidence | RetrievedError;
+export type EvidenceRetrievalResult = RetrivedEvidence | EvidenceRetrievalError;
 
-interface RetrievedEvidence {
-	content: string[];
+export interface RetrivedEvidence {
+	contents: string[];
 	sources: RetrievedSource[];
 }
 
-interface RetrievedError {
+interface EvidenceRetrievalError {
 	error: string;
 }
 
@@ -56,7 +56,7 @@ export default class EvidenceRetriever {
 
 	public static isError(
 		result: EvidenceRetrievalResult,
-	): result is RetrievedError {
+	): result is EvidenceRetrievalError {
 		return "error" in result;
 	}
 

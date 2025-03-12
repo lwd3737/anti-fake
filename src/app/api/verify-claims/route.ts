@@ -18,18 +18,18 @@ export async function POST(req: NextRequest) {
 			const isCompleted = idx === claims.length - 1;
 			const claim = claims[idx];
 
-			const retrieved = await evidenceRetriever.retrieve(
+			const evidence = await evidenceRetriever.retrieve(
 				claim.content,
 				isCompleted,
 			);
 
-			if (EvidenceRetriever.isError(retrieved)) {
-				console.error(retrieved.error);
+			if (EvidenceRetriever.isError(evidence)) {
+				console.error(evidence.error);
 			} else {
 				const verifed = await claimVerifier.verify(
 					{
 						claim: claim.content,
-						evidence: retrieved.content,
+						evidence: evidence.contents,
 					},
 					isCompleted,
 				);
@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
 					...verifed,
 					type: "claimVerificationResult",
 					claimIndex: claim.index,
-				} as ClaimVerificationResponseDto;
+					evidence,
+				} satisfies ClaimVerificationResponseDto;
 
 				send(dto);
 			}

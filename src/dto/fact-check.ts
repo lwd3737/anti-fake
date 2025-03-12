@@ -1,5 +1,6 @@
 import { ClaimDetectionResult } from "@/service/claim-detector";
 import { ClaimVerificationResult } from "@/service/claim-verifier";
+import { RetrivedEvidence } from "@/service/evidence-retriever";
 
 // Request
 export interface DetectClaimsRequestDto {
@@ -30,6 +31,7 @@ export type ClaimDetectionPayload = Omit<ClaimDetectionResponseDto, "type">;
 export interface ClaimVerificationResponseDto extends ClaimVerificationResult {
 	type: "claimVerificationResult";
 	claimIndex: number;
+	evidence: RetrivedEvidence;
 }
 
 export type ClaimVerificationPayload = Omit<

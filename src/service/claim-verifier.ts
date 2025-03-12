@@ -6,7 +6,7 @@ import loadConfig from "@/config";
 import VERIFY_CLAIM_PROMPT from "@/constants/prompts/verify-claim";
 
 const ClaimVerificationResultSchema = z.object({
-	verdictPrediction: z
+	verdict: z
 		.union([
 			z.literal("TRUE"),
 			z.literal("MOSTLY_TRUE"),
@@ -15,7 +15,7 @@ const ClaimVerificationResultSchema = z.object({
 			z.literal("FALSE"),
 		])
 		.describe("주장의 진실 여부 라벨"),
-	justificationProduction: z.string().describe("주장에 대한 판결에 대한 이유"),
+	reason: z.string().describe("주장에 대한 판결에 대한 이유"),
 });
 
 export type ClaimVerificationResult = z.infer<

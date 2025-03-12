@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 			const verifed = await claimVerifier.verify(
 				{
 					claim: claim.content,
-					evidence: retrieved.content,
+					evidence: retrieved.contents,
 				},
 				true,
 			);
