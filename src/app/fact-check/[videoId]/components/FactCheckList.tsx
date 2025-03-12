@@ -38,9 +38,12 @@ export default function FactCheckList() {
 					isBatchMode && status === VerificationStatus.NOT_VERIFIED;
 
 				return (
-					<div className="flex gap-x-3 gap-y-1" key={detectionResult.index}>
+					<div
+						className="flex items-start gap-x-3 gap-y-1"
+						key={detectionResult.index}
+					>
 						<CheckBox
-							className={`${isVerfiable ? "visible" : "invisible"} mt-[1px]`}
+							className={` ${isVerfiable ? "visible" : "invisible"} mt-[1px]`}
 							checked={shouldVerify}
 							onChange={(ev) =>
 								updateClaimToVerifiy(detectionResult.index, ev.target.checked)
