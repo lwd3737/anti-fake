@@ -2,9 +2,11 @@
 import { ChangeEvent, MouseEvent } from "react";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
+import { useClaimVerification } from "../providers/ClaimVerificationProvider";
 
 export default function ControlHorizontalBar() {
-	const { data: detectionResults } = useClaimDetection();
+	const { data: detectionResults, retry: retryDetection } = useClaimDetection();
+	const { clear: clearVerficationResults } = useClaimVerification();
 	const {
 		start: startBatch,
 		stop: stopBatch,
@@ -38,6 +40,11 @@ export default function ControlHorizontalBar() {
 		);
 	};
 
+	const handleRetryDetectionClick = () => {
+		retryDetection();
+		clearVerficationResults();
+	};
+
 	return (
 		<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
 			{isBatchMode ? (
@@ -61,9 +68,14 @@ export default function ControlHorizontalBar() {
 					</div>
 				)
 			) : (
-				<button onClick={handleSwitchToBatchModeClick}>
-					미검증 주장 일괄 검증하기
-				</button>
+				<div className="flex gap-x-3">
+					<button onClick={handleSwitchToBatchModeClick}>
+						미검증 주장 일괄 검증하기
+					</button>
+					<button onClick={handleRetryDetectionClick}>
+						주장 탐지 재시도하기
+					</button>
+				</div>
 			)}
 		</div>
 	);

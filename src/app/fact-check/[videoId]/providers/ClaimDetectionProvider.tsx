@@ -18,6 +18,7 @@ export interface IClaimDetection {
 	isLoading: boolean;
 	stop: () => void;
 	remove: (index: number) => void;
+	retry: () => void;
 }
 
 const ClaimDetectionContext = createContext<IClaimDetection | undefined>(
@@ -56,14 +57,20 @@ export default function ClaimDetectionProvider({
 		setData((prev) => prev.filter((_, i) => i !== index));
 	}, []);
 
+	const retry = useCallback(() => {
+		setData([]);
+		startStreaming("detect-claims", { videoId });
+	}, [startStreaming, videoId]);
+
 	const value: IClaimDetection = useMemo(
 		() => ({
 			data: data,
 			isLoading,
 			stop: stopStreaming,
 			remove,
+			retry,
 		}),
-		[data, isLoading, remove, stopStreaming],
+		[data, isLoading, remove, retry, stopStreaming],
 	);
 
 	return (

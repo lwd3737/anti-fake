@@ -14,6 +14,7 @@ export interface IClaimVerification {
 	data: ClaimVerificationPayload[];
 	append: (data: ClaimVerificationPayload[]) => void;
 	remove: (index: number) => void;
+	clear: () => void;
 }
 
 const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
@@ -35,9 +36,13 @@ export default function ClaimVerificationProvider({
 		setData((prev) => prev.filter((_, i) => i !== index));
 	}, []);
 
+	const clear = useCallback(() => {
+		setData([]);
+	}, []);
+
 	const value: IClaimVerification = useMemo(
-		() => ({ data, append, remove }),
-		[append, data, remove],
+		() => ({ data, append, remove, clear }),
+		[append, clear, data, remove],
 	);
 
 	return (
