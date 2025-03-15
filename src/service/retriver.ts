@@ -8,16 +8,7 @@ import {
 	GroundingMetadata,
 } from "@google/generative-ai";
 
-export interface RetrievedResult<Content = unknown> {
-	contents: Content;
-	sources: RetrievalCitation[];
-	metadata: {
-		tokenUsage: TokenUsage;
-		model: string;
-	};
-}
-
-export interface RetrievalResult {
+interface RetrievalResult {
 	summaries: RetrievalSummary[];
 	citations: RetrievalCitation[];
 	metadata: {
@@ -26,12 +17,12 @@ export interface RetrievalResult {
 	};
 }
 
-export interface RetrievalSummary {
+interface RetrievalSummary {
 	content: string;
 	citationIndices: number[];
 }
 
-export interface RetrievalCitation {
+interface RetrievalCitation {
 	title: string;
 	uri: string;
 }
@@ -60,7 +51,7 @@ export default class Retriever {
 		);
 	}
 
-	public async new__retrieve(
+	public async retrieve(
 		query: string,
 		{
 			system,

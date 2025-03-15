@@ -1,6 +1,6 @@
 "use client";
-import { ClaimDetectionPayload } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
+import { ClaimDetectionResult } from "@/models/claim-detection";
 import assert from "assert";
 import {
 	createContext,
@@ -14,7 +14,7 @@ import {
 } from "react";
 
 export interface IClaimDetection {
-	data: ClaimDetectionPayload[];
+	data: ClaimDetectionResult[];
 	isLoading: boolean;
 	stop: () => void;
 	remove: (index: number) => void;
@@ -32,11 +32,11 @@ export default function ClaimDetectionProvider({
 	videoId: string;
 	children: ReactNode;
 }) {
-	const [data, setData] = useState<ClaimDetectionPayload[]>([]);
+	const [data, setData] = useState<ClaimDetectionResult[]>([]);
 
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
-			setData((prev) => [...prev, ...(chunks as ClaimDetectionPayload[])]);
+			setData((prev) => [...prev, ...(chunks as ClaimDetectionResult[])]);
 		},
 	);
 

@@ -1,26 +1,12 @@
-import RETRIEVE_EVIDENCES_PROMPT from "@/constants/prompts/retrieve-evidences";
-import Retriever, { RetrievalCitation, RetrievalResult } from "./retriver";
+import RETRIEVE_EVIDENCES_PROMPT from "@/prompts/retrieve-evidences";
+import Retriever from "./retriver";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
 import EventEmitter from "events";
-
-export type EvidenceRetrievalResult = RetrivedEvidence | EvidenceRetrievalError;
-
-export type RetrivedEvidence = Omit<RetrievalResult, "metadata">;
-
-export interface RetrivedEvidences {
-	evidences: RetrivedEvidence[];
-	sources: RetrievalCitation[];
-}
-
-export interface New__RetriedEvidence {
-	content: string;
-	sourceIndices: number[];
-}
-
-interface EvidenceRetrievalError {
-	error: string;
-}
+import {
+	EvidenceRetrievalError,
+	EvidenceRetrievalResult,
+} from "@/models/evidence-retrieval";
 
 enum EventType {
 	RETRIEVED = "RETRIEVED",
@@ -76,19 +62,10 @@ export default class EvidenceRetriever {
 		const result = this.logger.monitor<EvidenceRetrievalResult>(
 			async (log, error) => {
 				try {
-					// const { metadata, ...evidence } = await this.retriever.retrieve(
-					// 	claim,
-					// 	{
-					// 		system: RETRIEVE_EVIDENCES_PROMPT,
-					// 		mode: "json",
-					// 	},
-					// );
-
-					const { metadata, ...evidence } = await this.retriever.new__retrieve(
+					const { metadata, ...evidence } = await this.retriever.retrieve(
 						claim,
 						{
 							system: RETRIEVE_EVIDENCES_PROMPT,
-							// mode: "json",
 						},
 					);
 

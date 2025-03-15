@@ -3,24 +3,25 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
-import VERIFY_CLAIM_PROMPT from "@/constants/prompts/verify-claim";
+import VERIFY_CLAIM_PROMPT from "@/prompts/verify-claim";
+import {
+	ClaimVerificationResult,
+	VerificationVerdict,
+} from "@/models/claim-verification";
 
 const ClaimVerificationResultSchema = z.object({
 	verdict: z
 		.union([
-			z.literal("TRUE"),
-			z.literal("MOSTLY_TRUE"),
-			z.literal("MIXED"),
-			z.literal("MOSTLY_FALSE"),
-			z.literal("FALSE"),
+			z.literal(VerificationVerdict.TRUE),
+			z.literal(VerificationVerdict.MOSTLY_TRUE),
+			z.literal(VerificationVerdict.MIXED),
+			z.literal(VerificationVerdict.MOSTLY_FALSE),
+			z.literal(VerificationVerdict.FALSE),
+			z.literal(VerificationVerdict.UNKNOWN),
 		])
-		.describe("주장의 진실 여부 라벨"),
-	reason: z.string().describe("주장에 대한 판결에 대한 이유"),
+		.describe("주장의 진실 여부 판결"),
+	reason: z.string().describe("주장에 대한 판결에 대한 이유 및 근거"),
 });
-
-export type ClaimVerificationResult = z.infer<
-	typeof ClaimVerificationResultSchema
->;
 
 export default class ClaimVerifier {
 	private logger = new LLMHistoryLogger("claim-verifier", {

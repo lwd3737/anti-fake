@@ -1,11 +1,12 @@
 import { AIModel, openai } from "@/helpers/ai";
 import { streamObject } from "ai";
-import DETECT_CLAIM_PROMPT from "@/constants/prompts/detect-claim";
+import DETECT_CLAIM_PROMPT from "@/prompts/detect-claim";
 import { z } from "zod";
 import EventEmitter from "events";
 import assert from "assert";
 import LLMHistoryLogger from "@/logger/llm-history.logger";
 import loadConfig from "@/config";
+import { ClaimDetectionResult } from "@/models/claim-detection";
 
 enum EventType {
 	CLAIM_DETECTED = "CLAIM_DETECTED",
@@ -21,12 +22,6 @@ const ClaimDetectionResultSchema = z.object({
 		),
 	reason: z.string().describe("해당 주장이 검증 가능한 주장으로 탐지된 이유"),
 });
-
-export type ClaimDetectionResult = z.infer<
-	typeof ClaimDetectionResultSchema
-> & {
-	index: number;
-};
 
 const STREAM_INTERVAL = 100;
 

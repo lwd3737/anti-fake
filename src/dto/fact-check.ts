@@ -1,6 +1,5 @@
-import { ClaimDetectionResult } from "@/service/claim-detector";
-import { ClaimVerificationResult } from "@/service/claim-verifier";
-import { RetrivedEvidence } from "@/service/evidence-retriever";
+import { ClaimDetectionResult } from "@/models/claim-detection";
+import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 
 // Request
 export interface DetectClaimsRequestDto {
@@ -21,17 +20,13 @@ export interface ClaimDto {
 }
 
 // Response
-
 export interface ClaimDetectionResponseDto extends ClaimDetectionResult {
 	type: "claimDetectionResult";
 }
 
-export type ClaimDetectionPayload = Omit<ClaimDetectionResponseDto, "type">;
-
-export interface ClaimVerificationResponseDto extends ClaimVerificationResult {
+export interface ClaimVerificationResponseDto
+	extends ClaimVerificationResultWithDetails {
 	type: "claimVerificationResult";
-	claimIndex: number;
-	evidence: RetrivedEvidence;
 }
 
 export type ClaimVerificationPayload = Omit<

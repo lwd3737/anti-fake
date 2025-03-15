@@ -1,11 +1,9 @@
-import {
-	ClaimDetectionPayload,
-	ClaimVerificationPayload,
-} from "@/dto/fact-check";
+import { ClaimVerificationPayload } from "@/dto/fact-check";
+import { ClaimDetectionResult } from "@/models/claim-detection";
 import Link from "next/link";
 
 interface Props {
-	detectionResult: ClaimDetectionPayload;
+	detectionResult: ClaimDetectionResult;
 	verificationResult?: ClaimVerificationPayload;
 	status: VerificationStatus;
 	onRemove: () => void;
