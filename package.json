@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "^0.0.61",
-		"@google/generative-ai": "^0.21.0",
+		"@google/generative-ai": "^0.24.0",
 		"@googleapis/customsearch": "^3.2.0",
 		"ai": "^4.1.37",
 		"googleapis": "^144.0.0",

@@ -2,24 +2,39 @@ import loadConfig from "@/config";
 import { TokenUsage } from "@/logger/llm-history.logger";
 import {
 	DynamicRetrievalMode,
-	GenerateContentResult,
 	GenerativeModel,
 	GoogleGenerativeAI,
 	GroundingChunk,
-	GroundingChunkWeb,
 	GroundingMetadata,
 } from "@google/generative-ai";
 
 export interface RetrievedResult<Content = unknown> {
-	content: Content;
-	sources: RetrievedSource[];
+	contents: Content;
+	sources: RetrievalCitation[];
 	metadata: {
 		tokenUsage: TokenUsage;
 		model: string;
 	};
 }
 
-export type RetrievedSource = GroundingChunkWeb;
+export interface RetrievalResult {
+	summaries: RetrievalSummary[];
+	citations: RetrievalCitation[];
+	metadata: {
+		tokenUsage: TokenUsage;
+		model: string;
+	};
+}
+
+export interface RetrievalSummary {
+	content: string;
+	citationIndices: number[];
+}
+
+export interface RetrievalCitation {
+	title: string;
+	uri: string;
+}
 
 export default class Retriever {
 	private model: GenerativeModel;
@@ -45,21 +60,19 @@ export default class Retriever {
 		);
 	}
 
-	public async retrieve<OutputContent = any>(
+	public async new__retrieve(
 		query: string,
 		{
 			system,
 			temperature = 0,
 			mode = "text",
-			onCompleted,
 		}: {
 			system?: string;
 			temperature?: number;
 			mode?: "json" | "text";
-			onCompleted?: (result: GenerateContentResult) => void;
 		},
-	): Promise<RetrievedResult<OutputContent>> {
-		const result = await this.model.generateContent(
+	): Promise<RetrievalResult> {
+		const generatedContent = await this.model.generateContent(
 			{
 				contents: [
 					{
@@ -87,34 +100,68 @@ export default class Retriever {
 			},
 		);
 
-		onCompleted?.(result);
+		const initialResult = {
+			summaries: [] as RetrievalSummary[],
+			citations: [] as RetrievalCitation[],
+		} as RetrievalResult;
 
-		const sources =
-			result.response.candidates?.reduce((sources, candidate) => {
-				const groundingMetadata = candidate.groundingMetadata as Omit<
-					GroundingMetadata,
-					"groundingChuncks"
-				> & {
-					groundingChunks: GroundingChunk[];
-				};
-				groundingMetadata.groundingChunks?.forEach((chunk) => {
-					if (chunk.web) sources.push(chunk.web);
-				});
+		const result =
+			generatedContent.response.candidates?.reduce((result, candidate) => {
+				// INFO: SDK 오타로 인해 타입 단언으로 해결
+				const { groundingChunks, groundingSupports } =
+					candidate.groundingMetadata as Omit<
+						GroundingMetadata,
+						"groundingChuncks" | "groundingSupports"
+					> & {
+						groundingChunks?: GroundingChunk[];
+						groundingSupports?: {
+							confidenceScores: number[];
+							groundingChunkIndices: number[];
+							segment: {
+								text?: string;
+								startIndex?: number;
+								endIndex?: number;
+								partIndex?: number;
+							};
+						}[];
+					};
 
-				return sources;
-			}, [] as GroundingChunkWeb[]) ?? [];
+				const newSummaries =
+					groundingSupports
+						?.map((support) => {
+							const { segment, groundingChunkIndices } = support;
+							const { text } = segment as unknown as { text?: string };
 
-		const output = result.response.text();
-		const content =
-			mode === "json"
-				? JSON.parse(output.replace(/```json|```/g, "").trim())
-				: output;
+							return {
+								content: text,
+								citationIndices: groundingChunkIndices,
+							};
+						})
+						.filter(
+							(summary): summary is RetrievalSummary =>
+								!!summary.content && !!summary.citationIndices,
+						) ?? [];
+				result.summaries = [...result.summaries, ...newSummaries];
+
+				const citiations =
+					groundingChunks
+						?.map((groundingChunk) => groundingChunk.web)
+						.filter<RetrievalCitation>(
+							(citiation): citiation is RetrievalCitation =>
+								!!citiation?.title && !!citiation.uri,
+						) ?? [];
+				result.citations = Array.from(
+					new Set([...result.citations, ...citiations]),
+				);
+
+				return result;
+			}, initialResult as RetrievalResult) ?? initialResult;
+
 		const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
-			result.response.usageMetadata ?? {};
+			generatedContent.response.usageMetadata ?? {};
 
 		return {
-			content,
-			sources,
+			...result,
 			metadata: {
 				tokenUsage: {
 					promptTokens: promptTokenCount ?? 0,
@@ -124,5 +171,9 @@ export default class Retriever {
 				model: this.model.model,
 			},
 		};
+	}
+
+	private parseJsonContent(content: string) {
+		return JSON.parse(content.replace(/```json|```/g, "").trim());
 	}
 }

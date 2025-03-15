@@ -26,10 +26,14 @@ export async function POST(req: NextRequest) {
 			if (EvidenceRetriever.isError(evidence)) {
 				console.error(evidence.error);
 			} else {
+				const evidenceContents = evidence.summaries.map(
+					(summary) => summary.content,
+				);
+
 				const verifed = await claimVerifier.verify(
 					{
 						claim: claim.content,
-						evidence: evidence.contents,
+						evidence: evidenceContents,
 					},
 					isCompleted,
 				);

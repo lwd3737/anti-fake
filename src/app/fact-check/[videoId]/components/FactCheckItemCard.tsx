@@ -39,26 +39,51 @@ export default function FactCheckItemCard({
 				{status === VerificationStatus.VERIFIED && (
 					<div className="flex flex-col gap-y-3">
 						<p>{verificationResult!.verdict}</p>
-						<p>판결 근거: {verificationResult!.reason}</p>
+						<p>판결 이유: {verificationResult!.reason}</p>
 
 						<div>
 							<p>증거</p>
 							<ol className="flex flex-col gap-y-2">
-								{verificationResult!.evidence.contents.map((content, index) => (
-									<li key={index}>{content}</li>
-								))}
+								{verificationResult?.evidence.summaries.map(
+									(summary, index) => {
+										const { content, citationIndices } = summary;
+										const { citations } = verificationResult?.evidence;
+										const filteredCitations = citationIndices.map(
+											(index) => citations[index],
+										);
+
+										return (
+											<li key={index}>
+												<p>{content}</p>
+												<span>
+													{filteredCitations.map(({ title, uri }) => {
+														return (
+															<Link key={uri} href={uri} target="_blank">
+																{title}
+															</Link>
+														);
+													})}
+												</span>
+											</li>
+										);
+									},
+								)}
 							</ol>
 						</div>
 
 						<div>
 							<p>출처</p>
 							<ol className="flex flex-col gap-y-2">
-								{verificationResult!.evidence.sources.map(
-									({ title, uri }, index) => (
-										<Link key={index} href={uri!}>
-											{title}
-										</Link>
-									),
+								{verificationResult?.evidence.citations.map(
+									({ title, uri }) => {
+										return (
+											<li key={title}>
+												<Link href={uri} target="_blank">
+													{title}
+												</Link>
+											</li>
+										);
+									},
 								)}
 							</ol>
 						</div>
