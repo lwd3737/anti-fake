@@ -24,8 +24,8 @@ export default class EvidenceRetriever {
 	}
 
 	private get isDevMode(): boolean {
-		const { devMode: new__devMode } = loadConfig();
-		return new__devMode.claimVerification ?? new__devMode.default;
+		const { devMode } = loadConfig();
+		return devMode.claimVerification ?? devMode.default;
 	}
 
 	public async start(claims: string[]): Promise<void> {

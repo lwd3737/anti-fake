@@ -94,8 +94,8 @@ export default class ClaimDetector {
 	}
 
 	private get isDevMode(): boolean {
-		const { devMode: new__devMode } = loadConfig();
-		return new__devMode.claimDetection ?? new__devMode.default;
+		const { devMode } = loadConfig();
+		return devMode.claimDetection ?? devMode.default;
 	}
 
 	private async detectOnDevMode(): Promise<void> {
