@@ -49,7 +49,7 @@ export default class ClaimVerifier {
 
 		const result = this.logger.monitor<ClaimVerificationResult>(async () => {
 			const prompt = `${claim}\n${evidence
-				.map((item, idx) => `${idx}.${item}`)
+				.map((item, idx) => `${idx + 1}.${item}`)
 				.join("\n")}`;
 
 			const result = await generateObject({
