@@ -1,6 +1,6 @@
 import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 import EvidenceCollapse from "./EvidenceCollapse";
-import CitationPopoverButton from "./CitationPopOverButton";
+import CitationPopoverButton from "./`CitationPopoverButton";
 import { ReactNode, useState } from "react";
 import assert from "assert";
 
