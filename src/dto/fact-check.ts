@@ -28,8 +28,3 @@ export interface ClaimVerificationResponseDto
 	extends ClaimVerificationResultWithDetails {
 	type: "claimVerificationResult";
 }
-
-export type ClaimVerificationPayload = Omit<
-	ClaimVerificationResponseDto,
-	"type"
->;

@@ -1,8 +1,5 @@
 "use client";
-import {
-	ClaimVerificationPayload,
-	VerifyClaimsRequestDto,
-} from "@/dto/fact-check";
+import { VerifyClaimsRequestDto } from "@/dto/fact-check";
 import useStreamingResponse from "@/hooks/useStreamingResponse";
 import {
 	createContext,
@@ -16,9 +13,10 @@ import {
 import { useClaimDetection } from "./ClaimDetectionProvider";
 import { useClaimVerification } from "./ClaimVerificationProvider";
 import assert from "assert";
+import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 
 export interface IClaimVerificationBatch {
-	data: ClaimVerificationPayload[];
+	data: ClaimVerificationResultWithDetails[];
 	isLoading: boolean;
 	start: () => void;
 	stop: () => void;
@@ -45,7 +43,7 @@ export default function ClaimVerificationBatchProvider({
 
 	const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
 		(chunks: unknown[]) => {
-			append(chunks as ClaimVerificationPayload[]);
+			append(chunks as ClaimVerificationResultWithDetails[]);
 		},
 	);
 

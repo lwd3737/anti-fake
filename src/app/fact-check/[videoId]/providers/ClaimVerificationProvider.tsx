@@ -1,5 +1,5 @@
 "use client";
-import { ClaimVerificationPayload } from "@/dto/fact-check";
+import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 import assert from "assert";
 import {
 	createContext,
@@ -11,8 +11,8 @@ import {
 } from "react";
 
 export interface IClaimVerification {
-	data: ClaimVerificationPayload[];
-	append: (data: ClaimVerificationPayload[]) => void;
+	data: ClaimVerificationResultWithDetails[];
+	append: (data: ClaimVerificationResultWithDetails[]) => void;
 	remove: (index: number) => void;
 	clear: () => void;
 }
@@ -26,9 +26,9 @@ export default function ClaimVerificationProvider({
 }: {
 	children: ReactNode;
 }) {
-	const [data, setData] = useState<ClaimVerificationPayload[]>([]);
+	const [data, setData] = useState<ClaimVerificationResultWithDetails[]>([]);
 
-	const append = useCallback((data: ClaimVerificationPayload[]) => {
+	const append = useCallback((data: ClaimVerificationResultWithDetails[]) => {
 		setData((prev) => [...prev, ...data]);
 	}, []);
 
