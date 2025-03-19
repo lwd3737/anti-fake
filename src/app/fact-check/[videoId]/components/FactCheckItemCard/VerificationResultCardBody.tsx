@@ -1,6 +1,4 @@
 import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
-import Link from "next/link";
-import { useState } from "react";
 import EvidenceCollapse from "./EvidenceCollapse";
 import CitationPopoverButton from "./CitationPopOverButton";
 
@@ -11,12 +9,6 @@ export default function VerficicationResultCardBody({
 	reason,
 	evidence,
 }: Props) {
-	const [isCitiationShown, setIsCitiationShown] = useState(false);
-
-	const toggleCitation = () => {
-		setIsCitiationShown((prev) => !prev);
-	};
-
 	return (
 		<div className="flex flex-col gap-y-3">
 			<div>
