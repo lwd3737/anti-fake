@@ -1,6 +1,7 @@
 import { ClaimVerificationPayload } from "@/dto/fact-check";
 import { ClaimDetectionResult } from "@/models/claim-detection";
 import Link from "next/link";
+import { useState } from "react";
 
 interface Props {
 	detectionResult: ClaimDetectionResult;
@@ -21,6 +22,18 @@ export default function FactCheckItemCard({
 	status,
 	onRemove,
 }: Props) {
+	const [isEvidenceShown, setIsEvidenceShown] = useState(false);
+
+	const toggleEvidence = () => {
+		setIsEvidenceShown((prev) => !prev);
+	};
+
+	const [isCitiationShown, setIsCitiationShown] = useState(false);
+
+	const toggleCitation = () => {
+		setIsCitiationShown((prev) => !prev);
+	};
+
 	return (
 		<article className="flex flex-col flex-1 gap-y-4">
 			<div className="flex justify-between items-center gap-x-10">
@@ -33,14 +46,20 @@ export default function FactCheckItemCard({
 				<button onClick={onRemove}>삭제</button>
 			</div>
 
-			<div className="h-[200px] overflow-y-auto">
-				{status === VerificationStatus.VERIFIED && (
-					<div className="flex flex-col gap-y-3">
+			{status === VerificationStatus.VERIFIED && (
+				<div className="flex flex-col gap-y-3">
+					<div>
 						<p>{verificationResult!.verdict}</p>
-						<p>판결 이유: {verificationResult!.reason}</p>
+						<p className="h-max-[100px] overflow-y-clip">
+							{verificationResult!.reason}
+						</p>
+					</div>
 
-						<div>
-							<p>증거</p>
+					<div className="">
+						<p className="cursor-pointer" onClick={toggleEvidence}>
+							증거
+						</p>
+						{isEvidenceShown && (
 							<ol className="flex flex-col gap-y-2">
 								{verificationResult?.evidence.summaries.map(
 									(summary, index) => {
@@ -67,10 +86,12 @@ export default function FactCheckItemCard({
 									},
 								)}
 							</ol>
-						</div>
+						)}
+					</div>
 
-						<div>
-							<p>출처</p>
+					<div>
+						<button onClick={toggleCitation}>인용</button>
+						{isCitiationShown && (
 							<ol className="flex flex-col gap-y-2">
 								{verificationResult?.evidence.citations.map(
 									({ title, uri }) => {
@@ -84,10 +105,10 @@ export default function FactCheckItemCard({
 									},
 								)}
 							</ol>
-						</div>
+						)}
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 		</article>
 	);
 }

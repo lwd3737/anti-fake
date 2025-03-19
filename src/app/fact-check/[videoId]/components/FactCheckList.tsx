@@ -2,7 +2,9 @@
 import CheckBox from "@/app/components/inputs/CheckBox";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
-import FactCheckItemCard, { VerificationStatus } from "./FactCheckItemCard";
+import FactCheckItemCard, {
+	VerificationStatus,
+} from "./FactCheckItemCard/FactCheckItemCard";
 import { useClaimVerification } from "../providers/ClaimVerificationProvider";
 
 export default function FactCheckList() {
