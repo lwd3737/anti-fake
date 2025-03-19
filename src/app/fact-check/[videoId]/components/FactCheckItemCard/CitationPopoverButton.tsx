@@ -18,9 +18,9 @@ export default function CitationPopoverButton({ citations }: Props) {
 			<button onClick={toggle}>인용</button>
 			{isShown && (
 				<ol className="flex flex-col gap-y-2">
-					{citations.map(({ title, uri }) => {
+					{citations.map(({ title, uri }, index) => {
 						return (
-							<li key={title}>
+							<li key={index}>
 								<Link href={uri} target="_blank">
 									{title}
 								</Link>

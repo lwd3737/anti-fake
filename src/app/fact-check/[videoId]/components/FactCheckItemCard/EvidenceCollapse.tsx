@@ -4,9 +4,13 @@ import { useState } from "react";
 
 interface Props {
 	evidence: Evidence;
+	hoveredSummaryIndex: number | null;
 }
 
-export default function EvidenceCollapse({ evidence }: Props) {
+export default function EvidenceCollapse({
+	evidence,
+	hoveredSummaryIndex,
+}: Props) {
 	const [isShown, setIsShown] = useState(false);
 
 	const toggle = () => {
@@ -28,7 +32,12 @@ export default function EvidenceCollapse({ evidence }: Props) {
 						);
 
 						return (
-							<li key={index}>
+							<li
+								className={`${
+									hoveredSummaryIndex === index ? "bg-gray-300" : ""
+								}`}
+								key={index}
+							>
 								<p>{content}</p>
 								<span>
 									{filteredCitations.map(({ title, uri }) => {
