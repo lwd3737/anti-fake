@@ -1,8 +1,8 @@
 import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 import EvidenceCollapse from "./EvidenceCollapse";
 import CitationPopoverButton from "./CitationPopoverButton";
-import { ReactNode, useState } from "react";
-import assert from "assert";
+import { useState } from "react";
+import VerdictReasonText from "../VerdictReasonText";
 
 interface Props extends ClaimVerificationResultWithDetails {}
 
@@ -14,60 +14,35 @@ export default function VerficicationResultCardBody({
 	reason,
 	evidence,
 }: Props) {
-	const [hoveredCitedSummaryIndex, setHoveredCitedSummaryIndex] = useState<
-		number | null
-	>(null);
+	const [hoveredCitationIndex, setCitationIndex] = useState<number | null>(
+		null,
+	);
 
-	const citedSummaryIndices = Array.from(
-		reason.matchAll(EVIDENCE_SUMMARY_PATTERN),
-	).map((match) => {
-		const template = match[0];
+	const handleCitationHover = (index: number): void => {
+		setCitationIndex(index);
+	};
 
-		const sumamryNumberMatch = template.match(EVIDENCE_SUMMARY_NUMBER_PATTERN);
-		assert(sumamryNumberMatch !== null), "evidence number is null";
-
-		const sumamryNumber = parseInt(sumamryNumberMatch[0]);
-		const summaryIndex = sumamryNumber - 1;
-
-		return summaryIndex;
-	});
-
-	const highlightableReasonParts = reason
-		.split(EVIDENCE_SUMMARY_PATTERN)
-		.reduce((result, text, index, origin) => {
-			const isLast = index === origin.length - 1;
-			if (isLast) {
-				return [...result, text];
-			}
-
-			const citedSummaryIndex = citedSummaryIndices[index];
-
-			return [
-				...result,
-				text,
-				<span
-					className="inline-block bg-gray-200 hover:bg-gray-300 w-5 text-gray-500 text-center cursor-pointer"
-					key={index}
-					onMouseEnter={() => setHoveredCitedSummaryIndex(citedSummaryIndex)}
-					onMouseLeave={() => setHoveredCitedSummaryIndex(null)}
-				>
-					{citedSummaryIndex + 1}
-				</span>,
-			];
-		}, [] as (string | ReactNode)[]);
+	const handleCitationLeave = (): void => {
+		setCitationIndex(null);
+	};
 
 	return (
 		<div className="flex flex-col gap-y-3">
 			<div>
 				<p>{verdict}</p>
 				<p className="h-max-[100px] overflow-y-clip">
-					{highlightableReasonParts}
+					<VerdictReasonText
+						reason={reason}
+						hoveredCitationIndex={hoveredCitationIndex}
+						onCitationHover={handleCitationHover}
+						onCitationLeave={handleCitationLeave}
+					/>
 				</p>
 			</div>
 
 			<EvidenceCollapse
 				evidence={evidence}
-				hoveredSummaryIndex={hoveredCitedSummaryIndex}
+				hoveredSummaryIndex={hoveredCitationIndex}
 			/>
 			<CitationPopoverButton citations={evidence.citations} />
 		</div>
