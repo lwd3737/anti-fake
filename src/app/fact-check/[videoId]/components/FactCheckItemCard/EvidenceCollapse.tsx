@@ -1,6 +1,7 @@
 import { Evidence } from "@/models/evidence-retrieval";
 import Link from "next/link";
 import { RefObject, useEffect, useState } from "react";
+import { FactCheckEventType } from "../../events";
 
 interface Props {
 	containerElRef: RefObject<HTMLElement>;
@@ -41,13 +42,13 @@ export default function EvidenceCollapse({
 			};
 
 			containerEl.addEventListener(
-				"MOVE_EVIDENCE_CITATION",
+				FactCheckEventType.EVIDENCE_CITATION,
 				handleMoveToEvidence,
 			);
 
 			return () => {
 				containerEl.removeEventListener(
-					"MOVE_EVIDENCE_CITATION",
+					FactCheckEventType.EVIDENCE_CITATION,
 					handleMoveToEvidence,
 				);
 			};

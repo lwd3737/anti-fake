@@ -1,5 +1,6 @@
 import assert from "assert";
 import { ReactNode, RefObject } from "react";
+import { createEvidenceCitationEvent } from "../../events";
 
 interface Props {
 	containerElRef: RefObject<HTMLElement>;
@@ -38,9 +39,7 @@ export default function VerdictReasonText({
 		const containerEl = containerElRef.current;
 		if (containerEl === null) return;
 
-		containerEl.dispatchEvent(
-			new CustomEvent("MOVE_EVIDENCE_CITATION", { detail: { index } }),
-		);
+		containerEl.dispatchEvent(createEvidenceCitationEvent(index));
 	};
 
 	return (
