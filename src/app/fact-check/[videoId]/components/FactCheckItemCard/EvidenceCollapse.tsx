@@ -1,15 +1,17 @@
 import { Evidence } from "@/models/evidence-retrieval";
 import Link from "next/link";
-import { useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 interface Props {
+	containerElRef: RefObject<HTMLElement>;
 	evidence: Evidence;
-	hoveredSummaryIndex: number | null;
+	highlightedSummaryIndex: number | null;
 }
 
 export default function EvidenceCollapse({
+	containerElRef,
 	evidence,
-	hoveredSummaryIndex,
+	highlightedSummaryIndex,
 }: Props) {
 	const [isShown, setIsShown] = useState(false);
 
@@ -17,11 +19,48 @@ export default function EvidenceCollapse({
 		setIsShown((prev) => !prev);
 	};
 
+	useEffect(
+		function () {
+			const containerEl = containerElRef.current;
+			if (containerEl === null) return;
+
+			const handleMoveToEvidence = (event: Event) => {
+				const { index } = (event as CustomEvent).detail;
+				if (highlightedSummaryIndex !== index) return;
+
+				setIsShown(true);
+				requestAnimationFrame(() => {
+					const summaryEl = document.querySelector(
+						`[data-summary-index="${index}"]`,
+					);
+
+					if (summaryEl === null) return;
+
+					summaryEl.scrollIntoView({ behavior: "smooth", block: "start" });
+				});
+			};
+
+			containerEl.addEventListener(
+				"MOVE_EVIDENCE_CITATION",
+				handleMoveToEvidence,
+			);
+
+			return () => {
+				containerEl.removeEventListener(
+					"MOVE_EVIDENCE_CITATION",
+					handleMoveToEvidence,
+				);
+			};
+		},
+		[containerElRef, highlightedSummaryIndex],
+	);
+
 	return (
 		<span className="">
 			<button className="cursor-pointer" onClick={toggle}>
 				증거
 			</button>
+
 			{isShown && (
 				<ol className="flex flex-col gap-y-2">
 					{evidence.summaries.map((summary, index) => {
@@ -34,9 +73,10 @@ export default function EvidenceCollapse({
 						return (
 							<li
 								className={`${
-									hoveredSummaryIndex === index ? "bg-gray-300" : ""
+									highlightedSummaryIndex === index ? "bg-gray-300" : ""
 								}`}
 								key={index}
+								data-summary-index={index}
 							>
 								<p>{content}</p>
 								<span>

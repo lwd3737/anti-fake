@@ -1,7 +1,8 @@
 import assert from "assert";
-import { ReactNode } from "react";
+import { ReactNode, RefObject } from "react";
 
 interface Props {
+	containerElRef: RefObject<HTMLElement>;
 	reason: string;
 	hoveredCitationIndex: number | null;
 	onCitationHover: (index: number) => void;
@@ -12,6 +13,7 @@ const CITATION_PATTERN = /\{\{\d+\}\}/g;
 const CITATION_NUMBER_PATTERN = /\d+/;
 
 export default function VerdictReasonText({
+	containerElRef,
 	reason,
 	onCitationHover,
 	onCitationLeave,
@@ -32,6 +34,15 @@ export default function VerdictReasonText({
 		},
 	);
 
+	const handleCitationClick = (index: number) => {
+		const containerEl = containerElRef.current;
+		if (containerEl === null) return;
+
+		containerEl.dispatchEvent(
+			new CustomEvent("MOVE_EVIDENCE_CITATION", { detail: { index } }),
+		);
+	};
+
 	return (
 		<div>
 			{reason.split(CITATION_PATTERN).reduce((result, text, index, origin) => {
@@ -50,6 +61,7 @@ export default function VerdictReasonText({
 						key={index}
 						onMouseEnter={() => onCitationHover(citationIndex)}
 						onMouseLeave={onCitationLeave}
+						onClick={() => handleCitationClick(citationIndex)}
 					>
 						{citationIndex + 1}
 					</span>,

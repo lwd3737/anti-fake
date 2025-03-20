@@ -1,8 +1,8 @@
 import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
 import EvidenceCollapse from "./EvidenceCollapse";
 import CitationPopoverButton from "./CitationPopoverButton";
-import { useState } from "react";
-import VerdictReasonText from "../VerdictReasonText";
+import { useRef, useState } from "react";
+import VerdictReasonText from "./VerdictReasonText";
 
 interface Props extends ClaimVerificationResultWithDetails {}
 
@@ -11,6 +11,8 @@ export default function VerficicationResultCardBody({
 	reason,
 	evidence,
 }: Props) {
+	const containerElRef = useRef<HTMLDivElement>(null);
+
 	const [hoveredCitationIndex, setCitationIndex] = useState<number | null>(
 		null,
 	);
@@ -24,11 +26,12 @@ export default function VerficicationResultCardBody({
 	};
 
 	return (
-		<div className="flex flex-col gap-y-3">
+		<div className="flex flex-col gap-y-3" ref={containerElRef}>
 			<div>
 				<p>{verdict}</p>
 				<p className="h-max-[100px] overflow-y-clip">
 					<VerdictReasonText
+						containerElRef={containerElRef}
 						reason={reason}
 						hoveredCitationIndex={hoveredCitationIndex}
 						onCitationHover={handleCitationHover}
@@ -38,8 +41,9 @@ export default function VerficicationResultCardBody({
 			</div>
 
 			<EvidenceCollapse
+				containerElRef={containerElRef}
 				evidence={evidence}
-				hoveredSummaryIndex={hoveredCitationIndex}
+				highlightedSummaryIndex={hoveredCitationIndex}
 			/>
 			<CitationPopoverButton citations={evidence.citations} />
 		</div>
