@@ -6,9 +6,6 @@ import VerdictReasonText from "../VerdictReasonText";
 
 interface Props extends ClaimVerificationResultWithDetails {}
 
-const EVIDENCE_SUMMARY_PATTERN = /\{\{\d+\}\}/g;
-const EVIDENCE_SUMMARY_NUMBER_PATTERN = /\d+/;
-
 export default function VerficicationResultCardBody({
 	verdict,
 	reason,

@@ -40,7 +40,7 @@ export default function VerdictReasonText({
 					return [...result, text];
 				}
 
-				const citedSummaryIndex = citationIndices[index];
+				const citationIndex = citationIndices[index];
 
 				return [
 					...result,
@@ -48,10 +48,10 @@ export default function VerdictReasonText({
 					<span
 						className="inline-block bg-gray-200 hover:bg-gray-300 w-5 text-gray-500 text-center cursor-pointer"
 						key={index}
-						onMouseEnter={() => onCitationHover(citedSummaryIndex)}
-						onMouseLeave={() => onCitationLeave()}
+						onMouseEnter={() => onCitationHover(citationIndex)}
+						onMouseLeave={onCitationLeave}
 					>
-						{citedSummaryIndex + 1}
+						{citationIndex + 1}
 					</span>,
 				];
 			}, [] as (string | ReactNode)[])}
