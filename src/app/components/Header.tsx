@@ -5,15 +5,23 @@ import { useAuth } from "./AuthProvider";
 export default function Header() {
 	const { isAuthenticated, logout } = useAuth();
 
-	const handleLogout = async () => {
+	const handleLogoutClick = async () => {
 		await fetchLgout();
 		logout();
 	};
 
+	/* TODO: color theme */
 	return (
-		<header className="flex items-center justify-between py-4">
-			<h1 className="text-2xl italic font-bold text-red-800">Anti Fake</h1>
-			{isAuthenticated && <button onClick={handleLogout}>로그아웃</button>}
+		<header className="flex justify-between items-center py-4 h-16">
+			<h1 className="font-bold text-black text-2xl">Anti Fake</h1>
+			{isAuthenticated && (
+				<button
+					className="font-normal text-[#4B5563] text-base"
+					onClick={handleLogoutClick}
+				>
+					로그아웃
+				</button>
+			)}
 		</header>
 	);
 }
