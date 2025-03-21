@@ -1,6 +1,6 @@
 "use client";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
-import { PAGE_ROUTES } from "@/constants/routes";
+import { PageRoutes } from "@/constants/routes";
 import { useEffect } from "react";
 import { useAuth } from "../components/AuthProvider";
 import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
@@ -15,7 +15,7 @@ export default function OauthCallbackPage() {
 	useEffect(
 		function gnerateTokenOnMount() {
 			const [state, code] = [params.get("state"), params.get("code")];
-			if (!state || !code) return redirect(PAGE_ROUTES.error.auth);
+			if (!state || !code) return redirect(PageRoutes.error.AUTH);
 
 			const controller = new AbortController();
 
@@ -27,7 +27,7 @@ export default function OauthCallbackPage() {
 				controller.signal,
 			)
 				.then((result) => {
-					if (isFailure(result)) router.push(PAGE_ROUTES.error.auth);
+					if (isFailure(result)) router.push(PageRoutes.error.AUTH);
 
 					login();
 				})

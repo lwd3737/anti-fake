@@ -1,5 +1,5 @@
 import loadConfig from "@/config";
-import { PAGE_ROUTES } from "@/constants/routes";
+import { PageRoutes } from "@/constants/routes";
 import GoogleAuth from "@/services/googgle-auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,30 +11,30 @@ export async function GET(req: NextRequest) {
 	const state = searchParams.get("state");
 	if (!state) {
 		console.error("Failed to get oauth state", state);
-		return redirect(PAGE_ROUTES.error.auth);
+		return redirect(PageRoutes.error.AUTH);
 	}
 
 	const csrfTokenCookie = cookies().get("csrf-token");
 	if (!csrfTokenCookie) {
 		console.error("Failed to get csrf token", csrfTokenCookie);
-		return redirect(PAGE_ROUTES.error.auth);
+		return redirect(PageRoutes.error.AUTH);
 	}
 
 	if (state !== csrfTokenCookie.value) {
 		console.error("State does not match csrf token");
-		return redirect(PAGE_ROUTES.error.auth);
+		return redirect(PageRoutes.error.AUTH);
 	}
 
 	const authCode = searchParams.get("code");
 	if (!authCode) {
 		console.error("Failed to get auth code", authCode);
-		return redirect(PAGE_ROUTES.error.auth);
+		return redirect(PageRoutes.error.AUTH);
 	}
 
 	const tokens = await GoogleAuth.create().getToken(authCode);
 	if (!tokens.access_token) {
 		console.error("Failed to get access token", tokens);
-		return redirect(PAGE_ROUTES.error.auth);
+		return redirect(PageRoutes.error.AUTH);
 	}
 
 	cookies().set({

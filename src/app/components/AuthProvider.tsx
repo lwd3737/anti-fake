@@ -6,7 +6,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { PAGE_ROUTES } from "@/constants/routes";
+import { PageRoutes } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
@@ -34,7 +34,7 @@ export default function AuthProvider({
 
 	const logout = useCallback(() => {
 		setIsAuthenticated(false);
-		router.push(PAGE_ROUTES.login);
+		router.push(PageRoutes.LOGIN);
 	}, [router]);
 
 	const generateToken = useCallback(
@@ -43,7 +43,7 @@ export default function AuthProvider({
 				state,
 				authCode,
 			});
-			if (isFailure(result)) router.push(PAGE_ROUTES.error.auth);
+			if (isFailure(result)) router.push(PageRoutes.error.AUTH);
 		},
 		[login, router],
 	);

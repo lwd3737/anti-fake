@@ -1,11 +1,11 @@
-import { API_ROUTES } from "@/constants/routes";
+import { APIRoutes } from "@/constants/routes";
 import { VerifyTokenResponseDto } from "@/dto/auth";
 import { generateServerUrl } from "@/utils/url";
 
 export async function fetchVerifyAccessToken(
 	accessToken: string,
 ): Promise<VerifyTokenResponseDto> {
-	const res = await fetch(generateServerUrl(API_ROUTES.auth.verifyToken), {
+	const res = await fetch(generateServerUrl(APIRoutes.auth.VERIFY_TOKEN), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

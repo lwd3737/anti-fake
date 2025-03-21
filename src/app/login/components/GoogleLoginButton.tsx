@@ -1,6 +1,6 @@
 "use client";
 import { fetchGenerateOauthUrl } from "@/app/api/auth/oauth-url/fetch";
-import { PAGE_ROUTES } from "@/constants/routes";
+import { PageRoutes } from "@/constants/routes";
 import { useRouter } from "next/navigation";
 
 export default function GoogleLoginButton() {
@@ -11,7 +11,7 @@ export default function GoogleLoginButton() {
 			const { oauthUrl } = await fetchGenerateOauthUrl();
 			location.href = oauthUrl;
 		} catch {
-			router.push(PAGE_ROUTES.error.auth);
+			router.push(PageRoutes.error.AUTH);
 		}
 	};
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ROUTES, PAGE_ROUTES } from "./constants/routes";
+import { APIRoutes, PageRoutes } from "./constants/routes";
 import { fetchVerifyAccessToken } from "./app/api/auth/verify-token/fetch";
 import { generateServerUrl } from "./utils/url";
 import loadConfig from "./config";
@@ -12,7 +12,7 @@ export async function middleware(req: NextRequest) {
 
 	const isAuthenticated = await authenticate(req);
 	if (!isAuthenticated)
-		return NextResponse.redirect(generateServerUrl(PAGE_ROUTES.login));
+		return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
 
 	return NextResponse.next();
 }
@@ -22,12 +22,12 @@ const isPublic = (pathname: string): boolean => {
 	if (staticPath.test(pathname)) return true;
 
 	const routes = [
-		PAGE_ROUTES.error.auth,
-		PAGE_ROUTES.login,
-		PAGE_ROUTES.oauthCallback,
-		API_ROUTES.auth.oauthUrl,
-		API_ROUTES.auth.verifyToken,
-		API_ROUTES.auth.generateToken,
+		PageRoutes.error.AUTH,
+		PageRoutes.LOGIN,
+		PageRoutes.OAUTH_CALLBACK,
+		APIRoutes.auth.OAUTH_URL,
+		APIRoutes.auth.VERIFY_TOKEN,
+		APIRoutes.auth.GENERATE_TOKEN,
 	];
 	return routes.includes(pathname);
 };

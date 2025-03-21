@@ -1,7 +1,7 @@
-import { API_ROUTES } from "@/constants/routes";
+import { APIRoutes } from "@/constants/routes";
 
 export async function fetchLgout(): Promise<Response> {
-	return await fetch(API_ROUTES.auth.logout, {
+	return await fetch(APIRoutes.auth.LOGOUT, {
 		method: "POST",
 	});
 }
