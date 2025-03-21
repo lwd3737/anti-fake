@@ -4,7 +4,11 @@ import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
 import { useClaimVerification } from "../providers/ClaimVerificationProvider";
 
-export default function ControlHorizontalBar() {
+interface Props {
+	className?: string;
+}
+
+export default function ControlHorizontalBar({ className }: Props) {
 	const { data: detectionResults, retry: retryDetection } = useClaimDetection();
 	const { clear: clearVerficationResults } = useClaimVerification();
 	const {
@@ -51,7 +55,10 @@ export default function ControlHorizontalBar() {
 	};
 
 	return (
-		<div className="right-0 bottom-0 left-0 fixed flex justify-end bg-white p-5">
+		<div
+			// TODO: theme 적용
+			className={`h-full flex items-center justify-end bg-white p-5 ${className} shadow-sm [box-shadow:0_-1px_2px_0_rgba(0,0,0,0.05)]`}
+		>
 			{isBatchMode ? (
 				isBatchLoading ? (
 					<button onClick={stopBatch}>중단</button>

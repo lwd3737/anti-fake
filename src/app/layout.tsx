@@ -17,19 +17,32 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html className="h-full" lang="en">
+		<html className="h-screen" lang="en">
 			{/* TODO: theme 적용 */}
-			<body className={`${inter.className} h-full bg-[#F9FAFB]`}>
+			<body className={`${inter.className} h-screen bg-[#F9FAFB]`}>
 				<AuthProvider>
 					<div className="flex flex-col h-full">
-						<div className="top-0 right-0 left-0 fixed">
-							<Header className="h-16" />
+						<div
+							className={`top-0 right-0 left-0 fixed h-[${Styles.header.height}]`}
+						>
+							<Header />
 						</div>
 
-						<div className="flex-1 mt-16">{children}</div>
+						<div
+							// className="flex-1 mt-16"
+							className={`mt-16 h-[calc(100%-${Styles.header.height})]`}
+						>
+							{children}
+						</div>
 					</div>
 				</AuthProvider>
 			</body>
 		</html>
 	);
 }
+
+const Styles = {
+	header: {
+		height: "4rem",
+	},
+};

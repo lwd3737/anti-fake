@@ -25,7 +25,7 @@ export default function FactCheckList() {
 	};
 
 	return (
-		<div className="contents">
+		<ol className="flex flex-col gap-y-10 h-full">
 			{detectionResults.map((detectionResult) => {
 				const verified = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,
@@ -40,7 +40,7 @@ export default function FactCheckList() {
 					isBatchMode && status === VerificationStatus.NOT_VERIFIED;
 
 				return (
-					<div
+					<li
 						className="flex items-start gap-x-3 gap-y-1"
 						key={detectionResult.index}
 					>
@@ -60,9 +60,9 @@ export default function FactCheckList() {
 								onRemove={() => removeItem(detectionResult.index)}
 							/>
 						</div>
-					</div>
+					</li>
 				);
 			})}
-		</div>
+		</ol>
 	);
 }

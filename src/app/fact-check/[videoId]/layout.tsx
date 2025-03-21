@@ -11,9 +11,7 @@ export default function FactCheckLayout({
 	children: ReactNode;
 }) {
 	return (
-		<main>
-			<h1 className="text-2xl">팩트 체크 결과</h1>
-
+		<main className="h-full">
 			<ClaimDetectionProvider videoId={videoId}>
 				<ClaimVerificationProvider>
 					<ClaimVerificationBatchProvider>
