@@ -20,8 +20,10 @@ export default function RootLayout({
 		<html className="h-full" lang="en">
 			<body className={`${inter.className} h-full px-6`}>
 				<AuthProvider>
-					<Header />
-					{children}
+					<div className="top-0 right-0 left-0 fixed px-8">
+						<Header className="h-16" />
+					</div>
+					<div className="mt-16">{children}</div>
 				</AuthProvider>
 			</body>
 		</html>
