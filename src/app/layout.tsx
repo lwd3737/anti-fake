@@ -18,12 +18,16 @@ export default function RootLayout({
 }) {
 	return (
 		<html className="h-full" lang="en">
-			<body className={`${inter.className} h-full px-6`}>
+			{/* TODO: theme 적용 */}
+			<body className={`${inter.className} h-full bg-[#F9FAFB]`}>
 				<AuthProvider>
-					<div className="top-0 right-0 left-0 fixed px-8">
-						<Header className="h-16" />
+					<div className="flex flex-col h-full">
+						<div className="top-0 right-0 left-0 fixed">
+							<Header className="h-16" />
+						</div>
+
+						<div className="flex-1 mt-16">{children}</div>
 					</div>
-					<div className="mt-16">{children}</div>
 				</AuthProvider>
 			</body>
 		</html>

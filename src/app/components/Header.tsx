@@ -16,10 +16,10 @@ export default function Header({ className }: Props) {
 		logout();
 	};
 
-	/* TODO: color theme */
+	/* TODO: theme 적용*/
 	return (
 		<header
-			className={`flex justify-between items-center py-4 h-full ${className}`}
+			className={`px-8 bg-white shadow-sm flex justify-between items-center py-4 h-full ${className}`}
 		>
 			<Link className="font-bold text-black text-2xl" href={PageRoutes.HOME}>
 				Anti Fake
