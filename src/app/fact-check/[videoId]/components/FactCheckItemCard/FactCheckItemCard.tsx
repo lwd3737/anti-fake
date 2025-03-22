@@ -22,7 +22,7 @@ export default function FactCheckItemCard({
 	onRemove,
 }: Props) {
 	return (
-		<article className="flex flex-col flex-1 gap-y-4">
+		<article className="flex flex-col flex-1 gap-y-4 bg-white shadow-sm p-6 rounded-sm">
 			<div className="flex justify-between items-center gap-x-10">
 				<div className="flex items-center gap-x-2">
 					<span>{status}</span>

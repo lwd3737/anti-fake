@@ -24,11 +24,11 @@ export enum VerificationVerdict {
 export const displayVerdict = (verdict: VerificationVerdict): string => {
 	switch (verdict) {
 		case VerificationVerdict.TRUE:
-			return "사실";
+			return "진실";
 		case VerificationVerdict.MOSTLY_TRUE:
-			return "대체로 사실";
+			return "대체로 진실";
 		case VerificationVerdict.MIXED:
-			return "사실과 거짓이 섞여 있음";
+			return "진실/거짓 혼합";
 		case VerificationVerdict.MOSTLY_FALSE:
 			return "대체로 거짓";
 		case VerificationVerdict.FALSE:

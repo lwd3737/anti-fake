@@ -39,18 +39,28 @@ export default function FactCheckList() {
 				const isVerfiable =
 					isBatchMode && status === VerificationStatus.NOT_VERIFIED;
 
+				// TODO: theme 적용
 				return (
 					<li
-						className="flex items-start gap-x-3 gap-y-1"
+						className="relative flex items-start gap-x-3 gap-y-1"
 						key={detectionResult.index}
 					>
-						<CheckBox
-							className={` ${isVerfiable ? "visible" : "invisible"} mt-[1px]`}
-							checked={shouldVerify}
-							onChange={(ev) =>
-								updateClaimToVerifiy(detectionResult.index, ev.target.checked)
-							}
-						/>
+						{isVerfiable && (
+							<span className="left-[-20px] absolute">
+								<CheckBox
+									className={` ${
+										isVerfiable ? "visible" : "invisible"
+									} mt-[1px]`}
+									checked={shouldVerify}
+									onChange={(ev) =>
+										updateClaimToVerifiy(
+											detectionResult.index,
+											ev.target.checked,
+										)
+									}
+								/>
+							</span>
+						)}
 						<div className="flex-1">
 							<FactCheckItemCard
 								key={detectionResult.index}

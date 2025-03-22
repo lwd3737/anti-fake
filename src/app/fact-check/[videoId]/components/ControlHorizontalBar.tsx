@@ -12,10 +12,11 @@ export default function ControlHorizontalBar({ className }: Props) {
 	const { data: detectionResults, retry: retryDetection } = useClaimDetection();
 	const { clear: clearVerficationResults } = useClaimVerification();
 	const {
-		start: startBatch,
-		stop: stopBatch,
 		isLoading: isBatchLoading,
 		isBatchMode,
+		claimIndexesToVerifiy,
+		start: startBatch,
+		stop: stopBatch,
 		switchToBatchMode,
 		cancelBatchMode,
 		updateClaimsToVerifiyBulk,
@@ -74,7 +75,9 @@ export default function ControlHorizontalBar({ className }: Props) {
 							<label htmlFor="all-selector">전체 선택</label>
 						</div>
 						<div className="flex gap-x-3">
-							<button onClick={startBatch}>선택한 주장 검증하기</button>
+							<button onClick={startBatch}>
+								{claimIndexesToVerifiy.size}개 주장 검증하기
+							</button>
 							<button onClick={handleCancelBatchModeClick}>취소</button>
 						</div>
 					</div>
@@ -82,7 +85,7 @@ export default function ControlHorizontalBar({ className }: Props) {
 			) : (
 				<div className="flex gap-x-3">
 					<button onClick={handleSwitchToBatchModeClick}>
-						미검증 주장 일괄 검증하기
+						검증할 주장 선택하기
 					</button>
 					<button onClick={handleRetryDetectionClick}>
 						주장 탐지 재시도하기
