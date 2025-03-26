@@ -3,7 +3,7 @@ import {
 	VerificationVerdict,
 } from "@/models/claim-verification";
 import EvidenceCollapse from "./EvidenceCollapse";
-import CitationPopoverButton from "./CitationPopoverButton";
+import CitationPopover from "./CitationPopover";
 import { useMemo, useRef, useState } from "react";
 import VerdictReasonText from "./VerdictReasonText";
 import assert from "assert";
@@ -76,7 +76,10 @@ export default function VerficicationResultCardBody({
 				evidence={evidence}
 				highlightedSummaryIndex={hoveredCitationIndex}
 			/>
-			<CitationPopoverButton citations={evidence.citations} />
+
+			<div>
+				<CitationPopover citations={evidence.citations} />
+			</div>
 		</div>
 	);
 }
