@@ -11,7 +11,7 @@ export default function FactCheckLayout({
 	children: ReactNode;
 }) {
 	return (
-		<main className="h-full">
+		<div className="h-full">
 			<ClaimDetectionProvider videoId={videoId}>
 				<ClaimVerificationProvider>
 					<ClaimVerificationBatchProvider>
@@ -19,6 +19,6 @@ export default function FactCheckLayout({
 					</ClaimVerificationBatchProvider>
 				</ClaimVerificationProvider>
 			</ClaimDetectionProvider>
-		</main>
+		</div>
 	);
 }

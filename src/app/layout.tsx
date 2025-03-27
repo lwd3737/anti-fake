@@ -22,13 +22,14 @@ export default function RootLayout({
 			<body className={`${inter.className} h-screen bg-[#F9FAFB]`}>
 				<AuthProvider>
 					<div className="flex flex-col h-full">
-						<section
-							className={`z-200 z- top-0 right-0 left-0 fixed h-[${Styles.header.height}]`}
-						>
+						<section className={`z-200 z- top-0 right-0 left-0 fixed h-16`}>
 							<Header />
 						</section>
 
-						<section className={`mt-16 h-[calc(100%-${Styles.header.height})]`}>
+						<section
+							// className={`mt-16 h-[calc(100%-${Styles.header.height})]`}
+							className="top-16 right-0 bottom-0 left-0 fixed overflow-y-auto"
+						>
 							{children}
 						</section>
 					</div>
@@ -37,9 +38,3 @@ export default function RootLayout({
 		</html>
 	);
 }
-
-const Styles = {
-	header: {
-		height: "4rem",
-	},
-};
