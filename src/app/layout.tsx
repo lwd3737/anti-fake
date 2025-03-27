@@ -22,18 +22,15 @@ export default function RootLayout({
 			<body className={`${inter.className} h-screen bg-[#F9FAFB]`}>
 				<AuthProvider>
 					<div className="flex flex-col h-full">
-						<div
-							className={`top-0 right-0 left-0 fixed h-[${Styles.header.height}]`}
+						<section
+							className={`z-200 z- top-0 right-0 left-0 fixed h-[${Styles.header.height}]`}
 						>
 							<Header />
-						</div>
+						</section>
 
-						<div
-							// className="flex-1 mt-16"
-							className={`mt-16 h-[calc(100%-${Styles.header.height})]`}
-						>
+						<section className={`mt-16 h-[calc(100%-${Styles.header.height})]`}>
 							{children}
-						</div>
+						</section>
 					</div>
 				</AuthProvider>
 			</body>
