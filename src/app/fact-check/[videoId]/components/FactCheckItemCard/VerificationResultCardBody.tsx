@@ -1,5 +1,6 @@
 import {
 	ClaimVerificationResultWithDetails,
+	displayVerdict,
 	VerificationVerdict,
 } from "@/models/claim-verification";
 import EvidenceCollapse from "./EvidenceCollapse";
@@ -57,7 +58,7 @@ export default function VerficicationResultCardBody({
 					<span
 						className={`py-1 px-3 text-[0.875rem] font-medium rounded-full ${verdictColorStyles} `}
 					>
-						{verdict}
+						{displayVerdict(verdict)}
 					</span>
 				</div>
 				<p className="h-max-[100px] overflow-y-clip text-[#374151] text-base">

@@ -96,7 +96,7 @@ export default function CitationPopover({ citations }: Props) {
 				출처
 			</button>
 			{isShown && (
-				<div className="z-50 relative">
+				<div className="z-100 relative">
 					<section
 						className={`left-4 absolute flex flex-col gap-y-2 bg-white shadow-md py-4 rounded-lg w-[25vw] h-[40vh] ${directionStyle}`}
 						ref={popoverElRef}
