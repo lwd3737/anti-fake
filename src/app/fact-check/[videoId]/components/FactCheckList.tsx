@@ -25,7 +25,7 @@ export default function FactCheckList() {
 	};
 
 	return (
-		<ol className="flex flex-col gap-y-10 h-full">
+		<ol className="flex flex-col gap-y-10 px-12 py-8 h-full overflow-y-auto">
 			{detectionResults.map((detectionResult) => {
 				const verified = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,
