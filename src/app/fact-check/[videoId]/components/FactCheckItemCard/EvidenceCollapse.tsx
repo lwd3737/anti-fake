@@ -53,17 +53,24 @@ export default function EvidenceCollapse({
 
 					return (
 						<li
-							className={`flex flex-col gap-y-1 ${
-								highlightedItemIndex === index ? "bg-gray-300" : ""
-							}`}
-							key={index}
+							className={`flex flex-col gap-y-1
+								`}
 							ref={(el) => {
 								if (el) itemsRef.current[index] = el;
 							}}
+							key={index}
 						>
-							<div className="flex gap-x-2 text-[0.875rem]">
+							<div className={`flex gap-x-2 text-[0.875rem]`}>
 								<span className="text-black">{index + 1}.</span>
-								<p className="text-[#4B5563]">{content}</p>
+								<p
+									className={`inline-block w-fit text-[#4B5563] ${
+										highlightedItemIndex === index
+											? "bg-[#FFF59D] text-[#2C3E50]"
+											: ""
+									}`}
+								>
+									{content}
+								</p>
 							</div>
 
 							<div className="flex flex-wrap gap-x-2 pl-4">

@@ -48,13 +48,13 @@ export default function VerdictReasonText({
 					...result,
 					text,
 					<span
-						className="inline-block bg-gray-200 hover:bg-gray-300 w-5 text-gray-500 text-center cursor-pointer"
+						className="inline-block top-[-5px] relative bg-[#1F3A93] hover:bg-[#3A539B] mt-[-4px] mr-1 rounded-full w-5 font-normal text-white text-xs text-center cursor-pointer"
 						key={index}
 						onMouseEnter={() => onCitationHover(citationIndex)}
 						onMouseLeave={onCitationLeave}
 						onClick={() => onCitationClick(citationIndex)}
 					>
-						{citationIndex + 1}
+						{`[${citationIndex + 1}]`}
 					</span>,
 				];
 			}, [] as (string | ReactNode)[])}
