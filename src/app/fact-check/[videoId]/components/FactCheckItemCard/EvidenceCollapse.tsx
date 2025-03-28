@@ -43,7 +43,11 @@ export default function EvidenceCollapse({
 				<span className="font-semibold text-[0.875rem]">증거</span>
 			</button>
 
-			<ol className={`flex flex-col gap-y-4 pl-4 ${isShown ? "" : "hidden"}`}>
+			<ol
+				className={`flex flex-col gap-y-4 pl-4 max-h-[30vh] overflow-y-auto ${
+					isShown ? "" : "hidden"
+				}`}
+			>
 				{evidence.summaries.map((summary, index) => {
 					const { content, citationIndices } = summary;
 					const { citations } = evidence;

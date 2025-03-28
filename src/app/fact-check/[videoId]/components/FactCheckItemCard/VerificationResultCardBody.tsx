@@ -44,7 +44,9 @@ export default function VerficicationResultCardBody({
 		assert(evidenceItemEl !== undefined, "evidence item is undefined");
 
 		setIsEvidenceShown(true);
-		evidenceItemEl.scrollIntoView({ behavior: "smooth", block: "center" });
+		requestAnimationFrame(() => {
+			evidenceItemEl.scrollIntoView({ behavior: "smooth", block: "center" });
+		});
 	};
 
 	const verdictColorStyles = useMemo(() => {
