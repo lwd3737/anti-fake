@@ -62,7 +62,12 @@ export default function ControlHorizontalBar({ className }: Props) {
 		>
 			{isBatchMode ? (
 				isBatchLoading ? (
-					<button onClick={stopBatch}>중단</button>
+					<button
+						className={`${Styles.BUTTON} bg-[#E74C3C] text-white`}
+						onClick={stopBatch}
+					>
+						중단
+					</button>
 				) : (
 					<div className="flex justify-between w-full">
 						<div>
@@ -75,19 +80,36 @@ export default function ControlHorizontalBar({ className }: Props) {
 							<label htmlFor="all-selector">전체 선택</label>
 						</div>
 						<div className="flex gap-x-3">
-							<button onClick={startBatch}>
-								{claimIndexesToVerifiy.size}개 주장 검증하기
+							<button
+								className={`${Styles.BUTTON} bg-[#27AE60] text-white`}
+								onClick={startBatch}
+							>
+								<strong className="text-[#FFEB3B]">
+									{claimIndexesToVerifiy.size}
+								</strong>
+								개 주장 검증하기
 							</button>
-							<button onClick={handleCancelBatchModeClick}>취소</button>
+							<button
+								className={`${Styles.BUTTON} bg-[#95A5A6] text-white`}
+								onClick={handleCancelBatchModeClick}
+							>
+								취소
+							</button>
 						</div>
 					</div>
 				)
 			) : (
-				<div className="flex gap-x-3">
-					<button onClick={handleSwitchToBatchModeClick}>
+				<div className="flex gap-x-4">
+					<button
+						className={`${Styles.BUTTON} bg-[#1F3A93] text-white`}
+						onClick={handleSwitchToBatchModeClick}
+					>
 						검증할 주장 선택하기
 					</button>
-					<button onClick={handleRetryDetectionClick}>
+					<button
+						className={`${Styles.BUTTON} bg-[#F3F4F6] text-[#4B5563]`}
+						onClick={handleRetryDetectionClick}
+					>
 						주장 탐지 재시도하기
 					</button>
 				</div>
@@ -95,3 +117,7 @@ export default function ControlHorizontalBar({ className }: Props) {
 		</div>
 	);
 }
+
+const Styles = {
+	BUTTON: "px-6 py-3 rounded-lg font-medium",
+};
