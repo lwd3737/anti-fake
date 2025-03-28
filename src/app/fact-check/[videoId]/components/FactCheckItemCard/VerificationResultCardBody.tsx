@@ -18,16 +18,33 @@ export default function VerficicationResultCardBody({
 }: Props) {
 	const containerElRef = useRef<HTMLDivElement>(null);
 
-	const [hoveredCitationIndex, setCitationIndex] = useState<number | null>(
-		null,
-	);
+	const [
+		highlightedEvidenceCitationIndex,
+		setHighlightedEvidenceCitationIndex,
+	] = useState<number | null>(null);
 
-	const handleCitationHover = (index: number): void => {
-		setCitationIndex(index);
+	const handleEvidenceCitationHover = (index: number): void => {
+		setHighlightedEvidenceCitationIndex(index);
 	};
 
-	const handleCitationLeave = (): void => {
-		setCitationIndex(null);
+	const handleEvidenceCitationLeave = (): void => {
+		setHighlightedEvidenceCitationIndex(null);
+	};
+
+	const [isEvidenceShown, setIsEvidenceShown] = useState(false);
+
+	const handleToggleEvidence = () => {
+		setIsEvidenceShown((prev) => !prev);
+	};
+
+	const evidenceItemsRef = useRef<HTMLElement[]>([]);
+
+	const handleGoToEvidenceCitation = (index: number) => {
+		const evidenceItemEl = evidenceItemsRef.current[index];
+		assert(evidenceItemEl !== undefined, "evidence item is undefined");
+
+		setIsEvidenceShown(true);
+		evidenceItemEl.scrollIntoView({ behavior: "smooth", block: "center" });
 	};
 
 	const verdictColorStyles = useMemo(() => {
@@ -63,19 +80,20 @@ export default function VerficicationResultCardBody({
 				</div>
 				<p className="h-max-[100px] overflow-y-clip text-[#374151] text-base">
 					<VerdictReasonText
-						containerElRef={containerElRef}
 						reason={reason}
-						hoveredCitationIndex={hoveredCitationIndex}
-						onCitationHover={handleCitationHover}
-						onCitationLeave={handleCitationLeave}
+						onCitationHover={handleEvidenceCitationHover}
+						onCitationLeave={handleEvidenceCitationLeave}
+						onCitationClick={handleGoToEvidenceCitation}
 					/>
 				</p>
 			</section>
 
 			<EvidenceCollapse
-				containerElRef={containerElRef}
+				itemsRef={evidenceItemsRef}
 				evidence={evidence}
-				highlightedSummaryIndex={hoveredCitationIndex}
+				highlightedItemIndex={highlightedEvidenceCitationIndex}
+				isShown={isEvidenceShown}
+				onToggle={handleToggleEvidence}
 			/>
 
 			<div>

@@ -3,21 +3,20 @@ import { ReactNode, RefObject } from "react";
 import { createEvidenceCitationEvent } from "../../events";
 
 interface Props {
-	containerElRef: RefObject<HTMLElement>;
 	reason: string;
-	hoveredCitationIndex: number | null;
 	onCitationHover: (index: number) => void;
 	onCitationLeave: () => void;
+	onCitationClick: (index: number) => void;
 }
 
 const CITATION_PATTERN = /\{\{\d+\}\}/g;
 const CITATION_NUMBER_PATTERN = /\d+/;
 
 export default function VerdictReasonText({
-	containerElRef,
 	reason,
 	onCitationHover,
 	onCitationLeave,
+	onCitationClick,
 }: Props) {
 	const citationIndices = Array.from(reason.matchAll(CITATION_PATTERN)).map(
 		(match) => {
@@ -34,13 +33,6 @@ export default function VerdictReasonText({
 			return citationIndex;
 		},
 	);
-
-	const handleCitationClick = (index: number) => {
-		const containerEl = containerElRef.current;
-		if (containerEl === null) return;
-
-		containerEl.dispatchEvent(createEvidenceCitationEvent(index));
-	};
 
 	return (
 		<div>
@@ -60,7 +52,7 @@ export default function VerdictReasonText({
 						key={index}
 						onMouseEnter={() => onCitationHover(citationIndex)}
 						onMouseLeave={onCitationLeave}
-						onClick={() => handleCitationClick(citationIndex)}
+						onClick={() => onCitationClick(citationIndex)}
 					>
 						{citationIndex + 1}
 					</span>,
