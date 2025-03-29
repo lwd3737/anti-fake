@@ -69,7 +69,7 @@ export default function VerficicationResultCardBody({
 	// TODO: theme 적용
 	return (
 		<div
-			className="flex flex-col gap-y-3 bg-[#F9FAFB] p-4"
+			className="flex flex-col gap-y-3 bg-[#F9FAFB] p-4 rounded-lg"
 			ref={containerElRef}
 		>
 			<section className="flex flex-col gap-y-3">

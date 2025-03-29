@@ -41,7 +41,9 @@ export default function FactCheckItemCard({
 			<div className="flex justify-between items-start gap-x-10">
 				<div className="flex flex-1 items-start gap-x-2">
 					<Image
-						className="mt-1"
+						className={`mt-1 ${
+							status === VerificationStatus.LOADING ? "animate-spin" : ""
+						}`}
 						src={`/icons/${statusFileName}`}
 						alt={"status icon"}
 						width={18}
