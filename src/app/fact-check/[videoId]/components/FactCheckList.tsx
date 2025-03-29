@@ -1,5 +1,4 @@
 "use client";
-import CheckBox from "@/app/components/inputs/CheckBox";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
 import FactCheckItemCard, {
@@ -14,7 +13,6 @@ export default function FactCheckList() {
 		useClaimVerification();
 	const {
 		isLoading: isBatchLoading,
-		isBatchMode,
 		claimIndexesToVerifiy,
 		updateClaimToVerifiy,
 	} = useClaimVerificationBatch();
@@ -27,49 +25,31 @@ export default function FactCheckList() {
 	return (
 		<ol className="flex flex-col gap-y-10 px-12 py-8 h-full overflow-y-auto">
 			{detectionResults.map((detectionResult) => {
-				const verified = verificationResults.find(
+				const verificationResult = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,
 				);
-				const shouldVerify = claimIndexesToVerifiy.has(detectionResult.index);
-				const status = verified
+				const isSelected = claimIndexesToVerifiy.has(detectionResult.index);
+				const status = verificationResult
 					? VerificationStatus.VERIFIED
-					: shouldVerify && isBatchLoading
+					: isSelected && isBatchLoading
 					? VerificationStatus.LOADING
 					: VerificationStatus.NOT_VERIFIED;
-				const isVerfiable =
-					isBatchMode && status === VerificationStatus.NOT_VERIFIED;
 
 				// TODO: theme 적용
 				return (
-					<li
-						className="relative flex items-start gap-x-3 gap-y-1"
-						key={detectionResult.index}
-					>
-						{isVerfiable && (
-							<span className="left-[-20px] absolute">
-								<CheckBox
-									className={` ${
-										isVerfiable ? "visible" : "invisible"
-									} mt-[1px]`}
-									checked={shouldVerify}
-									onChange={(ev) =>
-										updateClaimToVerifiy(
-											detectionResult.index,
-											ev.target.checked,
-										)
-									}
-								/>
-							</span>
-						)}
-						<div className="flex-1">
-							<FactCheckItemCard
-								key={detectionResult.index}
-								detectionResult={detectionResult}
-								verificationResult={verified}
-								status={status}
-								onRemove={() => removeItem(detectionResult.index)}
-							/>
-						</div>
+					<li className="flex flex-col gap-y-6" key={detectionResult.index}>
+						<FactCheckItemCard
+							key={detectionResult.index}
+							detectionResult={detectionResult}
+							verificationResult={verificationResult}
+							status={status}
+							isSelected={isSelected}
+							onSelect={() => updateClaimToVerifiy(detectionResult.index, true)}
+							onUnselect={() =>
+								updateClaimToVerifiy(detectionResult.index, false)
+							}
+							onRemove={() => removeItem(detectionResult.index)}
+						/>
 					</li>
 				);
 			})}

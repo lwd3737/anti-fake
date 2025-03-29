@@ -20,11 +20,6 @@ export interface IClaimVerificationBatch {
 	isLoading: boolean;
 	start: () => void;
 	stop: () => void;
-
-	isBatchMode: boolean;
-	switchToBatchMode: () => void;
-	cancelBatchMode: () => void;
-
 	claimIndexesToVerifiy: Set<number>;
 	updateClaimToVerifiy: (index: number, isSelected: boolean) => void;
 	updateClaimsToVerifiyBulk: (indexes: number[], isSelected: boolean) => void;
@@ -82,22 +77,11 @@ export default function ClaimVerificationBatchProvider({
 		[],
 	);
 
-	const [isBatchMode, setIsBatchMode] = useState(false);
-
-	const switchToBatchMode = useCallback(() => {
-		setIsBatchMode(true);
-		setClaimIndexesToVerify(new Set(data.map((_, index) => index)));
-	}, [data]);
-
-	const cancelBatchMode = useCallback(() => {
-		setIsBatchMode(false);
-	}, []);
-
 	const { data: detectionResults } = useClaimDetection();
 
 	const start = useCallback(async () => {
-		if (!isBatchMode) return;
-
+		console.log("start");
+		debugger;
 		const hasClaimToVerify = claimIndexesToVerifiy.size > 0;
 		if (!hasClaimToVerify) {
 			alert("검증할 주장을 선택해주세요!");
@@ -114,8 +98,8 @@ export default function ClaimVerificationBatchProvider({
 
 		await startStreaming("verify-claims", dto);
 
-		setIsBatchMode(false);
-	}, [claimIndexesToVerifiy, detectionResults, isBatchMode, startStreaming]);
+		// setIsBatchMode(false);
+	}, [claimIndexesToVerifiy, detectionResults, startStreaming]);
 
 	const value: IClaimVerificationBatch = useMemo(
 		() => ({
@@ -124,23 +108,16 @@ export default function ClaimVerificationBatchProvider({
 			start,
 			stop: stopStreaming,
 
-			isBatchMode,
-			switchToBatchMode,
-			cancelBatchMode,
-
 			claimIndexesToVerifiy,
 			updateClaimToVerifiy,
 			updateClaimsToVerifiyBulk,
 		}),
 		[
-			cancelBatchMode,
 			claimIndexesToVerifiy,
 			data,
-			isBatchMode,
 			isLoading,
 			start,
 			stopStreaming,
-			switchToBatchMode,
 			updateClaimToVerifiy,
 			updateClaimsToVerifiyBulk,
 		],
