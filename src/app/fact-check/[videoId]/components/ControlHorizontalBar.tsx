@@ -25,16 +25,20 @@ export default function ControlHorizontalBar({ className }: Props) {
 	const isAllVerified = verificationResults.length === detectionResults.length;
 
 	const handleAllSelectionChange = (ev: ChangeEvent) => {
-		if (isBatchLoading || isAllVerified) {
-			ev.preventDefault();
-			return;
-		}
-
 		const el = ev.target as HTMLInputElement;
 
 		const claimIndexes = detectionResults.map((claim) => claim.index);
-		if (el.checked) addClaimsToVerifyBulk(claimIndexes);
-		else removeClaimsToVerifyBulk(claimIndexes);
+		if (el.checked) {
+			const verifiedClaimIndexes = verificationResults.map(
+				(result) => result.claimIndex,
+			);
+			const notVerifiedIndexes = claimIndexes.filter(
+				(index) => !verifiedClaimIndexes.includes(index),
+			);
+			addClaimsToVerifyBulk(notVerifiedIndexes);
+		} else {
+			removeClaimsToVerifyBulk(claimIndexes);
+		}
 	};
 
 	const handleStartBatch = () => {
