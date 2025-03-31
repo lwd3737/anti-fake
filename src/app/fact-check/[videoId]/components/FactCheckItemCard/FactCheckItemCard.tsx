@@ -43,11 +43,13 @@ export default function FactCheckItemCard({
 		}
 	}, [status]);
 
-	const selectedStyle = useMemo(() => {
-		return isSelected
-			? "outline outline-2 outline-[#1F3A93] bg-[#1F3A930D]"
-			: "";
-	}, [isSelected]);
+	const stateStyle = useMemo(() => {
+		if (isSelected)
+			return "outline outline-2 outline-[#1F3A93] bg-[#1F3A930D] cursor-pointer";
+		else if (status === VerificationStatus.NOT_VERIFIED)
+			return "hover:outline hover:outline-2 hover:bg-[#1F3A931A] hover:outline-[#1F3A93] cursor-pointer";
+		else return "";
+	}, [isSelected, status]);
 
 	const handleClick = () => {
 		if (status !== VerificationStatus.NOT_VERIFIED) return;
@@ -58,7 +60,7 @@ export default function FactCheckItemCard({
 
 	return (
 		<article
-			className={`flex flex-col flex-1 gap-y-4 bg-white shadow-sm p-6 rounded-sm ${selectedStyle}`}
+			className={`flex flex-col flex-1 gap-y-4 bg-white shadow-sm p-6 rounded-sm ${stateStyle}`}
 			onClick={handleClick}
 		>
 			<div className="flex justify-between items-start gap-x-10">
