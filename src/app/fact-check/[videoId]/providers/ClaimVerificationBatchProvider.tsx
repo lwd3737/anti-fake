@@ -6,7 +6,6 @@ import {
 	ReactNode,
 	useCallback,
 	useContext,
-	useEffect,
 	useMemo,
 	useState,
 } from "react";
@@ -20,9 +19,11 @@ export interface IClaimVerificationBatch {
 	isLoading: boolean;
 	start: () => void;
 	stop: () => void;
-	claimIndexesToVerifiy: Set<number>;
-	updateClaimToVerifiy: (index: number, isSelected: boolean) => void;
-	updateClaimsToVerifiyBulk: (indexes: number[], isSelected: boolean) => void;
+	claimIndexesToVerify: number[];
+	addClaimToVerify: (index: number) => void;
+	removeClaimToVerify: (index: number) => void;
+	addClaimsToVerifyBulk: (indexes: number[]) => void;
+	removeClaimsToVerifyBulk: (indexes: number[]) => void;
 }
 
 const ClaimVerificationBatchContext = createContext<
@@ -42,53 +43,42 @@ export default function ClaimVerificationBatchProvider({
 		},
 	);
 
-	const [claimIndexesToVerifiy, setClaimIndexesToVerify] = useState<
-		Set<number>
-	>(new Set());
-
-	useEffect(
-		function initClaimsCheckedOnClaimsUpdated() {
-			setClaimIndexesToVerify(new Set(data.map((_, index) => index)));
-		},
-		[data],
-	);
-
-	const updateClaimToVerifiy = useCallback(
-		(index: number, isSelected: boolean) => {
-			setClaimIndexesToVerify((prev) =>
-				isSelected
-					? new Set([...Array.from(prev), index])
-					: new Set([...Array.from(prev).filter((_index) => _index !== index)]),
-			);
-		},
+	const [claimIndexesToVerify, setClaimIndexesToVerify] = useState<number[]>(
 		[],
 	);
 
-	const updateClaimsToVerifiyBulk = useCallback(
-		(indexes: number[], isSelected: boolean) => {
-			setClaimIndexesToVerify((prev) =>
-				isSelected
-					? new Set([...Array.from(prev), ...indexes])
-					: new Set([
-							...Array.from(prev).filter((_index) => !indexes.includes(_index)),
-					  ]),
-			);
-		},
-		[],
-	);
+	const addClaimToVerify = useCallback((index: number) => {
+		setClaimIndexesToVerify((prev) => Array.from(new Set([...prev, index])));
+	}, []);
+
+	const removeClaimToVerify = useCallback((index: number) => {
+		setClaimIndexesToVerify((prev) =>
+			prev.filter((_index) => _index !== index),
+		);
+	}, []);
+
+	const addClaimsToVerifyBulk = useCallback((indexes: number[]) => {
+		setClaimIndexesToVerify((prev) =>
+			Array.from(new Set([...prev, ...indexes])),
+		);
+	}, []);
+
+	const removeClaimsToVerifyBulk = useCallback((indexes: number[]) => {
+		setClaimIndexesToVerify((prev) =>
+			prev.filter((index) => !indexes.includes(index)),
+		);
+	}, []);
 
 	const { data: detectionResults } = useClaimDetection();
 
 	const start = useCallback(async () => {
-		console.log("start");
-		debugger;
-		const hasClaimToVerify = claimIndexesToVerifiy.size > 0;
+		const hasClaimToVerify = claimIndexesToVerify.length > 0;
 		if (!hasClaimToVerify) {
 			alert("검증할 주장을 선택해주세요!");
 			return;
 		}
 
-		const claimsToVerify = Array.from(claimIndexesToVerifiy.values()).map(
+		const claimsToVerify = claimIndexesToVerify.map(
 			(index) => detectionResults[index],
 		);
 
@@ -98,8 +88,8 @@ export default function ClaimVerificationBatchProvider({
 
 		await startStreaming("verify-claims", dto);
 
-		// setIsBatchMode(false);
-	}, [claimIndexesToVerifiy, detectionResults, startStreaming]);
+		setClaimIndexesToVerify([]);
+	}, [claimIndexesToVerify, detectionResults, startStreaming]);
 
 	const value: IClaimVerificationBatch = useMemo(
 		() => ({
@@ -107,19 +97,22 @@ export default function ClaimVerificationBatchProvider({
 			isLoading,
 			start,
 			stop: stopStreaming,
-
-			claimIndexesToVerifiy,
-			updateClaimToVerifiy,
-			updateClaimsToVerifiyBulk,
+			claimIndexesToVerify,
+			addClaimToVerify,
+			removeClaimToVerify,
+			addClaimsToVerifyBulk,
+			removeClaimsToVerifyBulk,
 		}),
 		[
-			claimIndexesToVerifiy,
 			data,
 			isLoading,
 			start,
 			stopStreaming,
-			updateClaimToVerifiy,
-			updateClaimsToVerifiyBulk,
+			claimIndexesToVerify,
+			addClaimToVerify,
+			removeClaimToVerify,
+			addClaimsToVerifyBulk,
+			removeClaimsToVerifyBulk,
 		],
 	);
 

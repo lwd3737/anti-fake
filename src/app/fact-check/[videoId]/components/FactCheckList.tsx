@@ -13,8 +13,9 @@ export default function FactCheckList() {
 		useClaimVerification();
 	const {
 		isLoading: isBatchLoading,
-		claimIndexesToVerifiy,
-		updateClaimToVerifiy,
+		claimIndexesToVerify,
+		addClaimToVerify,
+		removeClaimToVerify,
 	} = useClaimVerificationBatch();
 
 	const removeItem = (index: number) => {
@@ -28,7 +29,7 @@ export default function FactCheckList() {
 				const verificationResult = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,
 				);
-				const isSelected = claimIndexesToVerifiy.has(detectionResult.index);
+				const isSelected = claimIndexesToVerify.includes(detectionResult.index);
 				const status = verificationResult
 					? VerificationStatus.VERIFIED
 					: isSelected && isBatchLoading
@@ -44,9 +45,11 @@ export default function FactCheckList() {
 							verificationResult={verificationResult}
 							status={status}
 							isSelected={isSelected}
-							onSelect={() => updateClaimToVerifiy(detectionResult.index, true)}
+							onSelect={() =>
+								!isBatchLoading && addClaimToVerify(detectionResult.index)
+							}
 							onUnselect={() =>
-								updateClaimToVerifiy(detectionResult.index, false)
+								!isBatchLoading && removeClaimToVerify(detectionResult.index)
 							}
 							onRemove={() => removeItem(detectionResult.index)}
 						/>

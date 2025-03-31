@@ -51,9 +51,9 @@ export default function EvidenceCollapse({
 				{evidence.summaries.map((summary, index) => {
 					const { content, citationIndices } = summary;
 					const { citations } = evidence;
-					const filteredCitations = citationIndices.map(
-						(index) => citations[index],
-					);
+					const filteredCitations = citationIndices
+						.map((index) => citations[index])
+						.filter(Boolean);
 
 					return (
 						<li
