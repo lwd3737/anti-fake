@@ -22,8 +22,6 @@ export default function ControlHorizontalBar({ className }: Props) {
 		resetClaimsToVerify,
 	} = useClaimVerificationBatch();
 
-	const isAllVerified = verificationResults.length === detectionResults.length;
-
 	const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
 	useEffect(
@@ -70,6 +68,8 @@ export default function ControlHorizontalBar({ className }: Props) {
 		clearVerficationResults();
 		retryDetection();
 	};
+
+	const isAllVerified = verificationResults.length === detectionResults.length;
 
 	const allSelectionButtonStyle = useMemo(() => {
 		const isDisabled = isBatchLoading || isAllVerified;
