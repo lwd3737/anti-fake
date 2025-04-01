@@ -1,5 +1,5 @@
 "use client";
-import { ChangeEvent, useMemo } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useClaimDetection } from "../providers/ClaimDetectionProvider";
 import { useClaimVerificationBatch } from "../providers/ClaimVerificationBatchProvider";
 import { useClaimVerification } from "../providers/ClaimVerificationProvider";
@@ -19,26 +19,40 @@ export default function ControlHorizontalBar({ className }: Props) {
 		start: startBatch,
 		stop: stopBatch,
 		addClaimsToVerifyBulk,
-		removeClaimsToVerifyBulk,
+		resetClaimsToVerify,
 	} = useClaimVerificationBatch();
 
 	const isAllVerified = verificationResults.length === detectionResults.length;
 
-	const handleAllSelectionChange = (ev: ChangeEvent) => {
-		const el = ev.target as HTMLInputElement;
+	const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
-		const claimIndexes = detectionResults.map((claim) => claim.index);
-		if (el.checked) {
-			const verifiedClaimIndexes = verificationResults.map(
-				(result) => result.claimIndex,
-			);
-			const notVerifiedIndexes = claimIndexes.filter(
-				(index) => !verifiedClaimIndexes.includes(index),
-			);
-			addClaimsToVerifyBulk(notVerifiedIndexes);
-		} else {
-			removeClaimsToVerifyBulk(claimIndexes);
-		}
+	useEffect(
+		function toggleAllSelectionOnCheckboxUpdate() {
+			const claimIndexes = detectionResults.map((claim) => claim.index);
+			if (isAllItemsSelected) {
+				const verifiedClaimIndexes = verificationResults.map(
+					(result) => result.claimIndex,
+				);
+				const notVerifiedClaimsIndexes = claimIndexes.filter(
+					(index) => !verifiedClaimIndexes.includes(index),
+				);
+				addClaimsToVerifyBulk(notVerifiedClaimsIndexes);
+			} else {
+				resetClaimsToVerify();
+			}
+		},
+		[
+			addClaimsToVerifyBulk,
+			detectionResults,
+			isAllItemsSelected,
+			resetClaimsToVerify,
+			verificationResults,
+		],
+	);
+
+	const handleAllSelectionChange = (ev: ChangeEvent) => {
+		const isChecked = (ev.target as HTMLInputElement).checked;
+		setIsAllItemsSelected(isChecked);
 	};
 
 	const handleStartBatch = () => {
@@ -52,8 +66,9 @@ export default function ControlHorizontalBar({ className }: Props) {
 		);
 		if (!ok) return;
 
-		retryDetection();
+		resetClaimsToVerify();
 		clearVerficationResults();
+		retryDetection();
 	};
 
 	const allSelectionButtonStyle = useMemo(() => {
@@ -91,6 +106,7 @@ export default function ControlHorizontalBar({ className }: Props) {
 						id="all-selector"
 						type="checkbox"
 						disabled={isBatchLoading || isAllVerified}
+						checked={isAllItemsSelected}
 						onChange={handleAllSelectionChange}
 					/>
 					<label htmlFor="all-selector">전체 선택</label>

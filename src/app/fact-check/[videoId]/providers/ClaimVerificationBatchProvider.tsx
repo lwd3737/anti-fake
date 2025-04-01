@@ -24,6 +24,7 @@ export interface IClaimVerificationBatch {
 	removeClaimToVerify: (index: number) => void;
 	addClaimsToVerifyBulk: (indexes: number[]) => void;
 	removeClaimsToVerifyBulk: (indexes: number[]) => void;
+	resetClaimsToVerify: () => void;
 }
 
 const ClaimVerificationBatchContext = createContext<
@@ -69,6 +70,10 @@ export default function ClaimVerificationBatchProvider({
 		);
 	}, []);
 
+	const resetClaimsToVerify = useCallback(() => {
+		setClaimIndexesToVerify([]);
+	}, []);
+
 	const { data: detectionResults } = useClaimDetection();
 
 	const start = useCallback(async () => {
@@ -102,6 +107,7 @@ export default function ClaimVerificationBatchProvider({
 			removeClaimToVerify,
 			addClaimsToVerifyBulk,
 			removeClaimsToVerifyBulk,
+			resetClaimsToVerify,
 		}),
 		[
 			data,
@@ -113,6 +119,7 @@ export default function ClaimVerificationBatchProvider({
 			removeClaimToVerify,
 			addClaimsToVerifyBulk,
 			removeClaimsToVerifyBulk,
+			resetClaimsToVerify,
 		],
 	);
 
