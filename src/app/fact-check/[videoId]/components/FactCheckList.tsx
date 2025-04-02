@@ -6,7 +6,11 @@ import FactCheckItemCard, {
 } from "./FactCheckItemCard/FactCheckItemCard";
 import { useClaimVerification } from "../providers/ClaimVerificationProvider";
 
-export default function FactCheckList() {
+interface Props {
+	className?: string;
+}
+
+export default function FactCheckList({ className }: Props) {
 	const { data: detectionResults, remove: removeDetectionResult } =
 		useClaimDetection();
 	const { data: verificationResults, remove: removeVerficationResult } =
@@ -24,7 +28,7 @@ export default function FactCheckList() {
 	};
 
 	return (
-		<ol className="flex flex-col gap-y-10 px-12 py-8 h-full overflow-y-auto">
+		<ol className={`flex flex-col gap-y-10 py-8 h-full ${className}`}>
 			{detectionResults.map((detectionResult) => {
 				const verificationResult = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,
