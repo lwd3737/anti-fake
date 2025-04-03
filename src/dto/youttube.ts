@@ -4,6 +4,7 @@ export interface VideoDto {
 	description: string;
 	thumbnailUrl: string;
 	channelTitle: string;
+	publishedAt: string;
 }
 
 export interface SearchVideoChannelDto {

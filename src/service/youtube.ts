@@ -52,13 +52,16 @@ export default class YoutubeService {
 		}
 
 		const video = res.data.items?.map((item) => {
-			const { title, description, thumbnails, channelTitle } = item.snippet!;
+			const { title, description, thumbnails, channelTitle, publishedAt } =
+				item.snippet!;
+
 			return {
 				id: item.id!,
 				title: title!,
 				description: description!,
 				thumbnailUrl: thumbnails!.default!.url!,
 				channelTitle: channelTitle!,
+				publishedAt: publishedAt!,
 			};
 		})[0];
 		if (!video) {

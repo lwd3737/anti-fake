@@ -28,7 +28,7 @@ export default function FactCheckList({ className }: Props) {
 	};
 
 	return (
-		<ol className={`flex flex-col gap-y-10 py-8 h-full ${className}`}>
+		<ol className={`flex flex-col gap-y-10 h-full ${className}`}>
 			{detectionResults.map((detectionResult) => {
 				const verificationResult = verificationResults.find(
 					(verified) => verified.claimIndex === detectionResult.index,

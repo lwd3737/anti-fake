@@ -1,4 +1,4 @@
-import { formatDate } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { logJsonFile } from "./file";
 
 interface LogInfo {
@@ -76,11 +76,14 @@ export default class LLMHistoryLogger {
 	public async save(): Promise<void> {
 		const createdAt = new Date();
 
-		await logJsonFile(`logs/${this.fileName}-${formatDate(createdAt)}.json`, {
-			...this.info,
-			usageHistory: this.history,
-			createdAt,
-		});
+		await logJsonFile(
+			`logs/${this.fileName}-${formatDateTime(createdAt)}.json`,
+			{
+				...this.info,
+				usageHistory: this.history,
+				createdAt,
+			},
+		);
 
 		this.history = [];
 	}
