@@ -59,7 +59,11 @@ export default class YoutubeService {
 				id: item.id!,
 				title: title!,
 				description: description!,
-				thumbnailUrl: thumbnails!.default!.url!,
+				thumbnail: {
+					url: thumbnails!.default!.url!,
+					width: thumbnails!.default!.width!,
+					height: thumbnails!.default!.height!,
+				},
 				channelTitle: channelTitle!,
 				publishedAt: publishedAt!,
 			};
@@ -90,7 +94,11 @@ export default class YoutubeService {
 					channelId: channelId!,
 					channelTitle: channelTitle!,
 					description: description!,
-					thumbnailUrl: thumbnails!.default!.url!,
+					thumbnail: {
+						url: thumbnails!.default!.url!,
+						width: thumbnails!.default!.width!,
+						height: thumbnails!.default!.height!,
+					},
 				};
 			}) ?? []
 		);
@@ -133,7 +141,11 @@ export default class YoutubeService {
 					channelTitle: channelTitle!,
 					videoId: item.id!.videoId!,
 					description: description!,
-					thumbnailUrl: thumbnails!.default!.url!,
+					thumbnail: {
+						url: thumbnails!.default!.url!,
+						width: thumbnails!.default!.width!,
+						height: thumbnails!.default!.height!,
+					},
 					publishedAt: publishedAt!,
 				};
 			}) ?? [];

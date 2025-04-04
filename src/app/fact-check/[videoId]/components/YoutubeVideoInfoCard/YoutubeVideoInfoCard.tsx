@@ -6,6 +6,8 @@ import { formatDate } from "@/utils/date";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import FactCheckProgressDisplay from "./components/FactCheckProgressDisplay";
+import VideoThumbnailLink from "./components/VideoThumbnailLink";
 
 interface Props {
 	videoId: string;
@@ -27,23 +29,16 @@ export default async function YoutubeVideoInfoCard({
 
 	// TODO: error handling
 	const video = await youtube.getVideo(videoId);
+	const { thumbnail, title, channelTitle, publishedAt } = video;
 
 	return (
 		<div
 			className={`flex gap-x-4 bg-white shadow-sm p-6 rounded-sm ${className}`}
 		>
-			<div>
-				<Image
-					className="rounded-lg"
-					src={video.thumbnailUrl}
-					width={320}
-					height={180}
-					alt="youtube video thumbnail"
-				/>
-			</div>
+			<VideoThumbnailLink {...thumbnail} videoId={videoId} />
 
 			<div className="flex-1">
-				<h1 className="pb-2 font-bold text-xl">{video.title}</h1>
+				<h1 className="pb-2 font-bold text-xl">{title}</h1>
 				<div className="flex gap-x-5 text-[#6B7280] text-[0.875rem]">
 					<span className="flex items-center gap-x-1">
 						<Image
@@ -52,7 +47,7 @@ export default async function YoutubeVideoInfoCard({
 							width={12}
 							height={12}
 						/>
-						<small>{video.channelTitle}</small>
+						<small>{channelTitle}</small>
 					</span>
 					<span className="flex items-center gap-x-1">
 						<Image
@@ -61,8 +56,11 @@ export default async function YoutubeVideoInfoCard({
 							width={12}
 							height={12}
 						/>
-						{formatDate(new Date(video.publishedAt))}
+						{formatDate(new Date(publishedAt))}
 					</span>
+				</div>
+				<div className="py-4">
+					<FactCheckProgressDisplay />
 				</div>
 			</div>
 		</div>

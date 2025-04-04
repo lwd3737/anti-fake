@@ -137,3 +137,21 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
+
+progress {
+	/* reset */
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+}
+
+/* TODO: 컴포넌트로 분리 */
+progress::-webkit-progress-bar {
+	background-color: #e5e7eb;
+	border-radius: 8px;
+}
+
+progress::-webkit-progress-value {
+	background-color: #1f3a93;
+	border-radius: 8px;
+}

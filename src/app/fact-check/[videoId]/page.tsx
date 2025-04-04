@@ -1,6 +1,6 @@
 import FactCheckList from "./components/FactCheckList";
 import ControlHorizontalBar from "./components/ControlHorizontalBar";
-import YoutubeVideoInfoCard from "./components/YoutubeVideoInfoCard";
+import YoutubeVideoInfoCard from "./components/YoutubeVideoInfoCard/YoutubeVideoInfoCard";
 
 export default function FactCheckPage({
 	params: { videoId },

@@ -2,7 +2,11 @@ export interface VideoDto {
 	id: string;
 	title: string;
 	description: string;
-	thumbnailUrl: string;
+	thumbnail: {
+		url: string;
+		width: number;
+		height: number;
+	};
 	channelTitle: string;
 	publishedAt: string;
 }
@@ -11,7 +15,11 @@ export interface SearchVideoChannelDto {
 	channelId: string;
 	channelTitle: string;
 	description: string;
-	thumbnailUrl: string;
+	thumbnail: {
+		url: string;
+		width: number;
+		height: number;
+	};
 }
 
 export interface SearchVideosDto {
@@ -21,6 +29,10 @@ export interface SearchVideosDto {
 		channelTitle: string;
 		videoId: string;
 		description: string;
-		thumbnailUrl: string;
+		thumbnail: {
+			url: string;
+			width: number;
+			height: number;
+		};
 	}[];
 }
