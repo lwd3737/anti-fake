@@ -61,6 +61,8 @@ export default function VerficicationResultCardBody({
 				return `bg-[#FADBD8] text-[#922B21]`;
 			case VerificationVerdict.FALSE:
 				return `bg-[#ECF0F1] text-[#566573]`;
+			case VerificationVerdict.UNKNOWN:
+				return `bg-[#F0F0F0] text-[#607D8B]`;
 			default:
 				assert(false, `Unknown verdict: ${verdict}`);
 		}
