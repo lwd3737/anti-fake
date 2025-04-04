@@ -8,6 +8,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import FactCheckProgressDisplay from "./components/FactCheckProgressDisplay";
 import VideoThumbnailLink from "./components/VideoThumbnailLink";
+import { isGoogleApisError } from "@/error/google-apis-error";
 
 interface Props {
 	videoId: string;
@@ -27,9 +28,19 @@ export default async function YoutubeVideoInfoCard({
 	const googleAuth = GoogleAuth.create(accessToken.value);
 	const youtube = YoutubeService.create(googleAuth);
 
-	// TODO: error handling
-	const video = await youtube.getVideo(videoId);
-	const { thumbnail, title, channelTitle, publishedAt } = video;
+	const videoResult = await youtube.getVideo(videoId);
+	if (isGoogleApisError(videoResult)) {
+		const { code, status } = videoResult;
+		switch (status) {
+			case 401:
+				return redirect(PageRoutes.LOGIN);
+			default:
+				throw new Error(
+					`Google API Error: ${code} ${status} ${videoResult.message}`,
+				);
+		}
+	}
+	const { thumbnail, title, channelTitle, publishedAt } = videoResult;
 
 	return (
 		<div

@@ -4,10 +4,11 @@ import {
 	SearchVideosDto,
 	VideoDto,
 } from "@/dto/youttube";
-import { GaxiosResponse } from "gaxios";
+import { GaxiosError, GaxiosResponse } from "gaxios";
 import { Auth, google, youtube_v3 } from "googleapis";
 import GoogleAuth from "./google-auth";
 import { YoutubeTranscript } from "youtube-transcript";
+import { GoogleApisError, isGoogleApisError } from "@/error/google-apis-error";
 
 export default class YoutubeService {
 	private youtube: youtube_v3.Youtube;
@@ -42,37 +43,46 @@ export default class YoutubeService {
 		});
 	}
 
-	public async getVideo(id: string): Promise<VideoDto> {
-		const res = await this.youtube.videos.list({
-			part: ["id", "snippet"],
-			id: [id],
-		});
-		if (this.isFailed(res)) {
-			throw new Error(`Youtube video search is failed: ${res.statusText}`);
+	public async getVideo(id: string): Promise<VideoDto | GoogleApisError> {
+		try {
+			const res = await this.youtube.videos.list({
+				part: ["id", "snippet"],
+				id: [id],
+			});
+			console.log("get video res", res);
+			if (this.isFailed(res)) {
+				throw new Error(`Youtube video search is failed: ${res.statusText}`);
+			}
+
+			const video = res.data.items?.map((item) => {
+				const { title, description, thumbnails, channelTitle, publishedAt } =
+					item.snippet!;
+
+				return {
+					id: item.id!,
+					title: title!,
+					description: description!,
+					thumbnail: {
+						url: thumbnails!.default!.url!,
+						width: thumbnails!.default!.width!,
+						height: thumbnails!.default!.height!,
+					},
+					channelTitle: channelTitle!,
+					publishedAt: publishedAt!,
+				};
+			})[0];
+			if (!video) {
+				throw new Error(`Youtube video not found: ${id}`);
+			}
+
+			return video;
+		} catch (error) {
+			if (isGoogleApisError(error)) {
+				return error;
+			}
+
+			throw error;
 		}
-
-		const video = res.data.items?.map((item) => {
-			const { title, description, thumbnails, channelTitle, publishedAt } =
-				item.snippet!;
-
-			return {
-				id: item.id!,
-				title: title!,
-				description: description!,
-				thumbnail: {
-					url: thumbnails!.default!.url!,
-					width: thumbnails!.default!.width!,
-					height: thumbnails!.default!.height!,
-				},
-				channelTitle: channelTitle!,
-				publishedAt: publishedAt!,
-			};
-		})[0];
-		if (!video) {
-			throw new Error(`Youtube video not found: ${id}`);
-		}
-
-		return video;
 	}
 
 	public async searchChannel(name: string): Promise<SearchVideoChannelDto[]> {
