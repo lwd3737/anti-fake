@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { useAuth } from "../../(protected)/components/AuthProvider";
 import { fetchGenerateAccessToken } from "../../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
+import Logo from "@/components/Logo";
+import Image from "next/image";
 
 export default function OauthCallbackPage() {
 	const params = useSearchParams();
@@ -46,8 +48,18 @@ export default function OauthCallbackPage() {
 	);
 
 	return (
-		<main>
-			<h1>로그인 중...</h1>
+		<main className="flex flex-col justify-center items-center gap-y-12 p-14 h-full">
+			<div className="flex flex-col items-center">
+				<Image
+					className="animate-spin"
+					src="/icons/loading.svg"
+					alt="loading"
+					width={64}
+					height={64}
+				/>
+				<h1 className="mt-8 mb-2 font-medium text-2xl">로그인 중입니다</h1>
+				<p className="text-[#6B7280]">잠시만 기다려 주세요...</p>
+			</div>
 		</main>
 	);
 }
