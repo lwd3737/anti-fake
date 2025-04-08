@@ -2,8 +2,8 @@
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { PageRoutes } from "@/constants/routes";
 import { useEffect } from "react";
-import { useAuth } from "../components/AuthProvider";
-import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
+import { useAuth } from "../../(protected)/components/AuthProvider";
+import { fetchGenerateAccessToken } from "../../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
 
 export default function OauthCallbackPage() {

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { PageRoutes } from "@/constants/routes";
 import { useRouter } from "next/navigation";
-import { fetchGenerateAccessToken } from "../api/auth/generate-token/fetch";
+import { fetchGenerateAccessToken } from "../../api/auth/generate-token/fetch";
 import { isFailure } from "@/result";
 
 export const AuthContext = createContext<{
@@ -45,7 +45,7 @@ export default function AuthProvider({
 			});
 			if (isFailure(result)) router.push(PageRoutes.error.AUTH);
 		},
-		[login, router],
+		[router],
 	);
 
 	useEffect(() => {

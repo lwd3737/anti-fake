@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { fetchLgout } from "../api/auth/logout/fetch";
+import { fetchLgout } from "../../api/auth/logout/fetch";
 import { useAuth } from "./AuthProvider";
 import { PageRoutes } from "@/constants/routes";
+import Logo from "@/components/Logo";
 
 export default function Header() {
 	const { isAuthenticated, logout } = useAuth();
@@ -17,9 +18,7 @@ export default function Header() {
 		<header
 			className={`px-8 bg-white shadow-sm flex justify-between items-center py-4 h-full`}
 		>
-			<Link className="font-bold text-black text-2xl" href={PageRoutes.HOME}>
-				Anti Fake
-			</Link>
+			<Logo />
 
 			{isAuthenticated && (
 				<button

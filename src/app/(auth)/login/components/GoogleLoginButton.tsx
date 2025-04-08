@@ -1,6 +1,7 @@
 "use client";
 import { fetchGenerateOauthUrl } from "@/app/api/auth/oauth-url/fetch";
 import { PageRoutes } from "@/constants/routes";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function GoogleLoginButton() {
@@ -17,7 +18,12 @@ export default function GoogleLoginButton() {
 
 	return (
 		<button className="" onClick={handleClick}>
-			Google 로그인
+			<Image
+				src="/icons/google-login-button.svg"
+				alt="google login"
+				width={330}
+				height={50}
+			/>
 		</button>
 	);
 }
