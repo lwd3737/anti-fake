@@ -18,8 +18,7 @@ export default function RootLayout({
 }) {
 	return (
 		<html className="h-screen" lang="en">
-			{/* TODO: theme 적용 */}
-			<body className={`${inter.className} h-screen bg-[#F9FAFB]`}>
+			<body className={`${inter.className} h-screen bg-surface`}>
 				<AuthProvider>
 					<div className="flex flex-col h-full">
 						<section className={`z-200 z- top-0 right-0 left-0 fixed h-16`}>

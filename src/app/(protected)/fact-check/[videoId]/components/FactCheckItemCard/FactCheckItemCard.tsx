@@ -45,9 +45,9 @@ export default function FactCheckItemCard({
 
 	const stateStyle = useMemo(() => {
 		if (isSelected)
-			return "outline outline-2 outline-[#1F3A93] bg-[#1F3A930D] cursor-pointer";
+			return "outline outline-2 outline-brand bg-surface-card-hover cursor-pointer";
 		else if (status === VerificationStatus.NOT_VERIFIED)
-			return "hover:outline hover:outline-2 hover:bg-[#1F3A931A] hover:outline-[#1F3A93] cursor-pointer";
+			return "hover:outline hover:outline-2 hover:bg-[#1F3A931A] hover:outline-brand cursor-pointer";
 		else return "";
 	}, [isSelected, status]);
 

@@ -84,7 +84,7 @@ export default function CitationPopover({ citations }: Props) {
 	return (
 		<span className="flex">
 			<button
-				className="flex gap-x-1 bg-[#F3F4F6] hover:bg-gray-200 px-3 py-[0.375rem] rounded-lg font-medium text-[0.875rem]"
+				className="flex gap-x-1 bg-surface-subtle hover:bg-gray-200 px-3 py-[0.375rem] rounded-lg font-medium text-[0.875rem]"
 				onClick={handleToggleClick}
 			>
 				<Image
@@ -101,18 +101,18 @@ export default function CitationPopover({ citations }: Props) {
 						className={`left-4 absolute flex flex-col gap-y-2 bg-white shadow-md py-4 rounded-lg w-[25vw] h-[40vh] ${directionStyle}`}
 						ref={popoverElRef}
 					>
-						<h3 className="px-4 font-semibold text-[#374151] text-[0.875rem] text-center">
+						<h3 className="px-4 font-semibold text-[0.875rem] text-text-base text-center">
 							인용
 						</h3>
 						<ol className="flex-[1_1_0px] px-4 overflow-y-auto">
 							{citations.map(({ title, uri }, index) => {
 								return (
 									<li
-										className="py-3 border-[#F3F4F6] border-b border-solid"
+										className="py-3 border-surbg-surface-subtle border-b border-solid"
 										key={index}
 									>
 										<Link
-											className="font-medium text-[#4B5563] text-[0.875rem]"
+											className="font-medium text-[0.875rem] text-text-subtle"
 											href={uri}
 											target="_blank"
 										>

@@ -72,14 +72,14 @@ export default function EvidenceCollapse({
 								}`}
 							>
 								<span className="text-black">{index + 1}.</span>
-								<p className={`inline-block w-fit text-[#4B5563]`}>{content}</p>
+								<p className="inline-block w-fit text-text-subtle">{content}</p>
 							</div>
 
 							<div className="flex flex-wrap gap-x-2 pl-4">
 								{filteredCitations.map(({ title, uri }) => {
 									return (
 										<Link
-											className="inline-block bg-[#E5E7EB] px-3 py-1 rounded-full text-[#4B5563] text-[0.5rem]"
+											className="inline-block bg-surface-subtle-hover px-3 py-1 rounded-full text-[0.5rem] text-text-subtle"
 											key={uri}
 											href={uri}
 											target="_blank"

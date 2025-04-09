@@ -16,7 +16,7 @@ export default function AuthLayout({
 }) {
 	return (
 		<html className="h-screen" lang="en">
-			<body className={`${inter.className} h-screen bg-[#F9FAFB]`}>
+			<body className={`${inter.className} h-screen bg-surface`}>
 				{children}
 			</body>
 		</html>

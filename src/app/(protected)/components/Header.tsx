@@ -1,8 +1,6 @@
 "use client";
-import Link from "next/link";
 import { fetchLgout } from "../../api/auth/logout/fetch";
 import { useAuth } from "./AuthProvider";
-import { PageRoutes } from "@/constants/routes";
 import Logo from "@/components/Logo";
 
 export default function Header() {
@@ -22,7 +20,7 @@ export default function Header() {
 
 			{isAuthenticated && (
 				<button
-					className="font-normal text-[#4B5563] text-base"
+					className="font-normal text-text-subtle text-base"
 					onClick={handleLogoutClick}
 				>
 					로그아웃

@@ -73,22 +73,20 @@ export default function ControlHorizontalBar({ className }: Props) {
 
 	const allSelectionButtonStyle = useMemo(() => {
 		const isDisabled = isBatchLoading || isAllVerified;
-		const disabledStyle = isDisabled
-			? "bg-[#1F3A9314] text-gray-400 cursor-not-allowed"
-			: "hover:bg-[#1F3A934D]";
-		return `text-[#1F3A93] bg-[#1F3A9320] ${disabledStyle}`;
+		return isDisabled
+			? "bg-[#02020213] text-gray-400 cursor-not-allowed"
+			: "text-brand bg-[#1F3A9320] hover:bg-brand-hover";
 	}, [isAllVerified, isBatchLoading]);
 
 	const startBatchButtonStyle = useMemo(() => {
 		const isDisabled = isBatchLoading || isAllVerified;
-		const disabledStyle = isDisabled
-			? "bg-[#AEB9D1] text-grapy-300 cursor-not-allowed"
-			: "hover:bg-[#3A539B]";
-		return `bg-[#1F3A93]  text-white  ${disabledStyle}`;
+		return isDisabled
+			? "bg-[#AEB9D1] text-gray-300 cursor-not-allowed"
+			: "bg-brand text-white hover:bg-brand-hover";
 	}, [isAllVerified, isBatchLoading]);
 
 	const retryButtonStyle = useMemo(
-		() => `bg-[#F3F4F6] hover:bg-[#E5E7EB] text-[#4B5563]`,
+		() => `bg-surface-subtle hover:bg-surface-subtle-hover text-text-base`,
 		[],
 	);
 
@@ -113,7 +111,7 @@ export default function ControlHorizontalBar({ className }: Props) {
 				</Button>
 
 				{isBatchLoading ? (
-					<Button className="bg-[#E74C3C] text-white" onClick={stopBatch}>
+					<Button className="bg-danger text-white" onClick={stopBatch}>
 						중단
 					</Button>
 				) : (

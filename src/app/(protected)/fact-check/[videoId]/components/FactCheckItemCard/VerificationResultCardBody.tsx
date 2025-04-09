@@ -71,7 +71,7 @@ export default function VerficicationResultCardBody({
 	// TODO: theme 적용
 	return (
 		<div
-			className="flex flex-col gap-y-3 bg-[#F9FAFB] p-4 rounded-lg"
+			className="flex flex-col gap-y-3 bg-surface-card p-4 rounded-lg"
 			ref={containerElRef}
 		>
 			<section className="flex flex-col gap-y-3">
@@ -82,14 +82,14 @@ export default function VerficicationResultCardBody({
 						{displayVerdict(verdict)}
 					</span>
 				</div>
-				<p className="h-max-[100px] overflow-y-clip text-[#374151] text-base">
+				<div className="h-max-[100px] overflow-y-clip">
 					<VerdictReasonText
 						reason={reason}
 						onCitationHover={handleEvidenceCitationHover}
 						onCitationLeave={handleEvidenceCitationLeave}
 						onCitationClick={handleGoToEvidenceCitation}
 					/>
-				</p>
+				</div>
 			</section>
 
 			<EvidenceCollapse

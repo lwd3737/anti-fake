@@ -35,7 +35,7 @@ export default function VerdictReasonText({
 	);
 
 	return (
-		<div>
+		<div className="text-base text-text-base">
 			{reason.split(CITATION_PATTERN).reduce((result, text, index, origin) => {
 				const isLast = index === origin.length - 1;
 				if (isLast) {
@@ -48,7 +48,7 @@ export default function VerdictReasonText({
 					...result,
 					text,
 					<span
-						className="inline-block top-[-5px] relative bg-[#1F3A93] hover:bg-[#3A539B] mt-[-4px] mr-1 rounded-full w-5 font-normal text-white text-xs text-center cursor-pointer"
+						className="inline-block top-[-5px] relative bg-brand hover:bg-brand-hover mt-[-4px] mr-1 rounded-full w-5 font-normal text-white text-xs text-center cursor-pointer"
 						key={index}
 						onMouseEnter={() => onCitationHover(citationIndex)}
 						onMouseLeave={onCitationLeave}

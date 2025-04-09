@@ -55,7 +55,7 @@ export default function Home() {
 						placeholder="https://www.youtube.com/watch?v=..."
 					/>
 
-					<button className="flex justify-center items-center gap-x-2 bg-[#1F3A93] p-5 rounded-lg w-full font-semibold text-[1.125rem] text-white">
+					<button className="flex justify-center items-center gap-x-2 bg-brand p-5 rounded-lg w-full font-semibold text-[1.125rem] text-white">
 						<Image
 							src="/icons/search.svg"
 							alt="start fectcheck"
