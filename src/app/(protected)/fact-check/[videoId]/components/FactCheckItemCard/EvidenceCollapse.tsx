@@ -1,7 +1,6 @@
 import { Evidence } from "@/models/evidence-retrieval";
 import Link from "next/link";
-import { MutableRefObject, RefObject, useEffect, useState } from "react";
-import { FactCheckEventType } from "../../events";
+import { MutableRefObject } from "react";
 import Image from "next/image";
 
 interface Props {
