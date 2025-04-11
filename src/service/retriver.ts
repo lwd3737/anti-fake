@@ -1,5 +1,6 @@
 import loadConfig from "@/config";
 import { TokenUsage } from "@/logger/llm-history.logger";
+import { RetrievalCitation, RetrievalItem } from "@/models/evidence-retrieval";
 import {
 	DynamicRetrievalMode,
 	GenerativeModel,
@@ -7,9 +8,10 @@ import {
 	GroundingChunk,
 	GroundingMetadata,
 } from "@google/generative-ai";
+import * as cheerio from "cheerio";
 
 interface RetrievalResult {
-	summaries: RetrievalSummary[];
+	items: RetrievalItem[];
 	citations: RetrievalCitation[];
 	metadata: {
 		tokenUsage: TokenUsage;
@@ -17,14 +19,9 @@ interface RetrievalResult {
 	};
 }
 
-interface RetrievalSummary {
-	content: string;
-	citationIndices: number[];
-}
-
-interface RetrievalCitation {
-	title: string;
-	uri: string;
+interface GroundingSource {
+	title: string; // domain
+	uri: string; // proxy url
 }
 
 export default class Retriever {
@@ -91,68 +88,56 @@ export default class Retriever {
 			},
 		);
 
-		const initialResult = {
-			summaries: [] as RetrievalSummary[],
-			citations: [] as RetrievalCitation[],
-		} as RetrievalResult;
+		const { groundingChunks, groundingSupports } = generatedContent.response
+			.candidates?.[0].groundingMetadata as Omit<
+			GroundingMetadata,
+			"groundingChuncks" | "groundingSupports"
+		> & {
+			groundingChunks?: GroundingChunk[];
+			groundingSupports?: {
+				confidenceScores: number[];
+				groundingChunkIndices: number[];
+				segment: {
+					text?: string;
+					startIndex?: number;
+					endIndex?: number;
+					partIndex?: number;
+				};
+			}[];
+		};
 
-		const result =
-			generatedContent.response.candidates?.reduce((result, candidate) => {
-				// INFO: SDK 오타로 인해 타입 단언으로 해결
-				const { groundingChunks, groundingSupports } =
-					candidate.groundingMetadata as Omit<
-						GroundingMetadata,
-						"groundingChuncks" | "groundingSupports"
-					> & {
-						groundingChunks?: GroundingChunk[];
-						groundingSupports?: {
-							confidenceScores: number[];
-							groundingChunkIndices: number[];
-							segment: {
-								text?: string;
-								startIndex?: number;
-								endIndex?: number;
-								partIndex?: number;
-							};
-						}[];
+		const items =
+			groundingSupports
+				?.map((support) => {
+					const { segment, groundingChunkIndices } = support;
+					const { text } = segment as unknown as { text?: string };
+
+					return {
+						summary: text,
+						citationIndexes: groundingChunkIndices,
 					};
+				})
+				.filter(
+					(item): item is RetrievalItem =>
+						!!item.summary && !!item.citationIndexes,
+				) ?? [];
 
-				const newSummaries =
-					groundingSupports
-						?.map((support) => {
-							const { segment, groundingChunkIndices } = support;
-							const { text } = segment as unknown as { text?: string };
+		const sources =
+			groundingChunks
+				?.map((groundingChunk) => groundingChunk.web)
+				.filter<GroundingSource>(
+					(citiation): citiation is GroundingSource =>
+						!!citiation?.title && !!citiation.uri,
+				) ?? [];
 
-							return {
-								content: text,
-								citationIndices: groundingChunkIndices,
-							};
-						})
-						.filter(
-							(summary): summary is RetrievalSummary =>
-								!!summary.content && !!summary.citationIndices,
-						) ?? [];
-				result.summaries = [...result.summaries, ...newSummaries];
-
-				const citiations =
-					groundingChunks
-						?.map((groundingChunk) => groundingChunk.web)
-						.filter<RetrievalCitation>(
-							(citiation): citiation is RetrievalCitation =>
-								!!citiation?.title && !!citiation.uri,
-						) ?? [];
-				result.citations = Array.from(
-					new Set([...result.citations, ...citiations]),
-				);
-
-				return result;
-			}, initialResult as RetrievalResult) ?? initialResult;
+		const citations = await Promise.all(sources.map(this.getCitation));
 
 		const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
 			generatedContent.response.usageMetadata ?? {};
 
 		return {
-			...result,
+			items,
+			citations,
 			metadata: {
 				tokenUsage: {
 					promptTokens: promptTokenCount ?? 0,
@@ -161,6 +146,52 @@ export default class Retriever {
 				},
 				model: this.model.model,
 			},
+		};
+	}
+
+	private async getCitation(
+		source: GroundingSource,
+	): Promise<RetrievalCitation> {
+		const { uri, title: domain } = source;
+		const res = await fetch(uri, {
+			headers: {
+				"User-Agent":
+					"Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+			},
+		});
+
+		const html = await res.text();
+
+		const $ = cheerio.load(html);
+		const head = $("head");
+
+		const title =
+			head.find('meta[property="og:title"]').attr("content") ??
+			head.find("title").text();
+		const description =
+			head.find('meta[property="og:description"]').attr("content") ??
+			head.find("meta[name=description]").attr("content");
+		const image =
+			head.find('link[rel="icon"]').attr("href") ??
+			head.find('link[rel="icons"]').attr("href");
+		const siteName =
+			head.find('meta[property="og:site_name"]').attr("content") ??
+			head.find('meta[name="application-name"]').attr("content") ??
+			domain;
+		const url =
+			head.find('meta[property="og:url"]').attr("content") ??
+			`https://${domain}`;
+
+		const resolvedImage = image?.startsWith("/")
+			? `${new URL(url).origin}${image}`
+			: image;
+
+		return {
+			title,
+			description,
+			image: resolvedImage ? decodeURIComponent(resolvedImage) : undefined,
+			siteName,
+			url: decodeURIComponent(url),
 		};
 	}
 

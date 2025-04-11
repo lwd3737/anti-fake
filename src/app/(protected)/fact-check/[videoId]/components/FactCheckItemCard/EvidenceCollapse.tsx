@@ -47,8 +47,9 @@ export default function EvidenceCollapse({
 					isShown ? "" : "hidden"
 				}`}
 			>
-				{evidence.summaries.map((summary, index) => {
-					const { content, citationIndices } = summary;
+				{evidence.items.map((summary, index) => {
+					const { summary: content, citationIndexes: citationIndices } =
+						summary;
 					const { citations } = evidence;
 					const filteredCitations = citationIndices
 						.map((index) => citations[index])
@@ -75,16 +76,16 @@ export default function EvidenceCollapse({
 							</div>
 
 							<div className="flex flex-wrap gap-x-2 pl-4">
-								{filteredCitations.map(({ title, uri }) => {
+								{filteredCitations.map(({ url, siteName }, index) => {
 									return (
-										<Link
+										<a
 											className="inline-block bg-surface-subtle-hover px-3 py-1 rounded-full text-[0.5rem] text-text-subtle"
-											key={uri}
-											href={uri}
+											key={index}
+											href={url}
 											target="_blank"
 										>
-											{title}
-										</Link>
+											<span>{siteName}</span>
+										</a>
 									);
 								})}
 							</div>

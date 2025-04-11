@@ -1,7 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+	experimental: {
+		serverComponentsExternalPackages: ["cheerio"],
+	},
 	images: {
-		domains: ["i.ytimg.com"],
+		remotePatterns: [
+			{
+				protocol: "http",
+				hostname: "**",
+			},
+			{
+				protocol: "https",
+				hostname: "**",
+			},
+		],
 	},
 };
 

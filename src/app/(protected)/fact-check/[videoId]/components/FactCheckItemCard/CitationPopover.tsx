@@ -1,8 +1,6 @@
 import { EvidenceCitation } from "@/models/evidence-retrieval";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { set } from "zod";
 
 interface Props {
 	citations: EvidenceCitation[];
@@ -105,22 +103,52 @@ export default function CitationPopover({ citations }: Props) {
 							인용
 						</h3>
 						<ol className="flex-[1_1_0px] px-4 overflow-y-auto">
-							{citations.map(({ title, uri }, index) => {
-								return (
-									<li
-										className="py-3 border-surbg-surface-subtle border-b border-solid"
-										key={index}
-									>
-										<Link
-											className="font-medium text-[0.875rem] text-text-subtle"
-											href={uri}
-											target="_blank"
+							{citations.map(
+								({ title, url, description, image, siteName }, index) => {
+									return (
+										<li
+											className="py-3 border-surface-subtle border-b border-solid"
+											key={index}
 										>
-											{title}
-										</Link>
-									</li>
-								);
-							})}
+											<a
+												className="font-medium text-[0.875rem] text-text-subtle"
+												href={url}
+												target="_blank"
+											>
+												<span className="flex flex-col gap-y-2">
+													<span className="flex items-center gap-x-1">
+														{image && (
+															<Image
+																className="rounded-[50%]"
+																src={image}
+																alt=""
+																width={18}
+																height={18}
+															/>
+														)}
+														<span className="font-semibold text-[14px] text-text-base">
+															{siteName}
+														</span>
+													</span>
+
+													<span className="flex flex-col gap-y-1">
+														{title && (
+															<span className="font-bold text-text-base leading-4">
+																{title}
+															</span>
+														)}
+														{description && (
+															<span className="max-h-[50px] font-medium text-[12px] text-text-subtle-extra text-ellipsis line-clamp-3 leading-4">
+																{description}
+															</span>
+														)}
+													</span>
+												</span>
+											</a>
+										</li>
+									);
+								},
+							)}
 						</ol>
 					</section>
 				</div>

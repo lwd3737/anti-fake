@@ -26,19 +26,17 @@ export async function POST(req: NextRequest) {
 			if (EvidenceRetriever.isError(evidence)) {
 				console.error(evidence.error);
 			} else {
-				const evidenceContents = evidence.summaries.map(
-					(summary) => summary.content,
-				);
+				const evidenceSummaries = evidence.items.map((item) => item.summary);
 
-				const verifed = await claimVerifier.verify(
+				const verificationResult = await claimVerifier.verify(
 					{
 						claim: claim.content,
-						evidence: evidenceContents,
+						evidence: evidenceSummaries,
 					},
 					isCompleted,
 				);
 				const dto = {
-					...verifed,
+					...verificationResult,
 					type: "claimVerificationResult",
 					claimIndex: claim.index,
 					evidence,

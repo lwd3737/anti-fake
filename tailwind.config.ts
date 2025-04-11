@@ -5,6 +5,7 @@ const BaseColors = {
 	gray50: "#F9FAFB",
 	gray100: "#F3F4F6",
 	gray200: "#E5E7EB",
+	gray400: "#9CA3AF",
 	gray600: "#4B5563",
 	gray900: "#374151",
 
@@ -13,7 +14,7 @@ const BaseColors = {
 	blue800: "#1F3A93",
 
 	red: "#E74C3C",
-};
+} as const;
 
 const config: Config = {
 	content: [
@@ -54,6 +55,7 @@ const config: Config = {
 					base: BaseColors.gray900,
 					subtle: {
 						DEFAULT: BaseColors.gray600,
+						extra: BaseColors.gray400,
 						hover: BaseColors.gray200,
 					},
 				},
