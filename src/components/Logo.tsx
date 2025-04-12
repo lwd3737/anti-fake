@@ -8,7 +8,7 @@ interface Props {
 export default function Logo({ onClick }: Props) {
 	return (
 		<Link
-			className="font-bold text-black text-2xl"
+			className="font-bold text-brand text-2xl"
 			href={PageRoutes.HOME}
 			onClick={onClick}
 		>

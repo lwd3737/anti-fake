@@ -2,6 +2,8 @@
 import { fetchLgout } from "../../api/auth/logout/fetch";
 import { useAuth } from "./AuthProvider";
 import Logo from "@/components/Logo";
+import { PageRoutes } from "@/constants/routes";
+import NavLink from "./NavLink";
 
 export default function Header() {
 	const { isAuthenticated, logout } = useAuth();
@@ -16,7 +18,14 @@ export default function Header() {
 		<header
 			className={`px-8 bg-white shadow-sm flex justify-between items-center py-4 h-full`}
 		>
-			<Logo />
+			<section className="flex items-center gap-12">
+				<Logo />
+
+				<div className="flex gap-4">
+					<NavLink to={PageRoutes.HOME}>홈</NavLink>
+					<NavLink to={PageRoutes.ARCHIVE}>아카이브</NavLink>
+				</div>
+			</section>
 
 			{isAuthenticated && (
 				<button

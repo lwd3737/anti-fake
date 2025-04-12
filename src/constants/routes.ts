@@ -14,8 +14,9 @@ export const APIRoutes = {
 };
 
 export const PageRoutes = {
-	HOME: "/",
 	LOGIN: "/login",
+	HOME: "/",
+	ARCHIVE: "/archive",
 	OAUTH_CALLBACK: "/oauth-callback",
 	error: {
 		AUTH: "/error/auth",
