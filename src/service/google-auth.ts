@@ -4,6 +4,7 @@ import { google, Auth } from "googleapis";
 import { NextRequest } from "next/server";
 
 export default class GoogleAuth {
+	private config: Pick<Config["google"], "clientId">;
 	private _client: Auth.OAuth2Client;
 	private _csrfToken?: string;
 
@@ -27,6 +28,9 @@ export default class GoogleAuth {
 		config: Pick<Config["google"], "clientId" | "clientSecret" | "redirectUrl">,
 	) {
 		const { clientId, clientSecret, redirectUrl } = config;
+		this.config = {
+			clientId,
+		};
 
 		this._client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl);
 	}
@@ -42,12 +46,19 @@ export default class GoogleAuth {
 	public generateAuthUrl(options: Auth.GenerateAuthUrlOpts): string {
 		const csrfToken = generateCsrfToken();
 		this._csrfToken = csrfToken;
-		return this._client.generateAuthUrl({ state: csrfToken, ...options });
+		return this._client.generateAuthUrl({
+			state: csrfToken,
+			access_type: "offline",
+			...options,
+		});
 	}
 
 	public generateAuthUrlWithScopes(): string {
 		return this.generateAuthUrl({
 			scope: [
+				"openid",
+				"profile",
+				"email",
 				"https://www.googleapis.com/auth/youtube.force-ssl",
 				"https://www.googleapis.com/auth/youtubepartner",
 				"https://www.googleapis.com/auth/cse",
@@ -62,6 +73,11 @@ export default class GoogleAuth {
 		}
 
 		this._client.setCredentials(tokens);
+
+		const idToken = await this._client.verifyIdToken({
+			idToken: tokens.id_token!,
+			audience: this.config.clientId,
+		});
 		return tokens;
 	}
 

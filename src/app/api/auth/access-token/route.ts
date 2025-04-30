@@ -1,6 +1,6 @@
 import loadConfig from "@/config";
 import { PageRoutes } from "@/constants/routes";
-import GoogleAuth from "@/services/googgle-auth";
+import GoogleAuth from "@/service/google-auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextRequest } from "next/server";
