@@ -1,14 +1,28 @@
-import { VerifyTokenRequestDto, VerifyTokenResponseDto } from "@/dto/auth";
-import GoogleAuth from "@/service/google-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { VerifyTokenRequestDto, VerifyTokenResponseDto } from '@/dto/auth';
+import { authService } from '@/service';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
-	req: NextRequest,
+  req: NextRequest,
 ): Promise<NextResponse<VerifyTokenResponseDto>> {
-	const { accessToken } = (await req.json()) as VerifyTokenRequestDto;
+  const { accessToken } = (await req.json()) as VerifyTokenRequestDto;
 
-	const auth = GoogleAuth.create();
-	const isVerified = await auth.verifyAccessToken(accessToken);
+  const [isVerified, userInfo] =
+    await authService.verifyAccessToken(accessToken);
 
-	return NextResponse.json({ isVerified });
+  if (!isVerified) {
+    try {
+      const accessToken = await authService.refresh(userInfo.sub);
+
+      const res = NextResponse.json({ isVerified: true });
+      res.cookies.set('access-token', accessToken);
+
+      return res;
+    } catch (e) {
+      console.debug('failed to refresh access-token', e);
+      return NextResponse.json({ isVerified: false }, { status: 401 });
+    }
+  }
+
+  return NextResponse.json({ isVerified: true });
 }

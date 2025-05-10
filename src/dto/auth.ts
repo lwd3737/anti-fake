@@ -1,22 +1,17 @@
 // Request DTO
 export interface VerifyTokenRequestDto {
-	accessToken: string;
-}
-
-export interface GenerateTokenRequestDto {
-	state: string;
-	authCode: string;
+  accessToken: string;
 }
 
 // Response DTO
 export interface GenerateOauthUrlResponseDto {
-	oauthUrl: string;
+  oauthUrl: string;
 }
 
 export interface VerifyTokenResponseDto {
-	isVerified: boolean;
+  isVerified: boolean;
 }
 
 export interface GenerateTokenResponseDto {
-	isAuthenticated: boolean;
+  isAuthenticated: boolean;
 }

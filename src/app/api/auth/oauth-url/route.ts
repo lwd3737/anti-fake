@@ -1,24 +1,20 @@
-import loadConfig from "@/config";
-import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { GenerateOauthUrlResponseDto } from "@/dto/auth";
-import GoogleAuth from "@/service/google-auth";
+import { NextRequest, NextResponse } from 'next/server';
+import { GenerateOauthUrlResponseDto } from '@/dto/auth';
+import { authService } from '@/service';
+import { generateCsrfToken } from '@/utils/csrf';
 
 export async function POST(
-	req: NextRequest,
+  req: NextRequest,
 ): Promise<NextResponse<GenerateOauthUrlResponseDto>> {
-	const config = loadConfig();
+  const csrfToken = generateCsrfToken();
+  const oauthUrl = authService.generateAuthUrlWithScopes(csrfToken);
 
-	const googgleAuth = GoogleAuth.create();
-	const oauthUrl = googgleAuth.generateAuthUrlWithScopes();
-
-	cookies().set({
-		name: "csrf-token",
-		value: googgleAuth.csrfToken!,
-		secure: config.nodeEnv === "production",
-		sameSite: "strict",
-		httpOnly: true,
-	});
-
-	return NextResponse.json({ oauthUrl });
+  return NextResponse.json(
+    { oauthUrl },
+    {
+      headers: {
+        'x-csrf-token': csrfToken,
+      },
+    },
+  );
 }

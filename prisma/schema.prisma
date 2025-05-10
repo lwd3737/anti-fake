@@ -9,20 +9,20 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  provider     AuthProvider
-  providerSub  String
-  email        String       @unique
-  role         Role         @default(USER)
+  id           String        @id @default(uuid())
+  provider     OauthProvider
+  providerSub  String?
+  email        String        @unique
+  role         Role          @default(USER)
   refreshToken String?
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime      @default(now())
 
   factCheckSessions FactCheckSession[]
 
   @@unique([provider, providerSub])
 }
 
-enum AuthProvider {
+enum OauthProvider {
   GOOGLE
 }
 

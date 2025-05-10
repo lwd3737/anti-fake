@@ -187,7 +187,7 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
-exports.AuthProvider = exports.$Enums.AuthProvider = {
+exports.OauthProvider = exports.$Enums.OauthProvider = {
   GOOGLE: 'GOOGLE'
 };
 

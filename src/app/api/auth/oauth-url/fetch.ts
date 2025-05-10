@@ -1,12 +1,16 @@
-import { APIRoutes } from "@/constants/routes";
-import { GenerateOauthUrlResponseDto } from "@/dto/auth";
+import { APIRoutes } from '@/constants/routes';
+import { GenerateOauthUrlResponseDto } from '@/dto/auth';
+import apiClient from '../../client';
 
-export async function fetchGenerateOauthUrl(): Promise<GenerateOauthUrlResponseDto> {
-	const res = await fetch(APIRoutes.auth.OAUTH_URL, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-	});
-	return await res.json();
+export async function generateOauthUrl(): Promise<GenerateOauthUrlResponseDto> {
+  const res = await apiClient(APIRoutes.auth.OAUTH_URL, {
+    method: 'POST',
+  });
+
+  const csrfToken = res.headers.get('x-csrf-token');
+  if (!csrfToken) throw new Error('CSRF token not found');
+
+  sessionStorage.setItem('csrf-token', csrfToken);
+
+  return await res.json();
 }
