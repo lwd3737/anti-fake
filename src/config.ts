@@ -7,6 +7,7 @@ export default function loadConfig() {
   const {
     BASE_URL,
     ADMIN_EMAIL,
+    AUTH_INACTIVE_MODE,
     OPENAI_API_KEY,
     GOOGLE_API_KEY,
     GOOGLE_CLIENT_ID,
@@ -42,6 +43,7 @@ export default function loadConfig() {
     admin: {
       email: ADMIN_EMAIL,
     },
+    authInactiveMode: AUTH_INACTIVE_MODE === 'true',
     mockDataCount: MOCK_DATA_COUNT ? parseInt(MOCK_DATA_COUNT) : undefined,
     devMode: {
       default: DEFAULT_DEV_MODE === 'true',

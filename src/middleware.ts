@@ -5,9 +5,10 @@ import loadConfig from './config';
 import { verifyAccessToken } from './app/api/auth/verify-token/fetch';
 
 export async function middleware(req: NextRequest) {
-  const { devMode } = loadConfig();
-  if (devMode.default) return NextResponse.next();
+  const { authInactiveMode } = loadConfig();
+  if (authInactiveMode) return NextResponse.next();
 
+  console.log('pathname', req.nextUrl.pathname);
   if (isPublic(req.nextUrl.pathname)) return NextResponse.next();
 
   const accessTokenCookie = req.cookies.get('access-token');
