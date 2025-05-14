@@ -9,6 +9,7 @@ import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
 import { isGoogleApisError } from '@/error/google-apis-error';
 import { authService } from '@/service';
+import { createYoutubeVideo, getYoutubeVideo } from '@/repository/youtube';
 
 interface Props {
   videoId: string;
@@ -19,35 +20,48 @@ export default async function YoutubeVideoInfoCard({
   videoId,
   className,
 }: Props) {
-  const cookieStore = cookies();
-  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME);
-  if (!accessToken) {
-    return redirect(PageRoutes.LOGIN);
-  }
+  let video = await getYoutubeVideo(videoId);
+  if (!video) {
+    const accessToken = cookies().get(ACCESS_TOKEN_COOKIE_NAME)!;
+    authService.setTokens({ accessToken: accessToken.value });
 
-  authService.setTokens({ accessToken: accessToken.value });
-
-  const youtube = YoutubeService.create(authService);
-
-  const videoResult = await youtube.getVideo(videoId);
-  if (isGoogleApisError(videoResult)) {
-    const { code, status } = videoResult;
-    switch (status) {
-      case 401:
-        return redirect(PageRoutes.LOGIN);
-      default:
-        throw new Error(
-          `Google API Error: ${code} ${status} ${videoResult.message}`,
-        );
+    const youtube = YoutubeService.create(authService);
+    const videoResult = await youtube.getVideo(videoId);
+    if (isGoogleApisError(videoResult)) {
+      const { code, status } = videoResult;
+      switch (status) {
+        case 401:
+          return redirect(PageRoutes.LOGIN);
+        default:
+          throw new Error(
+            `Google API Error: ${code} ${status} ${videoResult.message}`,
+          );
+      }
     }
+    const { id, title, channelId, channelTitle, thumbnail, publishedAt } =
+      videoResult;
+    video = await createYoutubeVideo({
+      id,
+      thumbnailUrl: thumbnail.url,
+      title,
+      channelTitle,
+      publishedAt,
+      channelId,
+    });
   }
-  const { thumbnail, title, channelTitle, publishedAt } = videoResult;
+
+  const { thumbnailUrl, title, channelTitle, publishedAt } = video!;
 
   return (
     <div
       className={`flex gap-x-4 bg-white shadow-sm p-6 rounded-sm ${className}`}
     >
-      <VideoThumbnailLink {...thumbnail} videoId={videoId} />
+      <VideoThumbnailLink
+        url={thumbnailUrl}
+        width={120}
+        height={120}
+        videoId={videoId}
+      />
 
       <div className="flex-1">
         <h1 className="pb-2 text-xl font-bold">{title}</h1>

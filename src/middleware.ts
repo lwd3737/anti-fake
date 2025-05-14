@@ -8,7 +8,6 @@ export async function middleware(req: NextRequest) {
   const { authInactiveMode } = loadConfig();
   if (authInactiveMode) return NextResponse.next();
 
-  console.log('pathname', req.nextUrl.pathname);
   if (isPublic(req.nextUrl.pathname)) return NextResponse.next();
 
   const accessTokenCookie = req.cookies.get('access-token');

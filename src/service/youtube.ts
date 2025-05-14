@@ -49,25 +49,31 @@ export default class YoutubeService {
         part: ['id', 'snippet'],
         id: [id],
       });
-      console.log('get video res', res);
       if (this.isFailed(res)) {
         throw new Error(`Youtube video search is failed: ${res.statusText}`);
       }
 
       const video = res.data.items?.map((item) => {
-        const { title, description, thumbnails, channelTitle, publishedAt } =
-          item.snippet!;
+        const {
+          title,
+          description,
+          thumbnails,
+          channelId,
+          channelTitle,
+          publishedAt,
+        } = item.snippet!;
 
         return {
           id: item.id!,
           title: title!,
           description: description!,
+          channelId: channelId!,
+          channelTitle: channelTitle!,
           thumbnail: {
             url: thumbnails!.default!.url!,
             width: thumbnails!.default!.width!,
             height: thumbnails!.default!.height!,
           },
-          channelTitle: channelTitle!,
           publishedAt: publishedAt!,
         };
       })[0];

@@ -32,10 +32,10 @@ enum Role {
 }
 
 model YoutubeVideo {
-  id           String   @id @default(uuid())
+  id           String   @id // youtube video id
   title        String
   channelId    String   @unique
-  channelName  String
+  channelTitle String
   thumbnailUrl String
   publishedAt  DateTime
   updatedAt    DateTime @updatedAt
@@ -46,7 +46,7 @@ enum ContentType {
 }
 
 model FactCheckSession {
-  id          Int         @id @default(autoincrement())
+  id          String      @id @default(uuid())
   userId      String
   user        User        @relation(fields: [userId], references: [id])
   contentType ContentType
@@ -60,7 +60,7 @@ model FactCheckSession {
 
 model Claim {
   id                 String           @id @default(uuid())
-  factCheckSessionId Int
+  factCheckSessionId String
   faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id])
   index              Int
   content            String
@@ -72,7 +72,7 @@ model Claim {
 
 model ClaimVerification {
   id                 String           @id @default(uuid())
-  factCheckSessionId Int
+  factCheckSessionId String
   factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id])
   claimId            String
   claim              Claim            @relation(fields: [claimId], references: [id])

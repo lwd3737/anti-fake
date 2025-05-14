@@ -40,4 +40,4 @@ next-env.d.ts
 /mock/*
 
 # prisma
-/generated/prisma/*
+/prisma/generated/
