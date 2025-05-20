@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GenerateOauthUrlResponseDto } from '@/dto/auth';
-import { authService } from '@/service';
+import { authService } from '@/services';
 import { generateCsrfToken } from '@/utils/csrf';
 
 export async function POST(

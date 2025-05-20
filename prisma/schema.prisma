@@ -9,26 +9,28 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  provider     OauthProvider
+  id           String            @id @default(uuid())
+  provider     OauthProviderType
   providerSub  String?
-  email        String        @unique
-  role         Role          @default(USER)
+  email        String            @unique
+  role         UserRole          @default(USER)
   refreshToken String?
-  createdAt    DateTime      @default(now())
+  createdAt    DateTime          @default(now())
 
   factCheckSessions FactCheckSession[]
 
   @@unique([provider, providerSub])
 }
 
-enum OauthProvider {
+enum OauthProviderType {
   GOOGLE
 }
 
-enum Role {
+enum UserRole {
   USER
   ADMIN
+
+  @@map("Role")
 }
 
 model YoutubeVideo {
@@ -76,13 +78,13 @@ model ClaimVerification {
   factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id])
   claimId            String
   claim              Claim            @relation(fields: [claimId], references: [id])
-  verdict            Verdict
+  verdict            VerdictType
   verdictReason      String
-  evidence           Json
+  evidences          Json
   createdAt          DateTime         @default(now())
 }
 
-enum Verdict {
+enum VerdictType {
   TRUE
   MOSTLY_TRUE
   MIXED

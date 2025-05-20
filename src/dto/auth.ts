@@ -1,3 +1,5 @@
+import { User } from '@/models/user';
+
 // Request DTO
 export interface VerifyTokenRequestDto {
   accessToken: string;
@@ -10,6 +12,7 @@ export interface GenerateOauthUrlResponseDto {
 
 export interface VerifyTokenResponseDto {
   isVerified: boolean;
+  providerSub?: string;
 }
 
 export interface GenerateTokenResponseDto {

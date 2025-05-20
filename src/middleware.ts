@@ -4,6 +4,12 @@ import { generateServerUrl } from './utils/url';
 import loadConfig from './config';
 import { verifyAccessToken } from './app/api/auth/verify-token/fetch';
 
+declare module 'next/server' {
+  interface NextRequest {
+    providerSub?: string;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { authInactiveMode } = loadConfig();
   if (authInactiveMode) return NextResponse.next();
@@ -16,11 +22,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
   }
 
-  const { isVerified } = await verifyAccessToken(accessTokenCookie.value);
+  const { isVerified, providerSub } = await verifyAccessToken(
+    accessTokenCookie.value,
+  );
   if (!isVerified) {
     req.cookies.delete('access-token');
     return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
   }
+
+  req.cookies.set('providerSub', providerSub!);
 
   return NextResponse.next();
 }

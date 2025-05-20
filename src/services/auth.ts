@@ -1,7 +1,7 @@
 import loadConfig, { Config } from '@/config';
-import { getUser } from '@/repository/user';
+import { OauthProviderType, User } from '@/models/user';
+import { getUser } from '@/repositories/user';
 import { google, Auth } from 'googleapis';
-import { OauthProvider } from '/prisma/generated/prisma';
 
 export default class AuthService {
   private config: Pick<Config['google'], 'clientId'>;
@@ -87,11 +87,10 @@ export default class AuthService {
 
   public async verifyAccessToken(
     accessToken: string,
-  ): Promise<[true, null] | [false, { sub: string }]> {
+  ): Promise<[boolean, Pick<User, 'providerSub'>]> {
     const { expiry_date, sub } = await this._client.getTokenInfo(accessToken);
     const isExpired = expiry_date < Date.now();
-
-    return isExpired ? [false, { sub: sub! }] : [true, null];
+    return [isExpired, { providerSub: sub! }];
   }
 
   public async getAccessToken(): Promise<string | null | undefined> {
@@ -100,13 +99,10 @@ export default class AuthService {
   }
 
   public async refresh(providerSub: string): Promise<string> {
-    const user = await getUser(
-      {
-        provider: OauthProvider.GOOGLE,
-        providerSub,
-      },
-      { refreshToken: true },
-    );
+    const user = await getUser({
+      provider: OauthProviderType.GOOGLE,
+      providerSub,
+    });
     if (!user || !user.refreshToken)
       throw new Error('User or refresh token not found');
 

@@ -1,34 +1,34 @@
 import {
-	ClaimDetectionResponseDto,
-	DetectClaimsRequestDto,
-} from "@/dto/fact-check";
-import { streamResponse } from "@/helpers/stream-response";
-import ClaimDetector from "@/service/claim-detector";
-import YoutubeService from "@/service/youtube";
-import { NextRequest } from "next/server";
+  ClaimDetectionResponseDto,
+  DetectClaimsRequestDto,
+} from '@/dto/fact-check';
+import { streamResponse } from '@/helpers/stream-response';
+import ClaimDetector from '@/services/claim-detector';
+import YoutubeService from '@/services/youtube';
+import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
-	const { videoId } = (await req.json()) as DetectClaimsRequestDto;
+  const { videoId } = (await req.json()) as DetectClaimsRequestDto;
 
-	const subtitle = await YoutubeService.downloadSubtitle(videoId);
-	const claimDetector = new ClaimDetector(req.signal);
+  const subtitle = await YoutubeService.downloadSubtitle(videoId);
+  const claimDetector = new ClaimDetector(req.signal);
 
-	return streamResponse(({ send, close }) => {
-		claimDetector
-			.onClaimDetected((claim) => {
-				const dto = {
-					...claim,
-					type: "claimDetectionResult",
-				} as ClaimDetectionResponseDto;
+  return streamResponse(({ send, close }) => {
+    claimDetector
+      .onClaimDetected((claim) => {
+        const dto = {
+          ...claim,
+          type: 'claimDetectionResult',
+        } as ClaimDetectionResponseDto;
 
-				send(dto);
-			})
-			.onFinished(() => {
-				close();
-			})
-			.onError((error) => {
-				close();
-			})
-			.start(subtitle);
-	}, req.signal);
+        send(dto);
+      })
+      .onFinished(() => {
+        close();
+      })
+      .onError((error) => {
+        close();
+      })
+      .start(subtitle);
+  }, req.signal);
 }

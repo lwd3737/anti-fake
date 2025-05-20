@@ -1,8 +1,8 @@
 import { ACCESS_TOKEN_COOKIE_NAME } from '@/constants/auth';
 import { ErrorCode } from '@/error/error-code';
 import { handleRouteError } from '@/error/reponse-error-handler';
-import { authService } from '@/service';
-import YoutubeService from '@/service/youtube';
+import { authService } from '@/services';
+import YoutubeService from '@/services/youtube';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(

@@ -1,5 +1,5 @@
 import { VerifyTokenRequestDto, VerifyTokenResponseDto } from '@/dto/auth';
-import { authService } from '@/service';
+import { authService } from '@/services';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
@@ -8,13 +8,16 @@ export async function POST(
   try {
     const { accessToken } = (await req.json()) as VerifyTokenRequestDto;
 
-    const [isVerified, userInfo] =
+    const [isVerified, { providerSub }] =
       await authService.verifyAccessToken(accessToken);
 
     if (!isVerified) {
       try {
-        const newAccessToken = await authService.refresh(userInfo.sub);
-        const res = NextResponse.json({ isVerified: true });
+        const newAccessToken = await authService.refresh(providerSub);
+        const res = NextResponse.json({
+          isVerified: true,
+          providerSub,
+        });
         res.cookies.set('access-token', newAccessToken);
         return res;
       } catch (e) {
@@ -23,7 +26,10 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ isVerified: true });
+    return NextResponse.json({
+      isVerified: true,
+      providerSub,
+    });
   } catch (e) {
     console.error('Token verification failed:', e);
     return NextResponse.json({ isVerified: false }, { status: 401 });

@@ -1,30 +1,30 @@
-import { ClaimDetectionResult } from "@/models/claim-detection";
-import { ClaimVerificationResultWithDetails } from "@/models/claim-verification";
+import { ClaimDetectionResult } from '@/models/claim';
+import { ClaimVerificationResultWithDetails } from '@/models/claim-verification';
 
 // Request
 export interface DetectClaimsRequestDto {
-	videoId: string;
+  videoId: string;
 }
 
 export interface VerifyClaimsRequestDto {
-	claims: ClaimDto[];
+  claims: ClaimDto[];
 }
 
 export interface VerifyClaimRequestDto {
-	claim: ClaimDto;
+  claim: ClaimDto;
 }
 
 export interface ClaimDto {
-	index: number;
-	content: string;
+  index: number;
+  content: string;
 }
 
 // Response
 export interface ClaimDetectionResponseDto extends ClaimDetectionResult {
-	type: "claimDetectionResult";
+  type: 'claimDetectionResult';
 }
 
 export interface ClaimVerificationResponseDto
-	extends ClaimVerificationResultWithDetails {
-	type: "claimVerificationResult";
+  extends ClaimVerificationResultWithDetails {
+  type: 'claimVerificationResult';
 }

@@ -1,7 +1,8 @@
 import loadConfig from '@/config';
 import { PageRoutes } from '@/constants/routes';
-import { upsertUser } from '@/repository/user';
-import { authService } from '@/service';
+import { OauthProviderType } from '@/models/user';
+import { upsertUser } from '@/repositories/user';
+import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,6 +21,7 @@ export async function GET(req: NextRequest) {
 
   await upsertUser({
     email,
+    provider: OauthProviderType.GOOGLE,
     providerSub,
     refreshToken: tokens.refreshToken,
   });

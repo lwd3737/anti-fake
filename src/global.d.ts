@@ -1,4 +1,4 @@
-import AuthService from './service/auth';
+import AuthService from './services/auth';
 
 declare global {
   var __authService__: AuthService;
