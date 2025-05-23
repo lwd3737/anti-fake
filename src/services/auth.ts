@@ -106,13 +106,12 @@ export default class AuthService {
     if (!user || !user.refreshToken)
       throw new Error('User or refresh token not found');
 
-    const { token } = await this._client.getAccessToken();
-    if (!token) throw new Error('Access token not found');
-
     this._client.setCredentials({
-      access_token: token,
       refresh_token: user.refreshToken,
     });
+
+    const { token } = await this._client.getAccessToken();
+    if (!token) throw new Error('Access token not found');
 
     console.debug('refreshed');
 
