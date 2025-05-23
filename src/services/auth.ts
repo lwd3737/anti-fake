@@ -1,6 +1,6 @@
 import loadConfig, { Config } from '@/config';
 import { OauthProviderType, User } from '@/models/user';
-import { getUser } from '@/repositories/user';
+import userRepo from '@/repositories/user';
 import { google, Auth } from 'googleapis';
 
 export default class AuthService {
@@ -99,7 +99,7 @@ export default class AuthService {
   }
 
   public async refresh(providerSub: string): Promise<string> {
-    const user = await getUser({
+    const user = await userRepo.findByProviderSub({
       provider: OauthProviderType.GOOGLE,
       providerSub,
     });

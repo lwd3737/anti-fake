@@ -1,4 +1,3 @@
-import { ACCESS_TOKEN_COOKIE_NAME } from '@/constants/auth';
 import { PageRoutes } from '@/constants/routes';
 import YoutubeService from '@/services/youtube';
 import { formatDate } from '@/utils/date';
@@ -10,6 +9,7 @@ import VideoThumbnailLink from './components/VideoThumbnailLink';
 import { isGoogleApisError } from '@/error/google-apis-error';
 import { authService } from '@/services';
 import { createYoutubeVideo, getYoutubeVideo } from '@/repositories/youtube';
+import { CookieNames } from '@/constants/cookie';
 
 interface Props {
   videoId: string;
@@ -22,7 +22,7 @@ export default async function YoutubeVideoInfoCard({
 }: Props) {
   let video = await getYoutubeVideo(videoId);
   if (!video) {
-    const accessToken = cookies().get(ACCESS_TOKEN_COOKIE_NAME)!;
+    const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)!;
     authService.setTokens({ accessToken: accessToken.value });
 
     const youtube = YoutubeService.create(authService);
@@ -64,7 +64,7 @@ export default async function YoutubeVideoInfoCard({
       />
 
       <div className="flex-1">
-        <h1 className="pb-2 font-bold text-xl">{title}</h1>
+        <h1 className="pb-2 text-xl font-bold">{title}</h1>
         <div className="flex gap-x-5 text-[#6B7280] text-[0.875rem]">
           <span className="flex items-center gap-x-1">
             <Image

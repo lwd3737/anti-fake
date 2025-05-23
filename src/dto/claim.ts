@@ -1,0 +1,22 @@
+import { Claim } from '@/models/claim';
+
+// Request
+export interface CreateClaimsRequestDto {
+  factCheckSessionId: string;
+  userId: string;
+  contentType: 'YOUTUBE_VIDEO';
+  contentId: string;
+}
+
+export interface VerifyClaimRequestDto {
+  claim: Claim;
+}
+
+// Response
+export interface GetClaimsResponseDto {
+  claims: Claim[];
+}
+
+export interface VerifyClaimsRequestDto {
+  claims: Claim[];
+}

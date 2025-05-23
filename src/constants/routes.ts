@@ -6,8 +6,9 @@ export const APIRoutes = {
     GENERATE_TOKENS: '/api/auth/generate-tokens',
     LOGOUT: '/api/auth/logout',
   },
-  factCheck: {
-    DETECT_CLAIMS: '/api/fact-check/detect-claims',
+  factCheckSessions: {
+    CLAIMS: (factCheckSessionId: string) =>
+      `/api/fact-check-sessions/${factCheckSessionId}/claims`,
     VERIFY_CLAIMS: '/api/fact-check/verify-claims',
   },
 };

@@ -1,28 +1,10 @@
-import { ClaimDetectionResult } from '@/models/claim';
+import { Claim } from '@/models/claim';
 import { ClaimVerificationResultWithDetails } from '@/models/claim-verification';
 
 // Request
-export interface DetectClaimsRequestDto {
-  videoId: string;
-}
-
-export interface VerifyClaimsRequestDto {
-  claims: ClaimDto[];
-}
-
-export interface VerifyClaimRequestDto {
-  claim: ClaimDto;
-}
-
-export interface ClaimDto {
-  index: number;
-  content: string;
-}
 
 // Response
-export interface ClaimDetectionResponseDto extends ClaimDetectionResult {
-  type: 'claimDetectionResult';
-}
+export interface CreateClaimsResponseDto extends Claim {}
 
 export interface ClaimVerificationResponseDto
   extends ClaimVerificationResultWithDetails {

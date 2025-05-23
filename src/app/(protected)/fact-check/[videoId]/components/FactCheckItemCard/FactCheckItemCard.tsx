@@ -1,4 +1,4 @@
-import { ClaimDetectionResult } from '@/models/claim';
+import { Claim } from '@/models/claim';
 import VerficicationResultCardBody from './VerificationResultCardBody';
 import { ClaimVerificationResultWithDetails } from '@/models/claim-verification';
 import Image from 'next/image';
@@ -6,7 +6,7 @@ import assert from 'assert';
 import { useMemo } from 'react';
 
 interface Props {
-  detectionResult: ClaimDetectionResult;
+  claim: Claim;
   verificationResult?: ClaimVerificationResultWithDetails;
   status: VerificationStatus;
   isSelected: boolean;
@@ -22,7 +22,7 @@ export enum VerificationStatus {
 }
 
 export default function FactCheckItemCard({
-  detectionResult,
+  claim: detectionResult,
   verificationResult,
   status,
   isSelected,

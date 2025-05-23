@@ -4,7 +4,7 @@ export interface User {
   providerSub: string;
   email: string;
   role: UserRole;
-  refreshToken: string;
+  refreshToken: string | null;
 }
 
 export enum OauthProviderType {

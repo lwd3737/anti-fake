@@ -6,7 +6,7 @@ import EventEmitter from 'events';
 import assert from 'assert';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
 import loadConfig from '@/config';
-import { ClaimDetectionResult } from '@/models/claim';
+import { Claim } from '@/models/claim';
 
 enum EventType {
   CLAIM_DETECTED = 'CLAIM_DETECTED',
@@ -14,7 +14,7 @@ enum EventType {
   ERROR = 'ERROR',
 }
 
-const ClaimDetectionResultSchema = z.object({
+const ClaimSchema = z.object({
   content: z
     .string()
     .describe(
@@ -25,7 +25,7 @@ const ClaimDetectionResultSchema = z.object({
 
 const STREAM_INTERVAL = 100;
 
-export default class ClaimDetector {
+export default class ClaimService {
   private events = new EventEmitter();
   private logger = new LLMHistoryLogger('detect-claims', {
     title: 'Detect claims',
@@ -33,10 +33,8 @@ export default class ClaimDetector {
 
   constructor(private signal: AbortSignal) {}
 
-  public async start(text: string): Promise<void> {
-    if (this.isDevMode) {
-      return this.detectOnDevMode();
-    }
+  public async startDetection(text: string): Promise<void> {
+    if (this.isDevMode) return this.startDetectionOnDevMode();
 
     this.logger.monitor(async (log, error, save) => {
       try {
@@ -46,16 +44,14 @@ export default class ClaimDetector {
           prompt: text,
           mode: 'json',
           output: 'array',
-          schema: ClaimDetectionResultSchema,
+          schema: ClaimSchema,
           schemaName: 'DetectedClaims',
           schemaDescription:
             '자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.',
           temperature: 0,
           onFinish: (event) => {
             const claims = event.object;
-            if (!claims) {
-              assert(false, 'claims is undefined');
-            }
+            if (!claims) assert(false, 'claims is undefined');
 
             const claimsWithIndex = claims.map((claim, index) => ({
               ...claim,
@@ -98,12 +94,12 @@ export default class ClaimDetector {
     return devMode.claimDetection ?? devMode.default;
   }
 
-  private async detectOnDevMode(): Promise<void> {
-    const mockData = await import('/mock/claim-detection-results.json');
+  private async startDetectionOnDevMode(): Promise<void> {
+    const mockData = await import('/mock/claims.json');
     const { mockDataCount } = loadConfig();
 
-    const dataCount = mockDataCount ?? mockData.claimDetectionResults.length;
-    const claims = mockData.claimDetectionResults.slice(0, dataCount);
+    const dataCount = mockDataCount ?? mockData.claims.length;
+    const claims = mockData.claims.slice(0, dataCount);
 
     for (let index = 0; index < dataCount; index++) {
       const claim = claims[index];
@@ -122,9 +118,7 @@ export default class ClaimDetector {
     });
   }
 
-  public onClaimDetected(
-    listener: (claim: ClaimDetectionResult) => void,
-  ): this {
+  public onClaimDetected(listener: (claim: Claim) => void): this {
     this.events.on(EventType.CLAIM_DETECTED, listener);
     return this;
   }

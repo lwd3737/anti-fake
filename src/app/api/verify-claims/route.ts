@@ -1,7 +1,5 @@
-import {
-  ClaimVerificationResponseDto,
-  VerifyClaimsRequestDto,
-} from '@/dto/fact-check';
+import { VerifyClaimsRequestDto } from '@/dto/claim';
+import { ClaimVerificationResponseDto } from '@/dto/fact-check';
 import { streamResponse } from '@/helpers/stream-response';
 import ClaimVerifier from '@/services/claim-verifier';
 import EvidenceRetriever from '@/services/evidence-retriever';

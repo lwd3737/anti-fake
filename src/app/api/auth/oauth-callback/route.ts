@@ -1,7 +1,7 @@
 import loadConfig from '@/config';
 import { PageRoutes } from '@/constants/routes';
 import { OauthProviderType } from '@/models/user';
-import { upsertUser } from '@/repositories/user';
+import userRepo from '@/repositories/user';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   const { tokens, providerSub, email } = await authService.authenticate(code);
 
-  await upsertUser({
+  await userRepo.upsert({
     email,
     provider: OauthProviderType.GOOGLE,
     providerSub,

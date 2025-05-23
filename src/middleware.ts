@@ -3,6 +3,7 @@ import { APIRoutes, PageRoutes } from './constants/routes';
 import { generateServerUrl } from './utils/url';
 import loadConfig from './config';
 import { verifyAccessToken } from './app/api/auth/verify-token/fetch';
+import { CookieNames } from './constants/cookie';
 
 declare module 'next/server' {
   interface NextRequest {
@@ -16,7 +17,7 @@ export async function middleware(req: NextRequest) {
 
   if (isPublic(req.nextUrl.pathname)) return NextResponse.next();
 
-  const accessTokenCookie = req.cookies.get('access-token');
+  const accessTokenCookie = req.cookies.get(CookieNames.ACCESS_TOKEN);
   if (!accessTokenCookie) {
     console.debug('access-token cookie is not provided');
     return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
@@ -26,11 +27,11 @@ export async function middleware(req: NextRequest) {
     accessTokenCookie.value,
   );
   if (!isVerified) {
-    req.cookies.delete('access-token');
+    req.cookies.delete(CookieNames.ACCESS_TOKEN);
     return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
   }
 
-  req.cookies.set('providerSub', providerSub!);
+  req.cookies.set(CookieNames.PROVIDER_SUB, providerSub!);
 
   return NextResponse.next();
 }

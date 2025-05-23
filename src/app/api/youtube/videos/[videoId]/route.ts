@@ -1,4 +1,4 @@
-import { ACCESS_TOKEN_COOKIE_NAME } from '@/constants/auth';
+import { CookieNames } from '@/constants/cookie';
 import { ErrorCode } from '@/error/error-code';
 import { handleRouteError } from '@/error/reponse-error-handler';
 import { authService } from '@/services';
@@ -12,7 +12,7 @@ export async function GET(
   const { videoId } = params;
 
   const cookieStore = req.cookies;
-  const accessTokenCookie = cookieStore.get(ACCESS_TOKEN_COOKIE_NAME);
+  const accessTokenCookie = cookieStore.get(CookieNames.ACCESS_TOKEN);
   if (!accessTokenCookie) {
     return handleRouteError(
       ErrorCode.UNAUTHORIZATION,
