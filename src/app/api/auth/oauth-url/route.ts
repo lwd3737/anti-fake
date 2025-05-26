@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GenerateOauthUrlResponseDto } from '@/dto/auth';
+import { GenerateOauthUrlResponseDto } from '@/gateway/dto/auth';
 import { authService } from '@/services';
 import { generateCsrfToken } from '@/utils/csrf';
 

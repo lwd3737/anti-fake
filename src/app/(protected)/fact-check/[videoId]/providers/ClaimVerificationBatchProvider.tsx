@@ -12,7 +12,7 @@ import { useClaim } from './ClaimProvider';
 import { useClaimVerification } from './ClaimVerificationProvider';
 import assert from 'assert';
 import { ClaimVerificationResultWithDetails } from '@/models/claim-verification';
-import { VerifyClaimsRequestDto } from '@/dto/claim';
+import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 
 export interface IClaimVerificationBatch {
   data: ClaimVerificationResultWithDetails[];

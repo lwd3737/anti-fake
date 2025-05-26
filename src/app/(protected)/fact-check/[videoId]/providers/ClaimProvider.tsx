@@ -1,8 +1,8 @@
 'use client';
 import { getClaims } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
 import { APIRoutes, PageRoutes } from '@/constants/routes';
-import { CreateClaimsRequestDto } from '@/dto/claim';
-import { ErrorCode } from '@/error/error-code';
+import { CreateClaimsRequestDto } from '@/gateway/dto/claim';
+import { ErrorCode } from '@/gateway/error/error-code';
 import useStreamingResponse from '@/hooks/useStreamingResponse';
 import { Claim } from '@/models/claim';
 import { ContentType, FactCheckSession } from '@/models/fact-check-session';

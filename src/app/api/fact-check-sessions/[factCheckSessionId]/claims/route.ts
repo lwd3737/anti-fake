@@ -1,9 +1,12 @@
 import { CookieNames } from '@/constants/cookie';
-import { CreateClaimsRequestDto, GetClaimsResponseDto } from '@/dto/claim';
-import { CreateClaimsResponseDto } from '@/dto/fact-check';
-import { ErrorCode } from '@/error/error-code';
-import { handleRouteError } from '@/error/reponse-error-handler';
-import { streamResponse } from '@/helpers/stream-response';
+import {
+  CreateClaimsRequestDto,
+  GetClaimsResponseDto,
+} from '@/gateway/dto/claim';
+import { CreateClaimsResponseDto } from '@/gateway/dto/fact-check';
+import { ErrorCode } from '@/gateway/error/error-code';
+import { handleRouteError } from '@/gateway/error/reponse-error-handler';
+import { streamResponse } from '@/gateway/streaming/stream-response';
 import { ContentType } from '@/models/fact-check-session';
 import { OauthProviderType } from '@/models/user';
 import claimRepo from '@/repositories/claim';

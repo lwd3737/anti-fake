@@ -1,4 +1,4 @@
-import { CHUNK_DELIMITER } from '@/helpers/stream-response';
+import { CHUNK_DELIMITER } from '@/gateway/streaming/stream-response';
 import { json } from '@/utils/serialize';
 import assert from 'assert';
 import { useCallback, useRef, useState } from 'react';

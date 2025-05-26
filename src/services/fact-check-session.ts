@@ -1,4 +1,4 @@
-import { ErrorCode } from '@/error/error-code';
+import { ErrorCode } from '@/gateway/error/error-code';
 import factCheckSessionRepo from '@/repositories/fact-check-session';
 import { Result } from '@/result';
 

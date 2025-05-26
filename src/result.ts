@@ -1,4 +1,4 @@
-import { Failure } from './error/reponse-error-handler';
+import { Failure } from './gateway/error/reponse-error-handler';
 
 export type Result<T = any> = T | Failure;
 

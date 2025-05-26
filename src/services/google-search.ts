@@ -1,6 +1,9 @@
 import { customsearch, customsearch_v1 } from '@googleapis/customsearch';
 import loadConfig, { Config } from '@/config';
-import { GoogleSearchDto, GoogleSearchItemDto } from '@/dto/google-search';
+import {
+  GoogleSearchDto,
+  GoogleSearchItemDto,
+} from '@/gateway/dto/google-search';
 
 export default class GoogleSearchService {
   private search: customsearch_v1.Customsearch;

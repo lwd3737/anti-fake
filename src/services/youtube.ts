@@ -3,17 +3,20 @@ import {
   SearchVideoChannelDto,
   SearchVideosDto,
   VideoDto,
-} from '@/dto/youttube';
+} from '@/gateway/dto/youttube';
 import { GaxiosResponse } from 'gaxios';
 import { Auth, google, youtube_v3 } from 'googleapis';
-import AuthService from './auth';
+import AuthRepo from '../repositories/auth';
 import { YoutubeTranscript } from 'youtube-transcript';
-import { GoogleApisError, isGoogleApisError } from '@/error/google-apis-error';
+import {
+  GoogleApisError,
+  isGoogleApisError,
+} from '@/gateway/error/google-apis-error';
 
 export default class YoutubeService {
   private youtube: youtube_v3.Youtube;
 
-  public static create(googleAuth?: AuthService): YoutubeService {
+  public static create(googleAuth?: AuthRepo): YoutubeService {
     return new YoutubeService(
       googleAuth ? googleAuth.client : { google: loadConfig().google },
     );

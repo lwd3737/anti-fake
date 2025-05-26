@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
-import { isGoogleApisError } from '@/error/google-apis-error';
+import { isGoogleApisError } from '@/gateway/error/google-apis-error';
 import { authService } from '@/services';
 import { createYoutubeVideo, getYoutubeVideo } from '@/repositories/youtube';
 import { CookieNames } from '@/constants/cookie';
@@ -64,7 +64,7 @@ export default async function YoutubeVideoInfoCard({
       />
 
       <div className="flex-1">
-        <h1 className="pb-2 text-xl font-bold">{title}</h1>
+        <h1 className="pb-2 font-bold text-xl">{title}</h1>
         <div className="flex gap-x-5 text-[#6B7280] text-[0.875rem]">
           <span className="flex items-center gap-x-1">
             <Image

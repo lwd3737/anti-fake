@@ -1,6 +1,6 @@
 import { CookieNames } from '@/constants/cookie';
-import { ErrorCode } from '@/error/error-code';
-import { handleRouteError } from '@/error/reponse-error-handler';
+import { ErrorCode } from '@/gateway/error/error-code';
+import { handleRouteError } from '@/gateway/error/reponse-error-handler';
 import { authService } from '@/services';
 import YoutubeService from '@/services/youtube';
 import { NextRequest, NextResponse } from 'next/server';

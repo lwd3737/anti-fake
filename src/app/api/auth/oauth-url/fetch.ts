@@ -1,5 +1,5 @@
 import { APIRoutes } from '@/constants/routes';
-import { GenerateOauthUrlResponseDto } from '@/dto/auth';
+import { GenerateOauthUrlResponseDto } from '@/gateway/dto/auth';
 import apiClient from '../../client';
 
 export async function generateOauthUrl(): Promise<GenerateOauthUrlResponseDto> {
