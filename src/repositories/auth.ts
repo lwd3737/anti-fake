@@ -76,7 +76,6 @@ export default class AuthRepo {
 
     return {
       tokens: {
-        // accessToken: 'test',
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
       },

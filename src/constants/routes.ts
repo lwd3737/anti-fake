@@ -2,7 +2,6 @@ export const APIRoutes = {
   auth: {
     OAUTH_URL: '/api/auth/oauth-url',
     OAUTH_CALLBACK: '/api/auth/oauth-callback',
-    VERIFY_TOKEN: '/api/auth/verify-token',
     GENERATE_TOKENS: '/api/auth/generate-tokens',
     LOGOUT: '/api/auth/logout',
   },

@@ -5,17 +5,25 @@ import { User } from '@/models/user';
 import { isFailure } from '@/result';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const authGuard = async (
   req: NextRequest,
 ): Promise<
-  | ({ isAuthenticated: true } & Pick<User, 'providerSub'>)
+  | ({
+      isAuthenticated: true;
+      response: (args: Parameters<typeof NextResponse.json>) => NextResponse;
+    } & Pick<User, 'providerSub'>)
   | { isAuthenticated: false; response: NextResponse }
 > => {
   const { authInactiveMode } = loadConfig();
   if (authInactiveMode)
-    return { isAuthenticated: true, providerSub: 'mock-provider-sub' };
+    return {
+      isAuthenticated: true,
+      response: (args) => NextResponse.json(args),
+      providerSub: 'mock-provider-sub',
+    };
 
   const accessToken = req.cookies.get(CookieNames.ACCESS_TOKEN)?.value;
   if (!accessToken)
@@ -45,14 +53,30 @@ export const authGuard = async (
       const { accessToken } = refreshResult;
       req.cookies.set(CookieNames.ACCESS_TOKEN, accessToken);
 
-      return { isAuthenticated: true, providerSub };
+      return {
+        isAuthenticated: true,
+        response: responseWithAuth,
+        providerSub,
+      };
     } catch (e) {
       return {
         isAuthenticated: false,
-        response: NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN)),
+        response: NextResponse.redirect(PageRoutes.LOGIN),
       };
     }
   }
 
-  return { isAuthenticated: true, providerSub };
+  return { isAuthenticated: true, response: responseWithAuth, providerSub };
+};
+
+export const responseWithAuth = (
+  args: Parameters<typeof NextResponse.json>,
+): NextResponse => {
+  const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)?.value;
+  if (!accessToken)
+    return NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
+
+  const res = NextResponse.json(args);
+  res.cookies.set(CookieNames.ACCESS_TOKEN, accessToken);
+  return res;
 };

@@ -1,4 +1,4 @@
-import { CookieNames } from '@/constants/cookie';
+import { authGuard } from '@/gateway/auth/guard';
 import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
@@ -16,6 +16,7 @@ import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
 import YoutubeService from '@/services/youtube';
+import { auth } from '@googleapis/customsearch';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -24,10 +25,12 @@ export async function GET(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const providerSub = req.cookies.get(CookieNames.PROVIDER_SUB)!.value;
+  const guardResult = await authGuard(req);
+  if (!guardResult.isAuthenticated) return guardResult.response;
+
   const user = await userRepo.findByProviderSub({
     provider: OauthProviderType.GOOGLE,
-    providerSub,
+    providerSub: guardResult.providerSub,
   });
   if (!user) {
     return handleRouteError(ErrorCode.UNAUTHENTICATED, 'User not found', 401);

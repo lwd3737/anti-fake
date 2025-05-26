@@ -1,6 +1,7 @@
 import loadConfig from '@/config';
 import { PageRoutes } from '@/constants/routes';
 import { OauthProviderType } from '@/models/user';
+import AuthRepo from '@/repositories/auth';
 import userRepo from '@/repositories/user';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
@@ -17,7 +18,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(PageRoutes.error.AUTH);
   }
 
-  const { tokens, providerSub, email } = await authService.authenticate(code);
+  const { tokens, providerSub, email } = await new AuthRepo().authenticate(
+    code,
+  );
 
   await userRepo.upsert({
     email,
