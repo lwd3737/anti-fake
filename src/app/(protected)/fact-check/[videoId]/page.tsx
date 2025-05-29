@@ -10,15 +10,15 @@ import { redirect } from 'next/navigation';
 import { PageRoutes } from '@/constants/routes';
 import { CookieNames } from '@/constants/cookie';
 import FactCheckSessionProviders from './providers/providers';
+import { guardServer } from '@/gateway/auth/guard-server';
 
 export default async function FactCheckPage({
   params: { videoId },
 }: {
   params: { videoId: string };
 }) {
-  console.log('access token', cookies().get(CookieNames.ACCESS_TOKEN)?.value);
-  const providerSub = cookies().get(CookieNames.PROVIDER_SUB)?.value;
-  console.log('header:', headers().get('x-provider-sub'));
+  // const providerSub = cookies().get(CookieNames.PROVIDER_SUB)?.value;
+  const { providerSub } = await guardServer();
   if (!providerSub) {
     console.error('Provider sub cookie is not found');
     return redirect(PageRoutes.LOGIN);

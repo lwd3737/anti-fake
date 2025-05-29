@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import YoutubeVideoUrlForm from './components/YoutubeVideoUrlForm';
-import { guardServerAuth } from '@/gateway/auth/guard-server';
+import { guardServer } from '@/gateway/auth/guard-server';
 
 export default async function Home() {
-  await guardServerAuth();
+  await guardServer();
 
   return (
     <main className="flex justify-center px-20 py-8 h-full">

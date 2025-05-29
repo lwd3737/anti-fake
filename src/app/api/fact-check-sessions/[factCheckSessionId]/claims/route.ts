@@ -1,4 +1,4 @@
-import { guardServerAuth } from '@/gateway/auth/guard-server';
+import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
@@ -24,8 +24,8 @@ export async function GET(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const guardResult = await guardServerAuth(req);
-  if (!guardResult.isAuthenticated) return guardResult.response;
+  const guardResult = await guardRouteHandler(req);
+  if (!guardResult.isAuthenticated) return guardResult.redirect();
 
   const user = await userRepo.findByProviderSub({
     provider: OauthProviderType.GOOGLE,
