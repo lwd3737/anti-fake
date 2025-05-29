@@ -3,6 +3,7 @@ import { PageRoutes } from '@/constants/routes';
 import { OauthProviderType } from '@/models/user';
 import AuthRepo from '@/repositories/auth';
 import userRepo from '@/repositories/user';
+import { isFailure } from '@/result';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
@@ -18,9 +19,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(PageRoutes.error.AUTH);
   }
 
-  const { tokens, providerSub, email } = await new AuthRepo().authenticate(
-    code,
-  );
+  const authorizeResult = await authService.authorizeCode(code);
+  if (isFailure(authorizeResult)) {
+    return NextResponse.redirect(PageRoutes.error.AUTH);
+  }
+
+  const { tokens, providerSub, email } = authorizeResult;
 
   await userRepo.upsert({
     email,

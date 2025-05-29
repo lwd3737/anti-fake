@@ -5,6 +5,28 @@ import { Result } from '@/result';
 export default class AuthService {
   private authRepo = new AuthRepo();
 
+  public generateAuthUrl(csrfToken: string): string {
+    return this.authRepo.generateAuthUrlWithScopes(csrfToken);
+  }
+
+  public async authorizeCode(code: string): Promise<
+    Result<{
+      tokens: { accessToken: string; refreshToken: string };
+      providerSub: string;
+      email: string;
+    }>
+  > {
+    try {
+      return await this.authRepo.authenticate(code);
+    } catch (e) {
+      console.error(e);
+      return {
+        code: ErrorCode.UNAUTHENTICATED,
+        error: 'Failed to authorize code',
+      };
+    }
+  }
+
   public async authenticate(
     accessToken: string,
   ): Promise<Result<{ isVerified: boolean; providerSub: string }>> {

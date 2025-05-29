@@ -1,4 +1,4 @@
-import { authGuard } from '@/gateway/auth/guard';
+import { guardServerAuth } from '@/gateway/auth/guard-server';
 import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
@@ -16,7 +16,6 @@ import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
 import YoutubeService from '@/services/youtube';
-import { auth } from '@googleapis/customsearch';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -25,7 +24,7 @@ export async function GET(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const guardResult = await authGuard(req);
+  const guardResult = await guardServerAuth(req);
   if (!guardResult.isAuthenticated) return guardResult.response;
 
   const user = await userRepo.findByProviderSub({

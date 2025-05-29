@@ -7,7 +7,8 @@ export async function POST(
   req: NextRequest,
 ): Promise<NextResponse<GenerateOauthUrlResponseDto>> {
   const csrfToken = generateCsrfToken();
-  const oauthUrl = authService.generateAuthUrlWithScopes(csrfToken);
+  console.log('generate oauth url', authService.generateAuthUrl);
+  const oauthUrl = authService.generateAuthUrl(csrfToken);
 
   return NextResponse.json(
     { oauthUrl },

@@ -1,3 +1,4 @@
+import { setAccessTokenCookie } from '@/app/api/auth/set-access-token-cookie/fetch';
 import loadConfig from '@/config';
 import { CookieNames } from '@/constants/cookie';
 import { PageRoutes } from '@/constants/routes';
@@ -8,8 +9,8 @@ import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const authGuard = async (
-  req: NextRequest,
+export const guardServerAuth = async (
+  req?: NextRequest,
 ): Promise<
   | ({
       isAuthenticated: true;
@@ -25,7 +26,7 @@ export const authGuard = async (
       providerSub: 'mock-provider-sub',
     };
 
-  const accessToken = req.cookies.get(CookieNames.ACCESS_TOKEN)?.value;
+  const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)?.value;
   if (!accessToken)
     return {
       isAuthenticated: false,
@@ -51,7 +52,8 @@ export const authGuard = async (
       }
 
       const { accessToken } = refreshResult;
-      req.cookies.set(CookieNames.ACCESS_TOKEN, accessToken);
+      if (req) req.cookies.set(CookieNames.ACCESS_TOKEN, accessToken);
+      else await setAccessTokenCookie(accessToken);
 
       return {
         isAuthenticated: true,
