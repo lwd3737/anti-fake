@@ -19,6 +19,7 @@ export default class AuthService {
     try {
       return await this.authRepo.authenticate(code);
     } catch (e) {
+      console.error('Failed to authorize code');
       console.error(e);
       return {
         code: ErrorCode.UNAUTHENTICATED,

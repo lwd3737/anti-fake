@@ -2,6 +2,7 @@ import loadConfig, { Config } from '@/config';
 import { OauthProviderType, User } from '@/models/user';
 import userRepo from '@/repositories/user';
 import { google, Auth } from 'googleapis';
+import jwt from 'jsonwebtoken';
 
 export default class AuthRepo {
   private config: Pick<Config['google'], 'clientId'>;
@@ -76,7 +77,7 @@ export default class AuthRepo {
 
     return {
       tokens: {
-        accessToken: tokens.access_token,
+        accessToken: this.generateJWT(tokens.access_token, payload.sub!),
         refreshToken: tokens.refresh_token,
       },
       providerSub: payload.sub,
@@ -84,16 +85,36 @@ export default class AuthRepo {
     };
   }
 
+  private generateJWT(accessToken: string, providerSub: string): string {
+    return jwt.sign(
+      {
+        accessToken,
+        sub: providerSub,
+      },
+      loadConfig().jwt.secret,
+    );
+  }
+
   public async verifyAccessToken(
     accessToken: string,
   ): Promise<{ isVerified: boolean } & Pick<User, 'providerSub'>> {
-    const { expiry_date, sub } = await this._client.getTokenInfo(accessToken);
-    if (!sub) throw new Error('ProviderSub not found');
+    const { accessToken: oauthAccessToken, sub } = this.verifyJWT(accessToken);
+    const { expiry_date } = await this._client.getTokenInfo(oauthAccessToken);
 
     const isExpired = expiry_date < Date.now();
     return {
       isVerified: !isExpired,
       providerSub: sub,
+    };
+  }
+
+  private verifyJWT(token: string): {
+    accessToken: string;
+    sub: string;
+  } {
+    return jwt.verify(token, loadConfig().jwt.secret) as {
+      accessToken: string;
+      sub: string;
     };
   }
 

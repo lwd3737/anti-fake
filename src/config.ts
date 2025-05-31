@@ -8,6 +8,7 @@ export default function loadConfig() {
     BASE_URL,
     ADMIN_EMAIL,
     AUTH_INACTIVE_MODE,
+    JWT_SECRET,
     OPENAI_API_KEY,
     GOOGLE_API_KEY,
     GOOGLE_CLIENT_ID,
@@ -26,6 +27,7 @@ export default function loadConfig() {
 
   if (!BASE_URL) throw new Error('BASE_URL is required');
   if (!ADMIN_EMAIL) throw new Error('ADMIN_EMAIL is required');
+  if (!JWT_SECRET) throw new Error('JWT_SECRET is required');
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required');
   if (!GOOGLE_API_KEY) throw new Error('GOOGLE_API_KEY is required');
   if (!GOOGLE_CLIENT_ID) throw new Error('GOOGLE_CLIENT_ID is required');
@@ -42,6 +44,9 @@ export default function loadConfig() {
     baseUrl: BASE_URL,
     admin: {
       email: ADMIN_EMAIL,
+    },
+    jwt: {
+      secret: JWT_SECRET,
     },
     authInactiveMode: AUTH_INACTIVE_MODE === 'true',
     mockDataCount: MOCK_DATA_COUNT ? parseInt(MOCK_DATA_COUNT) : undefined,
