@@ -1,4 +1,4 @@
-import loadConfig, { Config } from '@/config';
+import loadConfig from '@/config';
 import {
   SearchVideoChannelDto,
   SearchVideosDto,
@@ -6,21 +6,15 @@ import {
 } from '@/gateway/dto/youttube';
 import { GaxiosResponse } from 'gaxios';
 import { Auth, google, youtube_v3 } from 'googleapis';
-import AuthRepo from '../repositories/auth';
 import { YoutubeTranscript } from 'youtube-transcript';
 import {
   GoogleApisError,
   isGoogleApisError,
 } from '@/gateway/error/google-apis-error';
+import { authService } from '.';
 
 export default class YoutubeService {
   private youtube: youtube_v3.Youtube;
-
-  public static create(googleAuth?: AuthRepo): YoutubeService {
-    return new YoutubeService(
-      googleAuth ? googleAuth.client : { google: loadConfig().google },
-    );
-  }
 
   public static async downloadSubtitle(videoId: string): Promise<string> {
     const { devMode: new__devMode } = loadConfig();
@@ -37,12 +31,14 @@ export default class YoutubeService {
     );
   }
 
-  constructor(config: Pick<Config, 'google'> | Auth.OAuth2Client) {
-    const auth =
-      config instanceof Auth.OAuth2Client ? config : config.google.apiKey;
+  public static create(): YoutubeService {
+    return new YoutubeService(authService.client);
+  }
+
+  constructor(googleAuth: Auth.OAuth2Client) {
     this.youtube = google.youtube({
       version: 'v3',
-      auth,
+      auth: googleAuth,
     });
   }
 

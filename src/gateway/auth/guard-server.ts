@@ -17,7 +17,10 @@ export const guardServer = async (): Promise<Pick<User, 'providerSub'>> => {
     };
 
   const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)?.value;
-  if (!accessToken) return redirect(generateServerUrl(PageRoutes.LOGIN));
+  if (!accessToken) {
+    console.debug('ACCESS_TOKEN cookie not found');
+    return redirect(generateServerUrl(PageRoutes.LOGIN));
+  }
 
   const authenticateResult = await authService.authenticate(accessToken);
   if (isFailure(authenticateResult))

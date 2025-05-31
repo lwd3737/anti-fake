@@ -1,9 +1,14 @@
 import { ErrorCode } from '@/gateway/error/error-code';
 import AuthRepo from '@/repositories/auth';
 import { Result } from '@/result';
+import { Auth } from 'googleapis';
 
 export default class AuthService {
   private authRepo = new AuthRepo();
+
+  public get client(): Auth.OAuth2Client {
+    return this.authRepo.client;
+  }
 
   public generateAuthUrl(csrfToken: string): string {
     return this.authRepo.generateAuthUrlWithScopes(csrfToken);

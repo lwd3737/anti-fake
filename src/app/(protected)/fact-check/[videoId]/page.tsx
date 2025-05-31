@@ -5,10 +5,8 @@ import factCheckSessionRepo from '@/repositories/fact-check-session';
 import { ContentType } from '@/models/fact-check-session';
 import userRepo from '@/repositories/user';
 import { OauthProviderType } from '@/models/user';
-import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { PageRoutes } from '@/constants/routes';
-import { CookieNames } from '@/constants/cookie';
 import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
 
@@ -17,12 +15,7 @@ export default async function FactCheckPage({
 }: {
   params: { videoId: string };
 }) {
-  // const providerSub = cookies().get(CookieNames.PROVIDER_SUB)?.value;
   const { providerSub } = await guardServer();
-  if (!providerSub) {
-    console.error('Provider sub cookie is not found');
-    return redirect(PageRoutes.LOGIN);
-  }
 
   const user = await userRepo.findByProviderSub({
     provider: OauthProviderType.GOOGLE,

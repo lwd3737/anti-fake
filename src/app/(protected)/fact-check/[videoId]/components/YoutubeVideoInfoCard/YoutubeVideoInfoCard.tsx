@@ -1,15 +1,12 @@
 import { PageRoutes } from '@/constants/routes';
 import YoutubeService from '@/services/youtube';
 import { formatDate } from '@/utils/date';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
 import { isGoogleApisError } from '@/gateway/error/google-apis-error';
-import { authService } from '@/services';
 import { createYoutubeVideo, getYoutubeVideo } from '@/repositories/youtube';
-import { CookieNames } from '@/constants/cookie';
 
 interface Props {
   videoId: string;
@@ -22,11 +19,10 @@ export default async function YoutubeVideoInfoCard({
 }: Props) {
   let video = await getYoutubeVideo(videoId);
   if (!video) {
-    const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)!;
-    authService.setTokens({ accessToken: accessToken.value });
-
-    const youtube = YoutubeService.create(authService);
+    const youtube = YoutubeService.create();
     const videoResult = await youtube.getVideo(videoId);
+
+    // TODO: Result로 통일
     if (isGoogleApisError(videoResult)) {
       const { code, status } = videoResult;
       switch (status) {

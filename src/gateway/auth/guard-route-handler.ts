@@ -25,16 +25,14 @@ export const guardRouteHandler = async (
   if (!accessToken)
     return {
       isAuthenticated: false,
-      redirect: () =>
-        NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN)),
+      redirect: createRedirect(),
     };
 
   const authenticateResult = await authService.authenticate(accessToken);
   if (isFailure(authenticateResult))
     return {
       isAuthenticated: false,
-      redirect: () =>
-        NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN)),
+      redirect: createRedirect(),
     };
 
   const { isVerified, providerSub } = authenticateResult;
@@ -44,8 +42,7 @@ export const guardRouteHandler = async (
       if (isFailure(refreshResult))
         return {
           isAuthenticated: false,
-          redirect: () =>
-            NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN)),
+          redirect: createRedirect(),
         };
 
       const { accessToken } = refreshResult;
@@ -58,11 +55,14 @@ export const guardRouteHandler = async (
     } catch (e) {
       return {
         isAuthenticated: false,
-        redirect: () =>
-          NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN)),
+        redirect: createRedirect(),
       };
     }
   }
 
   return { isAuthenticated: true, providerSub };
+};
+
+const createRedirect = (): (() => NextResponse) => {
+  return () => NextResponse.redirect(generateServerUrl(PageRoutes.LOGIN));
 };
