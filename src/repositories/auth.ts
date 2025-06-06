@@ -99,13 +99,21 @@ export default class AuthRepo {
     accessToken: string,
   ): Promise<{ isVerified: boolean } & Pick<User, 'providerSub'>> {
     const { accessToken: oauthAccessToken, sub } = this.verifyJWT(accessToken);
-    const { expiry_date } = await this._client.getTokenInfo(oauthAccessToken);
 
-    const isExpired = expiry_date < Date.now();
-    return {
-      isVerified: !isExpired,
-      providerSub: sub,
-    };
+    try {
+      const { expiry_date } = await this._client.getTokenInfo(oauthAccessToken);
+
+      const isExpired = expiry_date < Date.now();
+      return {
+        isVerified: !isExpired,
+        providerSub: sub,
+      };
+    } catch (e) {
+      return {
+        isVerified: false,
+        providerSub: sub,
+      };
+    }
   }
 
   private verifyJWT(token: string): {

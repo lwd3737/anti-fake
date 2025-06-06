@@ -1,7 +1,4 @@
 import { ReactNode } from 'react';
-import ClaimProvider from './providers/ClaimProvider';
-import ClaimVerificationProvider from './providers/ClaimVerificationProvider';
-import ClaimVerificationBatchProvider from './providers/ClaimVerificationBatchProvider';
 
 export default function FactCheckLayout({
   params: { videoId },

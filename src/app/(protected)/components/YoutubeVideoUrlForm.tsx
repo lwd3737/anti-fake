@@ -1,4 +1,5 @@
 'use client';
+import { PageRoutes } from '@/constants/routes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FormEventHandler } from 'react';
@@ -23,8 +24,7 @@ export default function YoutubeVideoUrlForm() {
     }
 
     const videoId = url.searchParams.get('v');
-
-    router.push(`/fact-check/${videoId}`);
+    router.push(PageRoutes.factCheckSession(videoId!));
   };
 
   return (

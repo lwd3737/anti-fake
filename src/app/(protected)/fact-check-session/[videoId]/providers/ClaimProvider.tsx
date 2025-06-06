@@ -85,7 +85,7 @@ export default function ClaimProvider({
         }
 
         startStreaming<CreateClaimsRequestDto>(
-          APIRoutes.factCheckSessions.CLAIMS(factCheckSession.id),
+          APIRoutes.factCheckSessions.claims(factCheckSession.id),
           {
             factCheckSessionId: factCheckSession.id,
             userId: factCheckSession.userId,
@@ -110,7 +110,7 @@ export default function ClaimProvider({
 
   const retry = useCallback(() => {
     setClaims([]);
-    startStreaming(APIRoutes.factCheckSessions.CLAIMS(factCheckSession.id), {
+    startStreaming(APIRoutes.factCheckSessions.claims(factCheckSession.id), {
       videoId: factCheckSession.contentId,
     });
   }, [factCheckSession.contentId, factCheckSession.id, startStreaming]);

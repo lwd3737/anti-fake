@@ -1,4 +1,5 @@
 import { ErrorCode } from '@/gateway/error/error-code';
+import { FactCheckSession } from '@/models/fact-check-session';
 import factCheckSessionRepo from '@/repositories/fact-check-session';
 import { Result } from '@/result';
 
@@ -9,7 +10,7 @@ export default class FactCheckSessionService {
   }: {
     factCheckSessionId: string;
     ownerId: string;
-  }): Promise<Result<void>> {
+  }): Promise<Result<FactCheckSession>> {
     const factCheckSession =
       await factCheckSessionRepo.findById(factCheckSessionId);
     if (!factCheckSession) {
@@ -25,5 +26,7 @@ export default class FactCheckSessionService {
         error: "User is not factcheck session's owner",
       };
     }
+
+    return factCheckSession;
   }
 }

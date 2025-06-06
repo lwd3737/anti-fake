@@ -45,7 +45,6 @@ export default async function YoutubeVideoInfoCard({
       channelId,
     });
   }
-
   const { thumbnailUrl, title, channelTitle, publishedAt } = video!;
 
   return (

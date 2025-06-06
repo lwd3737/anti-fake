@@ -10,7 +10,7 @@ import { PageRoutes } from '@/constants/routes';
 import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
 
-export default async function FactCheckPage({
+export default async function FactCheckSessionPage({
   params: { videoId },
 }: {
   params: { videoId: string };
@@ -25,6 +25,7 @@ export default async function FactCheckPage({
     console.error('User not found');
     return redirect(PageRoutes.LOGIN);
   }
+
   const factCheckSession =
     (await factCheckSessionRepo.findByUserAndContent({
       userId: user.id,

@@ -7,7 +7,7 @@ export const APIRoutes = {
     LOGOUT: '/api/auth/logout',
   },
   factCheckSessions: {
-    CLAIMS: (factCheckSessionId: string) =>
+    claims: (factCheckSessionId: string) =>
       `/api/fact-check-sessions/${factCheckSessionId}/claims`,
     VERIFY_CLAIMS: '/api/fact-check/verify-claims',
   },
@@ -16,6 +16,7 @@ export const APIRoutes = {
 export const PageRoutes = {
   LOGIN: '/login',
   HOME: '/',
+  factCheckSession: (contentId: string) => `/fact-check-session/${contentId}`,
   ARCHIVE: '/archive',
   OAUTH_CALLBACK: '/oauth-callback',
   error: {

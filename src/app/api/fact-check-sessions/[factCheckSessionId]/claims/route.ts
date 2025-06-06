@@ -35,24 +35,6 @@ export async function GET(
     return handleRouteError(ErrorCode.UNAUTHENTICATED, 'User not found', 401);
   }
 
-  const factCheckSession =
-    await factCheckSessionRepo.findById(factCheckSessionId);
-  if (!factCheckSession) {
-    return handleRouteError(
-      ErrorCode.FACT_CHECK_SESSION_NOT_FOUND,
-      'Fact check session not found',
-      404,
-    );
-  }
-
-  if (factCheckSession.userId !== user.id) {
-    return handleRouteError(
-      ErrorCode.UNAUTHORIZATION,
-      "User is not factcheck session's owner",
-      401,
-    );
-  }
-
   const authorizationResult = await new FactCheckSessionService().authoirze({
     factCheckSessionId,
     ownerId: user.id,
@@ -62,12 +44,16 @@ export async function GET(
     return handleRouteError(code, error, 401);
   }
 
+  const factCheckSession = authorizationResult;
   const claims = await claimRepo.findManyBySessionId(factCheckSession.id);
 
   return NextResponse.json({ claims } as GetClaimsResponseDto);
 }
 
 export async function POST(req: NextRequest) {
+  const guardResult = await guardRouteHandler(req);
+  if (!guardResult.isAuthenticated) return guardResult.redirect();
+
   const { factCheckSessionId, userId, contentType, contentId } =
     (await req.json()) as CreateClaimsRequestDto;
   // TODO: Add more content types
@@ -88,14 +74,15 @@ export async function POST(req: NextRequest) {
   }
 
   const subtitle = await YoutubeService.downloadSubtitle(contentId);
-  const claimDetector = new ClaimService(req.signal);
+  const claimService = new ClaimService(req.signal);
 
   return streamResponse(({ send, close }) => {
-    claimDetector
+    claimService
       .onClaimDetected((claim) => {
         send(claim satisfies CreateClaimsResponseDto);
       })
-      .onFinished(() => {
+      .onFinished(async (claims) => {
+        await claimRepo.createMany(factCheckSessionId, claims);
         close();
       })
       .onError((error) => {

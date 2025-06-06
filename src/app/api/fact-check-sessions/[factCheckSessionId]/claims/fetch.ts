@@ -7,7 +7,7 @@ export async function getClaims(
   factCheckSessionId: string,
 ): Promise<Result<GetClaimsResponseDto>> {
   const res = await apiClient(
-    APIRoutes.factCheckSessions.CLAIMS(factCheckSessionId),
+    APIRoutes.factCheckSessions.claims(factCheckSessionId),
   );
   return await res.json();
 }
