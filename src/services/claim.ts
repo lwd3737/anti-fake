@@ -72,15 +72,24 @@ export default class ClaimService {
         });
 
         let index = 0;
-        for await (const claim of result.elementStream) {
-          const newClaim: Claim = {
-            ...claim,
-            id: uuidv4(),
-            index: index++,
-          };
 
-          this.events.emit(EventType.CLAIM_DETECTED, newClaim);
-          this.claimsCache.push(newClaim);
+        const reader = result.elementStream.getReader();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const newClaim: Claim = {
+              ...value,
+              id: uuidv4(),
+              index: index++,
+            };
+
+            this.events.emit(EventType.CLAIM_DETECTED, newClaim);
+            this.claimsCache.push(newClaim);
+          }
+        } finally {
+          reader.releaseLock();
         }
       } catch (e) {
         error({

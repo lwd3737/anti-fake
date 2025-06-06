@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
   return streamResponse(({ send, close }) => {
     claimService
       .onClaimDetected((claim) => {
+        console.log('claim detected', claim);
         send(claim satisfies CreateClaimsResponseDto);
       })
       .onFinished(async (claims) => {
