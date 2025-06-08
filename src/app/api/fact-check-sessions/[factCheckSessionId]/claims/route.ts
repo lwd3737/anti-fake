@@ -2,6 +2,7 @@ import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
+  DeleteClaimsRequestDto,
 } from '@/gateway/dto/claim';
 import { CreateClaimsResponseDto } from '@/gateway/dto/fact-check';
 import { ErrorCode } from '@/gateway/error/error-code';
@@ -50,11 +51,16 @@ export async function GET(
   return NextResponse.json({ claims } as GetClaimsResponseDto);
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  {
+    params: { factCheckSessionId },
+  }: { params: { factCheckSessionId: string } },
+) {
   const guardResult = await guardRouteHandler(req);
   if (!guardResult.isAuthenticated) return guardResult.redirect();
 
-  const { factCheckSessionId, userId, contentType, contentId } =
+  const { userId, contentType, contentId } =
     (await req.json()) as CreateClaimsRequestDto;
   // TODO: Add more content types
   if (contentType !== ContentType.YOUTUBE_VIDEO)
@@ -79,7 +85,6 @@ export async function POST(req: NextRequest) {
   return streamResponse(({ send, close }) => {
     claimService
       .onClaimDetected((claim) => {
-        console.log('claim detected', claim);
         send(claim satisfies CreateClaimsResponseDto);
       })
       .onFinished(async (claims) => {
@@ -92,4 +97,25 @@ export async function POST(req: NextRequest) {
       })
       .startDetection(subtitle);
   }, req.signal);
+}
+
+export async function DELETE(
+  req: NextRequest,
+  {
+    params: { factCheckSessionId },
+  }: { params: { factCheckSessionId: string } },
+) {
+  const guardResult = await guardRouteHandler(req);
+  if (!guardResult.isAuthenticated) return guardResult.redirect();
+
+  try {
+    await claimRepo.deleteManyBySessionId(factCheckSessionId);
+    return NextResponse.json(null, { status: 204 });
+  } catch (e) {
+    return handleRouteError(
+      ErrorCode.CLAIM_DETECTION_RETRY_FAILED,
+      'Failed to delete claims',
+      500,
+    );
+  }
 }

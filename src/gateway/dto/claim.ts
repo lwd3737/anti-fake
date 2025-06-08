@@ -2,7 +2,6 @@ import { Claim } from '@/models/claim';
 
 // Request
 export interface CreateClaimsRequestDto {
-  factCheckSessionId: string;
   userId: string;
   contentType: 'YOUTUBE_VIDEO';
   contentId: string;
@@ -19,4 +18,8 @@ export interface GetClaimsResponseDto {
 
 export interface VerifyClaimsRequestDto {
   claims: Claim[];
+}
+
+export interface DeleteClaimsRequestDto {
+  factCheckSessionId: string;
 }

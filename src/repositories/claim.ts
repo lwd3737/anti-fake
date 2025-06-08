@@ -23,6 +23,14 @@ const claimRepo = {
     });
     return claims.map(claimMapper.toDomain);
   },
+
+  async deleteManyBySessionId(factCheckSessionId: string): Promise<void> {
+    await prisma.claim.deleteMany({
+      where: {
+        factCheckSessionId,
+      },
+    });
+  },
 };
 
 export default claimRepo;

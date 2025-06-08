@@ -1,5 +1,8 @@
 'use client';
-import { getClaims } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
+import {
+  deleteClaims,
+  getClaims,
+} from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
 import { APIRoutes, PageRoutes } from '@/constants/routes';
 import { CreateClaimsRequestDto } from '@/gateway/dto/claim';
 import { ErrorCode } from '@/gateway/error/error-code';
@@ -87,7 +90,6 @@ export default function ClaimProvider({
         startStreaming<CreateClaimsRequestDto>(
           APIRoutes.factCheckSessions.claims(factCheckSession.id),
           {
-            factCheckSessionId: factCheckSession.id,
             userId: factCheckSession.userId,
             contentType: ContentType.YOUTUBE_VIDEO,
             contentId: factCheckSession.contentId,
@@ -108,12 +110,28 @@ export default function ClaimProvider({
     setClaims((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const retry = useCallback(() => {
+  const retry = useCallback(async () => {
     setClaims([]);
-    startStreaming(APIRoutes.factCheckSessions.claims(factCheckSession.id), {
-      videoId: factCheckSession.contentId,
-    });
-  }, [factCheckSession.contentId, factCheckSession.id, startStreaming]);
+    const deletionResult = await deleteClaims(factCheckSession.id);
+    if (isFailure(deletionResult)) {
+      console.error(deletionResult);
+      return;
+    }
+
+    startStreaming<CreateClaimsRequestDto>(
+      APIRoutes.factCheckSessions.claims(factCheckSession.id),
+      {
+        userId: factCheckSession.userId,
+        contentType: ContentType.YOUTUBE_VIDEO,
+        contentId: factCheckSession.contentId,
+      },
+    );
+  }, [
+    factCheckSession.contentId,
+    factCheckSession.id,
+    factCheckSession.userId,
+    startStreaming,
+  ]);
 
   const value: IClaimProvider = useMemo(
     () => ({
