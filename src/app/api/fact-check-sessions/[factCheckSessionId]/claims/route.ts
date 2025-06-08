@@ -79,7 +79,14 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const subtitle = await YoutubeService.downloadSubtitle(contentId);
+  const subtitleResult = await YoutubeService.downloadSubtitle(contentId);
+  if (isFailure(subtitleResult)) {
+    console.error(subtitleResult);
+    const { code, error } = subtitleResult;
+    return handleRouteError(code, error, 400);
+  }
+
+  const subtitle = subtitleResult;
   const claimService = new ClaimService(req.signal);
 
   return streamResponse(({ send, close }) => {
@@ -110,11 +117,13 @@ export async function DELETE(
 
   try {
     await claimRepo.deleteManyBySessionId(factCheckSessionId);
-    return NextResponse.json(null, { status: 204 });
+    // TODO: verification 초기화
+    return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e) {
+    console.error(e);
     return handleRouteError(
-      ErrorCode.CLAIM_DETECTION_RETRY_FAILED,
-      'Failed to delete claims',
+      ErrorCode.FACTCHECK_SESSION_RESET,
+      'Failed to reset fact check session',
       500,
     );
   }

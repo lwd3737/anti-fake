@@ -114,7 +114,7 @@ export default function ClaimProvider({
     setClaims([]);
     const deletionResult = await deleteClaims(factCheckSession.id);
     if (isFailure(deletionResult)) {
-      console.error(deletionResult);
+      alert('팩트 체크 세션을 초기화하는데 실패했습니다.');
       return;
     }
 

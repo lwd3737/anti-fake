@@ -55,6 +55,14 @@ export default class ClaimService {
             '자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.',
           temperature: 0,
           onFinish: (event) => {
+            if (!event.object || event.object.length === 0) {
+              console.error('No claims detected in the response');
+              this.events.emit(
+                EventType.ERROR,
+                new Error('No claims detected'),
+              );
+              return;
+            }
             this.events.emit(EventType.FINISHED, this.claimsCache);
 
             log({
@@ -77,6 +85,7 @@ export default class ClaimService {
         try {
           while (true) {
             const { done, value } = await reader.read();
+
             if (done) break;
 
             const newClaim: Claim = {
@@ -88,10 +97,16 @@ export default class ClaimService {
             this.events.emit(EventType.CLAIM_DETECTED, newClaim);
             this.claimsCache.push(newClaim);
           }
+        } catch (e) {
+          console.error('Error reading from stream:', e);
+          reader.cancel();
+          this.events.emit(EventType.ERROR, e as Error);
         } finally {
+          console.log('Releasing stream lock');
           reader.releaseLock();
         }
       } catch (e) {
+        console.error(e);
         error({
           code: 'DetectClaimsError',
           error: e as Error,

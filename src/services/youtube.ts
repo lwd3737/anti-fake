@@ -12,11 +12,15 @@ import {
   isGoogleApisError,
 } from '@/gateway/error/google-apis-error';
 import { authService } from '.';
+import { Result } from '@/result';
+import { ErrorCode } from '@/gateway/error/error-code';
 
 export default class YoutubeService {
   private youtube: youtube_v3.Youtube;
 
-  public static async downloadSubtitle(videoId: string): Promise<string> {
+  public static async downloadSubtitle(
+    videoId: string,
+  ): Promise<Result<string>> {
     const { devMode: new__devMode } = loadConfig();
 
     if (new__devMode.youtubeSubtitleDownload ?? new__devMode.default) {
@@ -25,10 +29,17 @@ export default class YoutubeService {
     }
 
     const transcripts = await YoutubeTranscript.fetchTranscript(videoId);
-    return transcripts.reduce(
+    const subtitle = transcripts.reduce(
       (transcript, segment) => transcript + segment.text,
       '',
     );
+    if (subtitle.length === 0)
+      return {
+        code: ErrorCode.YOUTUBE_SUBTITLE_DOWNLOAD_FAILED,
+        error: 'No subtitle found',
+      };
+
+    return subtitle;
   }
 
   public static create(): YoutubeService {
