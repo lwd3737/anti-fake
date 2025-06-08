@@ -1,7 +1,9 @@
+import loadConfig from '@/config';
 import { ErrorCode } from '@/gateway/error/error-code';
 import AuthRepo from '@/repositories/auth';
 import { Result } from '@/result';
 import { Auth } from 'googleapis';
+import jwt from 'jsonwebtoken';
 
 export default class AuthService {
   private authRepo = new AuthRepo();
@@ -22,7 +24,14 @@ export default class AuthService {
     }>
   > {
     try {
-      return await this.authRepo.authenticate(code);
+      const { tokens, ...info } = await this.authRepo.authenticate(code);
+      return {
+        tokens: {
+          accessToken: this.generateJWT(tokens.accessToken, info.providerSub),
+          refreshToken: tokens.refreshToken,
+        },
+        ...info,
+      };
     } catch (e) {
       console.error('Failed to authorize code');
       console.error(e);
@@ -34,10 +43,15 @@ export default class AuthService {
   }
 
   public async authenticate(
-    accessToken: string,
+    jwt: string,
   ): Promise<Result<{ isVerified: boolean; providerSub: string }>> {
     try {
-      return await this.authRepo.verifyAccessToken(accessToken);
+      const { accessToken, sub } = this.verifyJWT(jwt);
+      const isVerified = await this.authRepo.verifyAccessToken(accessToken);
+      return {
+        isVerified,
+        providerSub: sub,
+      };
     } catch (e) {
       console.debug(e);
       return {
@@ -47,11 +61,10 @@ export default class AuthService {
     }
   }
 
-  public async refresh(
-    providerSub: string,
-  ): Promise<Result<{ accessToken: string }>> {
+  public async refresh(providerSub: string): Promise<Result<string>> {
     try {
-      return { accessToken: await this.authRepo.refresh(providerSub) };
+      const accessToken = await this.authRepo.refresh(providerSub);
+      return this.generateJWT(accessToken, providerSub);
     } catch (e) {
       console.debug(e);
       return {
@@ -59,5 +72,25 @@ export default class AuthService {
         error: 'Failed to refresh access token',
       };
     }
+  }
+
+  private generateJWT(accessToken: string, providerSub: string): string {
+    return jwt.sign(
+      {
+        accessToken,
+        sub: providerSub,
+      },
+      loadConfig().jwt.secret,
+    );
+  }
+
+  private verifyJWT(token: string): {
+    accessToken: string;
+    sub: string;
+  } {
+    return jwt.verify(token, loadConfig().jwt.secret) as {
+      accessToken: string;
+      sub: string;
+    };
   }
 }

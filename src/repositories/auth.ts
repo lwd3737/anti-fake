@@ -77,7 +77,7 @@ export default class AuthRepo {
 
     return {
       tokens: {
-        accessToken: this.generateJWT(tokens.access_token, payload.sub!),
+        accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
       },
       providerSub: payload.sub,
@@ -85,45 +85,14 @@ export default class AuthRepo {
     };
   }
 
-  private generateJWT(accessToken: string, providerSub: string): string {
-    return jwt.sign(
-      {
-        accessToken,
-        sub: providerSub,
-      },
-      loadConfig().jwt.secret,
-    );
-  }
-
-  public async verifyAccessToken(
-    accessToken: string,
-  ): Promise<{ isVerified: boolean } & Pick<User, 'providerSub'>> {
-    const { accessToken: oauthAccessToken, sub } = this.verifyJWT(accessToken);
-
+  public async verifyAccessToken(accessToken: string): Promise<boolean> {
     try {
-      const { expiry_date } = await this._client.getTokenInfo(oauthAccessToken);
-
+      const { expiry_date } = await this._client.getTokenInfo(accessToken);
       const isExpired = expiry_date < Date.now();
-      return {
-        isVerified: !isExpired,
-        providerSub: sub,
-      };
+      return !isExpired;
     } catch (e) {
-      return {
-        isVerified: false,
-        providerSub: sub,
-      };
+      return false;
     }
-  }
-
-  private verifyJWT(token: string): {
-    accessToken: string;
-    sub: string;
-  } {
-    return jwt.verify(token, loadConfig().jwt.secret) as {
-      accessToken: string;
-      sub: string;
-    };
   }
 
   public async getAccessToken(): Promise<string | null | undefined> {

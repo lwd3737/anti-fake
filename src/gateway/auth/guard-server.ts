@@ -33,8 +33,8 @@ export const guardServer = async (): Promise<Pick<User, 'providerSub'>> => {
       if (isFailure(refreshResult))
         return redirect(generateServerUrl(PageRoutes.LOGIN));
 
-      const { accessToken } = refreshResult;
-      setAccessTokenCookie(accessToken);
+      const jwt = refreshResult;
+      setAccessTokenCookie(jwt);
 
       return {
         providerSub,

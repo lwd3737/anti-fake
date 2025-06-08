@@ -45,8 +45,8 @@ export const guardRouteHandler = async (
           redirect: createRedirect(),
         };
 
-      const { accessToken } = refreshResult;
-      cookies().set(CookieNames.ACCESS_TOKEN, accessToken);
+      const jwt = refreshResult;
+      cookies().set(CookieNames.ACCESS_TOKEN, jwt);
 
       return {
         isAuthenticated: true,
