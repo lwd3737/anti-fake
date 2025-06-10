@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node src/scripts/init.js && next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node src/scripts/init.js && next start",
     "test": "vitest",
     "db:reset": "prisma db push --force-reset && prisma db seed",
     "db:update": "prisma db push && prisma generate",
@@ -29,6 +29,7 @@
     "userland": "^0.4.3",
     "uuid": "^10.0.0",
     "youtube-transcript": "^1.2.1",
+    "yt-dlp-wrap": "^2.3.12",
     "zod": "^3.23.8"
   },
   "prisma": {

@@ -42,6 +42,10 @@ export default class YoutubeService {
     return subtitle;
   }
 
+  public static async generateTranscript(
+    videoId: string,
+  ): Promise<Result<string>> {}
+
   public static create(): YoutubeService {
     return new YoutubeService(authService.client);
   }
