@@ -24,30 +24,6 @@ import { YoutubeVideoTranscription } from '@/models/youtube';
 export default class YoutubeService {
   private youtube: youtube_v3.Youtube;
 
-  public static async downloadSubtitle(
-    videoId: string,
-  ): Promise<Result<string>> {
-    const { devMode: new__devMode } = loadConfig();
-
-    if (new__devMode.youtubeSubtitleDownload ?? new__devMode.default) {
-      const mock = await import('/mock/subtitle.json');
-      return mock.subtitle;
-    }
-
-    const transcripts = await YoutubeTranscript.fetchTranscript(videoId);
-    const subtitle = transcripts.reduce(
-      (transcript, segment) => transcript + segment.text,
-      '',
-    );
-    if (subtitle.length === 0)
-      return {
-        code: ErrorCode.YOUTUBE_SUBTITLE_DOWNLOAD_FAILED,
-        error: 'No subtitle found',
-      };
-
-    return subtitle;
-  }
-
   public static async generateTranscript(
     videoId: string,
     signal?: AbortSignal,
@@ -60,7 +36,7 @@ export default class YoutubeService {
     }
 
     const url = `https://www.youtube.com/watch?v=${videoId}`;
-    const ytDlp = new YTDlpWrap(path.join(process.cwd(), 'yt-dlp'));
+    const ytDlp = new YTDlpWrap(path.join(process.cwd(), 'bin', 'yt-dlp'));
 
     const tempDir = os.tmpdir();
     const tempFile = path.join(tempDir, `${videoId}.mp3`);
@@ -115,7 +91,7 @@ export default class YoutubeService {
 
       const { stdout, stderr } = await execAsync(curlCommand);
 
-      if (stderr) console.error('Curl stderr:', stderr);
+      if (stderr) console.debug('Curl stderr:', stderr);
 
       try {
         const transcription = JSON.parse(stdout);

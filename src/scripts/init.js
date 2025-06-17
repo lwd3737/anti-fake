@@ -8,13 +8,19 @@ async function downloadYtDlpBinary() {
   const fs = require('fs');
   const path = require('path');
 
-  const binaryPath = path.join(process.cwd(), 'yt-dlp');
+  const binDir = path.join(process.cwd(), 'bin');
+  const binaryPath = path.join(binDir, 'yt-dlp');
+
+  // Create bin directory if it doesn't exist
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
+  }
 
   if (!fs.existsSync(binaryPath)) {
     console.log('yt-dlp binary not found, downloading...');
 
     try {
-      await YTDlpWrap.downloadFromGithub();
+      await YTDlpWrap.downloadFromGithub(binaryPath);
       fs.chmodSync(binaryPath, '755');
       console.log('yt-dlp binary download completed and made executable');
     } catch (downloadError) {
@@ -54,8 +60,10 @@ async function setupFfmpeg() {
   // Copy ffmpeg binary to our bin directory
   if (!fs.existsSync(ffmpegPath)) {
     console.log('Setting up ffmpeg...');
+
     fs.copyFileSync(ffmpeg, ffmpegPath);
     fs.chmodSync(ffmpegPath, '755');
+
     console.log('ffmpeg setup completed');
   }
 
