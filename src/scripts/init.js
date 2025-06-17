@@ -1,5 +1,6 @@
 async function init() {
   await downloadYtDlpBinary();
+  await setupFfmpeg();
 }
 
 async function downloadYtDlpBinary() {
@@ -31,6 +32,34 @@ async function downloadYtDlpBinary() {
     console.error('yt-dlp binary verification failed:', error);
     throw error;
   }
+}
+
+async function setupFfmpeg() {
+  const fs = require('fs');
+  const path = require('path');
+  const ffmpeg = require('ffmpeg-static');
+
+  if (!ffmpeg) {
+    throw new Error('ffmpeg-static package is not installed properly');
+  }
+
+  const binDir = path.join(process.cwd(), 'bin');
+  const ffmpegPath = path.join(binDir, 'ffmpeg');
+
+  // Create bin directory if it doesn't exist
+  if (!fs.existsSync(binDir)) {
+    fs.mkdirSync(binDir, { recursive: true });
+  }
+
+  // Copy ffmpeg binary to our bin directory
+  if (!fs.existsSync(ffmpegPath)) {
+    console.log('Setting up ffmpeg...');
+    fs.copyFileSync(ffmpeg, ffmpegPath);
+    fs.chmodSync(ffmpegPath, '755');
+    console.log('ffmpeg setup completed');
+  }
+
+  console.log('ffmpeg is ready at:', ffmpegPath);
 }
 
 init();

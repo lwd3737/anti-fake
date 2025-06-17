@@ -79,14 +79,16 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const subtitleResult = await YoutubeService.downloadSubtitle(contentId);
-  if (isFailure(subtitleResult)) {
-    console.error(subtitleResult);
-    const { code, error } = subtitleResult;
+  const transcriptResult = await YoutubeService.generateTranscript(
+    contentId,
+    req.signal,
+  );
+  if (isFailure(transcriptResult)) {
+    console.error(transcriptResult);
+    const { code, error } = transcriptResult;
     return handleRouteError(code, error, 400);
   }
 
-  const subtitle = subtitleResult;
   const claimService = new ClaimService(req.signal);
 
   return streamResponse(({ send, close }) => {
@@ -95,14 +97,13 @@ export async function POST(
         send(claim satisfies CreateClaimsResponseDto);
       })
       .onFinished(async (claims) => {
-        await claimRepo.createMany(factCheckSessionId, claims);
         close();
       })
       .onError((error) => {
         console.error(error);
         close();
       })
-      .startDetection(subtitle);
+      .startTranscriptionDetection(transcriptResult, factCheckSessionId);
   }, req.signal);
 }
 

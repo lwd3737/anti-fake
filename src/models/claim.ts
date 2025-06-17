@@ -3,4 +3,6 @@ export interface Claim {
   index: number;
   content: string;
   detectionReason: string;
+  startAt: number;
+  endAt: number;
 }

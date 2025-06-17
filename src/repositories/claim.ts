@@ -5,7 +5,11 @@ import { Claim } from '@/models/claim';
 const claimRepo = {
   async createMany(factCheckSessionId: string, claims: Claim[]): Promise<void> {
     const result = await prisma.claim.createMany({
-      data: claims.map((claim) => ({ factCheckSessionId, ...claim })),
+      data: claims.map(({ startAt, endAt, ...claim }) => ({
+        factCheckSessionId,
+        metadata: { startAt, endAt },
+        ...claim,
+      })),
     });
     if (result.count !== claims.length) {
       console.error(

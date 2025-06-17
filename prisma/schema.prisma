@@ -67,6 +67,7 @@ model Claim {
   index              Int
   content            String
   detectionReason    String
+  metadata           Json?
   createdAt          DateTime         @default(now())
 
   claimVerifications ClaimVerification[]

@@ -1,12 +1,14 @@
 import { AIModel, openai } from '@/helpers/ai';
 import { streamObject } from 'ai';
-import DETECT_CLAIM_PROMPT from '@/prompts/detect-claim';
 import { z } from 'zod';
 import EventEmitter from 'events';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
 import loadConfig from '@/config';
 import { Claim } from '@/models/claim';
 import { v4 as uuidv4 } from 'uuid';
+import { YoutubeVideoTranscription } from '@/models/youtube';
+import YOUTUBE_CLAIM_DETECTION_PROMPT from '@/prompts/youtube-claim-detection';
+import claimRepo from '@/repositories/claim';
 
 enum EventType {
   CLAIM_DETECTED = 'CLAIM_DETECTED',
@@ -18,11 +20,15 @@ const ClaimSchema = z.object({
   content: z
     .string()
     .describe(
-      '탐지된 검증 가능한 주장 및 관련된 문장. 주장에 해당하는 문장뿐만 아니라 관련된 문장들도 함께 content에 포함시킬 수 있습니다',
+      '검증 가능한 주장과 그 맥락을 포함한 문장들. 주장 자체뿐만 아니라 주장을 이해하는데 필요한 문맥도 함께 포함합니다',
     ),
   detectionReason: z
     .string()
-    .describe('해당 주장이 검증 가능한 주장으로 탐지된 이유'),
+    .describe(
+      '이 주장이 사실 검증이 가능하고 가치가 있다고 판단한 근거를 설명합니다',
+    ),
+  startAt: z.number().describe('주장이 시작되는 시간(초)'),
+  endAt: z.number().describe('주장이 끝나는 시간(초)'),
 });
 
 const STREAM_INTERVAL = 100;
@@ -36,39 +42,52 @@ export default class ClaimService {
 
   constructor(private signal: AbortSignal) {}
 
-  public async startDetection(text: string): Promise<void> {
-    if (this.isDevMode) return this.startDetectionOnDevMode();
+  public async startTranscriptionDetection(
+    transcription: YoutubeVideoTranscription,
+    factCheckSessionId: string,
+  ): Promise<void> {
+    if (this.isDevMode) return this.startTranscriptionDetectionOnDevMode();
 
     this.claimsCache = [];
+
+    const segments = transcription.segments.map(({ start, end, text }) => ({
+      start,
+      end,
+      text,
+    }));
+    const prompt = JSON.stringify(segments);
 
     this.logger.monitor(async (log, error, save) => {
       try {
         const result = streamObject({
           model: openai(AIModel.GPT_4O),
-          system: DETECT_CLAIM_PROMPT,
-          prompt: text,
+          system: YOUTUBE_CLAIM_DETECTION_PROMPT,
+          prompt,
           mode: 'json',
           output: 'array',
           schema: ClaimSchema,
-          schemaName: 'DetectedClaims',
+          schemaName: 'Claims',
           schemaDescription:
             '자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.',
           temperature: 0,
-          onFinish: (event) => {
+          onFinish: async (event) => {
             if (!event.object || event.object.length === 0) {
-              console.error('No claims detected in the response');
               this.events.emit(
                 EventType.ERROR,
                 new Error('No claims detected'),
               );
+              console.error('No claims detected in the response');
               return;
             }
+
+            await claimRepo.createMany(factCheckSessionId, this.claimsCache);
+
             this.events.emit(EventType.FINISHED, this.claimsCache);
 
             log({
               title: 'Claims detection',
               model: 'gpt-4o',
-              prompt: text,
+              prompt,
               output: this.claimsCache,
               tokenUsage: event.usage,
             });
@@ -79,9 +98,9 @@ export default class ClaimService {
           abortSignal: this.signal,
         });
 
+        const reader = result.elementStream.getReader();
         let index = 0;
 
-        const reader = result.elementStream.getReader();
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -98,21 +117,23 @@ export default class ClaimService {
             this.claimsCache.push(newClaim);
           }
         } catch (e) {
-          console.error('Error reading from stream:', e);
           reader.cancel();
           this.events.emit(EventType.ERROR, e as Error);
+
+          console.error('Error reading from stream:', e);
         } finally {
-          console.log('Releasing stream lock');
           reader.releaseLock();
+          console.log('Releasing stream lock');
         }
       } catch (e) {
-        console.error(e);
         error({
           code: 'DetectClaimsError',
           error: e as Error,
         });
         this.events.emit(EventType.ERROR, e as Error);
         this.claimsCache = [];
+
+        console.error(e);
       }
     });
   }
@@ -122,7 +143,7 @@ export default class ClaimService {
     return devMode.claimDetection ?? devMode.default;
   }
 
-  private async startDetectionOnDevMode(): Promise<void> {
+  private async startTranscriptionDetectionOnDevMode(): Promise<void> {
     const mockData = await import('/mock/claims.json');
     const { mockDataCount } = loadConfig();
 
