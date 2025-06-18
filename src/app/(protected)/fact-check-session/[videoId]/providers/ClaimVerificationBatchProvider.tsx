@@ -1,3 +1,4 @@
+// deprecated
 'use client';
 import useStreamingResponse from '@/hooks/useStreamingResponse';
 import {
@@ -36,7 +37,8 @@ export default function ClaimVerificationBatchProvider({
 }: {
   children: ReactNode;
 }) {
-  const { data, append } = useClaimVerification();
+  const { data } = useClaimVerification();
+  const append = (data: any) => {};
 
   const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
     (chunks: unknown[]) => {
@@ -74,7 +76,7 @@ export default function ClaimVerificationBatchProvider({
     setClaimIndexesToVerify([]);
   }, []);
 
-  const { claims: detectionResults } = useClaim();
+  const { items: detectionResults } = useClaim();
 
   const start = useCallback(async () => {
     const hasClaimToVerify = claimIndexesToVerify.length > 0;

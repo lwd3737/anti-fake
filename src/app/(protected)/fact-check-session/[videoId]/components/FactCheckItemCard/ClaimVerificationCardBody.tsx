@@ -1,20 +1,16 @@
-import {
-  ClaimVerificationResultWithDetails,
-  displayVerdict,
-  VerdictType,
-} from '@/models/claim-verification';
+import { ClaimVerification, VerdictType } from '@/models/claim-verification';
 import EvidenceCollapse from './EvidenceCollapse';
 import CitationPopover from './CitationPopover';
 import { useMemo, useRef, useState } from 'react';
 import VerdictReasonText from './VerdictReasonText';
 import assert from 'assert';
 
-interface Props extends ClaimVerificationResultWithDetails {}
+interface Props extends ClaimVerification {}
 
-export default function VerficicationResultCardBody({
+export default function ClaimVerificationCardBody({
   verdict,
-  reason,
-  evidence,
+  verdictReason,
+  evidences,
 }: Props) {
   const containerElRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +64,10 @@ export default function VerficicationResultCardBody({
     }
   }, [verdict]);
 
+  const allCitations = useMemo(() => {
+    return evidences.flatMap((evidence) => evidence.citaions);
+  }, [evidences]);
+
   // TODO: theme 적용
   return (
     <div
@@ -84,7 +84,7 @@ export default function VerficicationResultCardBody({
         </div>
         <div className="h-max-[100px] overflow-y-clip">
           <VerdictReasonText
-            reason={reason}
+            reason={verdictReason}
             onCitationHover={handleEvidenceCitationHover}
             onCitationLeave={handleEvidenceCitationLeave}
             onCitationClick={handleGoToEvidenceCitation}
@@ -94,15 +94,34 @@ export default function VerficicationResultCardBody({
 
       <EvidenceCollapse
         itemsRef={evidenceItemsRef}
-        evidence={evidence}
+        evidences={evidences}
         highlightedItemIndex={highlightedEvidenceCitationIndex}
         isShown={isEvidenceShown}
         onToggle={handleToggleEvidence}
       />
 
       <div>
-        <CitationPopover citations={evidence.citations} />
+        <CitationPopover citations={allCitations} />
       </div>
     </div>
   );
 }
+
+export const displayVerdict = (verdict: VerdictType): string => {
+  switch (verdict) {
+    case VerdictType.TRUE:
+      return '진실';
+    case VerdictType.MOSTLY_TRUE:
+      return '대체로 진실';
+    case VerdictType.MIXED:
+      return '진실/거짓 혼합';
+    case VerdictType.MOSTLY_FALSE:
+      return '대체로 거짓';
+    case VerdictType.FALSE:
+      return '거짓';
+    case VerdictType.UNKNOWN:
+      return '알 수 없음';
+    default:
+      assert(false, `Unknown verdict: ${verdict}`);
+  }
+};

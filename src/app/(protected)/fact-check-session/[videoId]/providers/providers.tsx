@@ -1,7 +1,6 @@
 import { FactCheckSession } from '@/models/fact-check-session';
 import ClaimProvider from './ClaimProvider';
 import ClaimVerificationProvider from './ClaimVerificationProvider';
-import ClaimVerificationBatchProvider from './ClaimVerificationBatchProvider';
 
 export default function FactCheckSessionProviders({
   children,
@@ -12,11 +11,7 @@ export default function FactCheckSessionProviders({
 }) {
   return (
     <ClaimProvider factCheckSession={factCheckSession}>
-      <ClaimVerificationProvider>
-        <ClaimVerificationBatchProvider>
-          {children}
-        </ClaimVerificationBatchProvider>
-      </ClaimVerificationProvider>
+      <ClaimVerificationProvider>{children}</ClaimVerificationProvider>
     </ClaimProvider>
   );
 }

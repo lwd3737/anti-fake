@@ -23,7 +23,7 @@ const ClaimVerificationResultSchema = z.object({
   reason: z.string().describe('주장에 대한 판결에 대한 이유 및 근거'),
 });
 
-export default class ClaimVerifier {
+export default class ClaimVerificationService {
   private logger = new LLMHistoryLogger('claim-verifier', {
     title: 'Claim verifier',
   });

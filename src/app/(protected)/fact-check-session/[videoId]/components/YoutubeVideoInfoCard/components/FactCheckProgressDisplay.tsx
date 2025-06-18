@@ -4,7 +4,7 @@ import { useClaim } from '../../../providers/ClaimProvider';
 import { useClaimVerification } from '../../../providers/ClaimVerificationProvider';
 
 export default function FactCheckProgressDisplay() {
-  const { claims: detectionResults } = useClaim();
+  const { items: detectionResults } = useClaim();
   const { data: verificationResults } = useClaimVerification();
 
   const progressPercent = useMemo(() => {

@@ -1,7 +1,6 @@
 'use client';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useClaim } from '../providers/ClaimProvider';
-import { useClaimVerificationBatch } from '../providers/ClaimVerificationBatchProvider';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import Button from '@/components/Button';
 
@@ -10,42 +9,30 @@ interface Props {
 }
 
 export default function ControlHorizontalBar({ className }: Props) {
-  const { claims: detectionResults, retry: retryDetection } = useClaim();
-  const { data: verificationResults, clear: clearVerficationResults } =
-    useClaimVerification();
-  const {
-    isLoading: isBatchLoading,
-    claimIndexesToVerify: claimIndexesToVerifiy,
-    start: startBatch,
-    stop: stopBatch,
-    addClaimsToVerifyBulk,
-    resetClaimsToVerify,
-  } = useClaimVerificationBatch();
+  const claim = useClaim();
+  const verification = useClaimVerification();
 
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
-      const claimIndexes = detectionResults.map((claim) => claim.index);
+      const claimIndexes = claim.items.map((claim) => claim.index);
       if (isAllItemsSelected) {
-        const verifiedClaimIndexes = verificationResults.map(
-          (result) => result.claimIndex,
-        );
-        const notVerifiedClaimsIndexes = claimIndexes.filter(
-          (index) => !verifiedClaimIndexes.includes(index),
-        );
-        addClaimsToVerifyBulk(notVerifiedClaimsIndexes);
+        // const verifiedClaimIndexes = verification.items.map(
+        //   (item) => item.claimIndex,
+        // );
+        // const notVerifiedClaimsIndexes = claimIndexes.filter(
+        //   (index) => !verifiedClaimIndexes.includes(index),
+        // );
+        // verification.addClaimsToVerifyBulk(notVerifiedClaimsIndexes);
+
+        const claimIds = claim.items.map((claim) => claim.id);
+        verification.addClaimsToVerifyBulk(claimIds);
       } else {
-        resetClaimsToVerify();
+        verification.resetClaimsToVerify();
       }
     },
-    [
-      addClaimsToVerifyBulk,
-      detectionResults,
-      isAllItemsSelected,
-      resetClaimsToVerify,
-      verificationResults,
-    ],
+    [claim.items, isAllItemsSelected, verification],
   );
 
   const handleAllSelectionChange = (ev: ChangeEvent) => {
@@ -53,37 +40,38 @@ export default function ControlHorizontalBar({ className }: Props) {
     setIsAllItemsSelected(isChecked);
   };
 
-  const handleStartBatch = () => {
-    startBatch();
-    addClaimsToVerifyBulk(claimIndexesToVerifiy);
+  const handleStartVerification = () => {
+    verification.start();
+    verification.addClaimsToVerifyBulk(verification.claimIdsToVerify);
+    // verification.addClaimsToVerifyBulk(verification.claimIndexesToVerify);
   };
 
-  const handleRetryDetection = () => {
+  const handleRetry = () => {
     const ok = confirm(
       '주장 탐지 재시도는 모든 항목들을 초기화합니다. 계속하시겠습니까?',
     );
     if (!ok) return;
 
-    resetClaimsToVerify();
-    clearVerficationResults();
-    retryDetection();
+    verification.resetClaimsToVerify();
+    verification.clear();
+    claim.retry();
   };
 
-  const isAllVerified = verificationResults.length === detectionResults.length;
+  const isAllVerified = verification.items.length === claim.items.length;
 
   const allSelectionButtonStyle = useMemo(() => {
-    const isDisabled = isBatchLoading || isAllVerified;
+    const isDisabled = verification.isLoading || isAllVerified;
     return isDisabled
       ? 'bg-[#02020213] text-gray-400 cursor-not-allowed'
       : 'text-brand bg-[#1F3A9320] hover:bg-brand-hover';
-  }, [isAllVerified, isBatchLoading]);
+  }, [isAllVerified, verification.isLoading]);
 
   const startBatchButtonStyle = useMemo(() => {
-    const isDisabled = isBatchLoading || isAllVerified;
+    const isDisabled = verification.isLoading || isAllVerified;
     return isDisabled
       ? 'bg-[#AEB9D1] text-gray-300 cursor-not-allowed'
       : 'bg-brand text-white hover:bg-brand-hover';
-  }, [isAllVerified, isBatchLoading]);
+  }, [isAllVerified, verification.isLoading]);
 
   const retryButtonStyle = useMemo(
     () => `bg-surface-subtle hover:bg-surface-subtle-hover text-text-base`,
@@ -98,37 +86,38 @@ export default function ControlHorizontalBar({ className }: Props) {
       <div className="flex justify-center items-center gap-x-4 pr-6 border-gray-200 border-r border-solid">
         <Button
           className={`flex items-center gap-x-2 ${allSelectionButtonStyle}`}
-          disabled={isBatchLoading || isAllVerified}
+          disabled={verification.isLoading || isAllVerified}
         >
           <input
             id="all-selector"
             type="checkbox"
-            disabled={isBatchLoading || isAllVerified}
+            disabled={verification.isLoading || isAllVerified}
             checked={isAllItemsSelected}
             onChange={handleAllSelectionChange}
           />
           <label htmlFor="all-selector">전체 선택</label>
         </Button>
 
-        {isBatchLoading ? (
-          <Button className="bg-danger text-white" onClick={stopBatch}>
+        {verification.isLoading ? (
+          <Button className="bg-danger text-white" onClick={verification.stop}>
             중단
           </Button>
         ) : (
           <Button
             className={startBatchButtonStyle}
             disabled={isAllVerified}
-            onClick={handleStartBatch}
+            onClick={handleStartVerification}
           >
             <strong className="inline-block w-3 text-[#FFEB3B]">
-              {claimIndexesToVerifiy.length}
+              {verification.claimIdsToVerify.length}
+              {/* {verification.claimIndexesToVerify.length} */}
             </strong>
             개 검증 시작
           </Button>
         )}
       </div>
 
-      <Button className={retryButtonStyle} onClick={handleRetryDetection}>
+      <Button className={retryButtonStyle} onClick={claim.retry}>
         주장 탐지 재시도
       </Button>
     </div>

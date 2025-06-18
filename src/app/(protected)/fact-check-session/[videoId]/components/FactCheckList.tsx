@@ -1,6 +1,5 @@
 'use client';
 import { useClaim } from '../providers/ClaimProvider';
-import { useClaimVerificationBatch } from '../providers/ClaimVerificationBatchProvider';
 import FactCheckItemCard, {
   VerificationStatus,
 } from './FactCheckItemCard/FactCheckItemCard';
@@ -13,50 +12,45 @@ interface Props {
 }
 
 export default function FactCheckList({ factCheckSession, className }: Props) {
-  const { claims, remove: removeClaim } = useClaim();
-  const { data: verificationResults, remove: removeVerficationResult } =
-    useClaimVerification();
-  const {
-    isLoading: isBatchLoading,
-    claimIndexesToVerify,
-    addClaimToVerify,
-    removeClaimToVerify,
-  } = useClaimVerificationBatch();
+  const claim = useClaim();
+  const verification = useClaimVerification();
 
   const removeItem = (index: number) => {
-    removeClaim(index);
-    removeVerficationResult(index);
+    claim.remove(index);
+    verification.remove(index);
   };
 
   return (
     <ol className={`flex flex-col gap-y-10 ${className}`}>
-      {claims.map((detectionResult) => {
-        const verificationResult = verificationResults.find(
-          (verified) => verified.claimIndex === detectionResult.index,
+      {claim.items.map((claim) => {
+        const verificationItem = verification.items.find(
+          (item) => item.claimId === claim.id,
         );
-        const isSelected = claimIndexesToVerify.includes(detectionResult.index);
-        const status = verificationResult
+        const isSelected = verification.claimIdsToVerify.includes(claim.id);
+        const status = verificationItem
           ? VerificationStatus.VERIFIED
-          : isSelected && isBatchLoading
+          : isSelected && verification.isLoading
             ? VerificationStatus.LOADING
             : VerificationStatus.NOT_VERIFIED;
 
         // TODO: theme 적용
         return (
-          <li className="flex flex-col gap-y-6" key={detectionResult.index}>
+          <li className="flex flex-col gap-y-6" key={claim.index}>
             <FactCheckItemCard
-              key={detectionResult.index}
-              claim={detectionResult}
-              verificationResult={verificationResult}
+              key={claim.index}
+              claim={claim}
+              verification={verificationItem}
               status={status}
               isSelected={isSelected}
               onSelect={() =>
-                !isBatchLoading && addClaimToVerify(detectionResult.index)
+                !verification.isLoading &&
+                verification.addClaimToVerify(claim.id)
               }
               onUnselect={() =>
-                !isBatchLoading && removeClaimToVerify(detectionResult.index)
+                !verification.isLoading &&
+                verification.removeClaimToVerify(claim.id)
               }
-              onRemove={() => removeItem(detectionResult.index)}
+              onRemove={() => removeItem(claim.index)}
             />
           </li>
         );

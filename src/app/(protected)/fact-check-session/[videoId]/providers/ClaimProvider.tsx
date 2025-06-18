@@ -24,7 +24,7 @@ import {
 } from 'react';
 
 export interface IClaimProvider {
-  claims: Claim[];
+  items: Claim[];
   isLoading: boolean;
   stop: () => void;
   remove: (index: number) => void;
@@ -43,11 +43,11 @@ export default function ClaimProvider({
   factCheckSession: FactCheckSession;
 }) {
   const router = useRouter();
-  const [claims, setClaims] = useState<Claim[]>([]);
+  const [items, setItems] = useState<Claim[]>([]);
 
   const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
     (chunks: unknown[]) => {
-      setClaims((prev) => [...prev, ...(chunks as Claim[])]);
+      setItems((prev) => [...prev, ...(chunks as Claim[])]);
     },
   );
 
@@ -83,7 +83,7 @@ export default function ClaimProvider({
 
         const { claims } = result;
         if (result.claims.length > 0) {
-          setClaims(claims);
+          setItems(claims);
           return;
         }
 
@@ -107,11 +107,11 @@ export default function ClaimProvider({
   );
 
   const remove = useCallback((index: number) => {
-    setClaims((prev) => prev.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const retry = useCallback(async () => {
-    setClaims([]);
+    setItems([]);
     const deletionResult = await deleteClaims(factCheckSession.id);
     if (isFailure(deletionResult)) {
       alert('팩트 체크 세션을 초기화하는데 실패했습니다.');
@@ -135,13 +135,13 @@ export default function ClaimProvider({
 
   const value: IClaimProvider = useMemo(
     () => ({
-      claims,
+      items,
       isLoading,
       stop: stopStreaming,
       remove,
       retry,
     }),
-    [claims, isLoading, remove, retry, stopStreaming],
+    [items, isLoading, remove, retry, stopStreaming],
   );
 
   return (

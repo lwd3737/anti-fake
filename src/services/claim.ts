@@ -80,9 +80,8 @@ export default class ClaimService {
               return;
             }
 
-            await claimRepo.createMany(factCheckSessionId, this.claimsCache);
-
             this.events.emit(EventType.FINISHED, this.claimsCache);
+            await claimRepo.createMany(factCheckSessionId, this.claimsCache);
 
             log({
               title: 'Claims detection',
