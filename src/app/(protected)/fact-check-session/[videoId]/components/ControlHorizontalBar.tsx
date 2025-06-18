@@ -16,16 +16,7 @@ export default function ControlHorizontalBar({ className }: Props) {
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
-      const claimIndexes = claim.items.map((claim) => claim.index);
       if (isAllItemsSelected) {
-        // const verifiedClaimIndexes = verification.items.map(
-        //   (item) => item.claimIndex,
-        // );
-        // const notVerifiedClaimsIndexes = claimIndexes.filter(
-        //   (index) => !verifiedClaimIndexes.includes(index),
-        // );
-        // verification.addClaimsToVerifyBulk(notVerifiedClaimsIndexes);
-
         const claimIds = claim.items.map((claim) => claim.id);
         verification.addClaimsToVerifyBulk(claimIds);
       } else {
@@ -43,7 +34,6 @@ export default function ControlHorizontalBar({ className }: Props) {
   const handleStartVerification = () => {
     verification.start();
     verification.addClaimsToVerifyBulk(verification.claimIdsToVerify);
-    // verification.addClaimsToVerifyBulk(verification.claimIndexesToVerify);
   };
 
   const handleRetry = () => {
@@ -110,7 +100,6 @@ export default function ControlHorizontalBar({ className }: Props) {
           >
             <strong className="inline-block w-3 text-[#FFEB3B]">
               {verification.claimIdsToVerify.length}
-              {/* {verification.claimIndexesToVerify.length} */}
             </strong>
             개 검증 시작
           </Button>
@@ -123,7 +112,3 @@ export default function ControlHorizontalBar({ className }: Props) {
     </div>
   );
 }
-
-const Styles = {
-  BUTTON: 'px-6 py-3 rounded-lg font-medium',
-};
