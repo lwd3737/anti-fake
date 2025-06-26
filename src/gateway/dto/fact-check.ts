@@ -1,12 +1,11 @@
 import { Claim } from '@/models/claim';
-import { ClaimVerificationResultWithDetails } from '@/models/claim-verification';
+import { ClaimVerification } from '@/models/claim-verification';
 
 // Request
 
 // Response
 export interface CreateClaimsResponseDto extends Claim {}
 
-export interface ClaimVerificationResponseDto
-  extends ClaimVerificationResultWithDetails {
-  type: 'claimVerificationResult';
+export interface CreateClaimVerificationResponseDto extends ClaimVerification {
+  type: 'claimVerification';
 }

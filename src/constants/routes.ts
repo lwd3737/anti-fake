@@ -9,7 +9,7 @@ export const APIRoutes = {
   factCheckSessions: {
     claims: (factCheckSessionId: string) =>
       `/api/fact-check-sessions/${factCheckSessionId}/claims`,
-    VERIFY_CLAIMS: '/api/fact-check/verify-claims',
+    CLAIM_VERIFICATIONS: '/api/fact-check/claim-verifications',
   },
 };
 

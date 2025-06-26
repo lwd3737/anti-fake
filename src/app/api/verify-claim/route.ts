@@ -1,34 +1,38 @@
 import { VerifyClaimRequestDto } from '@/gateway/dto/claim';
-import { ClaimVerificationResponseDto } from '@/gateway/dto/fact-check';
+import { CreateClaimVerificationResponseDto } from '@/gateway/dto/fact-check';
 import { streamResponse } from '@/gateway/streaming/stream-response';
+import { isFailure } from '@/result';
 import ClaimVerificationService from '@/services/claim-verification';
-import EvidenceRetriever from '@/services/evidence-retriever';
+import EvidenceRetrievalService from '@/services/evidence-retrieval';
 import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   const { claim } = (await req.json()) as VerifyClaimRequestDto;
 
-  const evidenceRetriever = new EvidenceRetriever(req.signal);
+  const evidenceRetriever = new EvidenceRetrievalService(req.signal);
   const claimVerifier = new ClaimVerificationService(req.signal);
 
   return streamResponse(async ({ send, close }) => {
-    const retrieved = await evidenceRetriever.retrieve(claim.content, true);
+    const retrievedResult = await evidenceRetriever.retrieve(
+      claim.content,
+      true,
+    );
 
-    if (EvidenceRetriever.isError(retrieved)) {
-      console.error(retrieved.error);
+    if (isFailure(retrievedResult)) {
+      console.error(retrievedResult.message);
     } else {
       const verifed = await claimVerifier.verify(
         {
           claim: claim.content,
-          evidence: retrieved.contents,
+          evidence: retrievedResult.map((item) => item.summary),
         },
         true,
       );
       const dto = {
         ...verifed,
-        type: 'claimVerificationResult',
+        type: 'claimVerification',
         claimIndex: claim.index,
-      } as ClaimVerificationResponseDto;
+      } as CreateClaimVerificationResponseDto;
 
       send(dto);
     }

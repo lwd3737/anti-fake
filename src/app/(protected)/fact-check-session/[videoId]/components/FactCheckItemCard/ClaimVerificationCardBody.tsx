@@ -65,7 +65,7 @@ export default function ClaimVerificationCardBody({
   }, [verdict]);
 
   const allCitations = useMemo(() => {
-    return evidences.flatMap((evidence) => evidence.citaions);
+    return evidences.flatMap((evidence) => evidence.citations);
   }, [evidences]);
 
   // TODO: theme 적용

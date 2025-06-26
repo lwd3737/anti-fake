@@ -46,7 +46,7 @@ export default function EvidenceCollapse({
           isShown ? '' : 'hidden'
         }`}
       >
-        {evidences.map(({ summary, citaions }, index) => {
+        {evidences.map(({ summary, citations: citaions }, index) => {
           // const { summary: content, citationIndexes: citationIndices } =
           //   summary;
           // const { citations } = evidences;

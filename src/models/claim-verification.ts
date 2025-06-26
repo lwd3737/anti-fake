@@ -1,6 +1,3 @@
-import assert from 'assert';
-import { Evidence } from './evidence-retrieval';
-
 export interface ClaimVerification {
   id: string;
   claimId: string;
@@ -11,7 +8,7 @@ export interface ClaimVerification {
 
 export interface VerificationEvidence {
   summary: string;
-  citaions: EvidenceCitation[];
+  citations: EvidenceCitation[];
 }
 
 export interface EvidenceCitation {
@@ -35,11 +32,4 @@ export enum VerdictType {
 export interface ClaimVerificationResult {
   verdict: VerdictType;
   reason: string;
-}
-
-// deprecated
-export interface ClaimVerificationResultWithDetails
-  extends ClaimVerificationResult {
-  claimIndex: number;
-  evidence: Evidence;
 }

@@ -37,7 +37,7 @@ export default class AuthService {
       console.error(e);
       return {
         code: ErrorCode.UNAUTHENTICATED,
-        error: 'Failed to authorize code',
+        message: 'Failed to authorize code',
       };
     }
   }
@@ -56,7 +56,7 @@ export default class AuthService {
       console.debug(e);
       return {
         code: ErrorCode.UNAUTHENTICATED,
-        error: 'Failed to verify access token',
+        message: 'Failed to verify access token',
       };
     }
   }
@@ -69,7 +69,7 @@ export default class AuthService {
       console.debug(e);
       return {
         code: ErrorCode.UNAUTHENTICATED,
-        error: 'Failed to refresh access token',
+        message: 'Failed to refresh access token',
       };
     }
   }

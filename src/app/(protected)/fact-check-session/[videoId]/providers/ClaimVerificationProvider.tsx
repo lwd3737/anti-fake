@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { useClaim } from './ClaimProvider';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
+import { APIRoutes } from '@/constants/routes';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
@@ -96,7 +97,8 @@ export default function ClaimVerificationProvider({
       claims: claimsToVerify,
     } as VerifyClaimsRequestDto;
 
-    await startStreaming('verify-claims', dto);
+    // await startStreaming('verify-claims', dto);
+    await startStreaming(APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS, dto);
 
     setClaimIdsToVerify([]);
   }, [claimIdsToVerify, claims, startStreaming]);
@@ -107,7 +109,7 @@ export default function ClaimVerificationProvider({
       isLoading,
       claimIdsToVerify,
       start,
-      stop,
+      stop: stopStreaming,
       addClaimToVerify,
       removeClaimToVerify,
       addClaimsToVerifyBulk,
@@ -121,6 +123,7 @@ export default function ClaimVerificationProvider({
       isLoading,
       claimIdsToVerify,
       start,
+      stopStreaming,
       addClaimToVerify,
       removeClaimToVerify,
       addClaimsToVerifyBulk,

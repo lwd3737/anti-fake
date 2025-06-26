@@ -16,14 +16,14 @@ export default class FactCheckSessionService {
     if (!factCheckSession) {
       return {
         code: ErrorCode.FACT_CHECK_SESSION_NOT_FOUND,
-        error: 'Fact check session not found',
+        message: 'Fact check session not found',
       };
     }
 
     if (factCheckSession.userId !== ownerId) {
       return {
         code: ErrorCode.UNAUTHORIZATION,
-        error: "User is not factcheck session's owner",
+        message: "User is not factcheck session's owner",
       };
     }
 

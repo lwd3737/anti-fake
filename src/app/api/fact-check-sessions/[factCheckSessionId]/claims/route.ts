@@ -41,7 +41,7 @@ export async function GET(
     ownerId: user.id,
   });
   if (isFailure(authorizationResult)) {
-    const { code, error } = authorizationResult;
+    const { code, message: error } = authorizationResult;
     return handleRouteError(code, error, 401);
   }
 
@@ -75,7 +75,7 @@ export async function POST(
     ownerId: userId,
   });
   if (isFailure(authorizationResult)) {
-    const { code, error } = authorizationResult;
+    const { code, message: error } = authorizationResult;
     return handleRouteError(code, error, 401);
   }
 
@@ -85,7 +85,7 @@ export async function POST(
   );
   if (isFailure(transcriptResult)) {
     console.error(transcriptResult);
-    const { code, error } = transcriptResult;
+    const { code, message: error } = transcriptResult;
     return handleRouteError(code, error, 400);
   }
 

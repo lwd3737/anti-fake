@@ -112,7 +112,7 @@ export default class YoutubeService {
 
       return {
         code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
-        error: error instanceof Error ? error.message : message,
+        message: error instanceof Error ? error.message : message,
       };
     }
   }
