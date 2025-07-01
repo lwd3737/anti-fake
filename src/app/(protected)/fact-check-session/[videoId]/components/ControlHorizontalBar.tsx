@@ -9,21 +9,30 @@ interface Props {
 }
 
 export default function ControlHorizontalBar({ className }: Props) {
-  const claim = useClaim();
-  const verification = useClaimVerification();
+  const { items: claims, retry } = useClaim();
+  const {
+    items: verifications,
+    claimIdsToVerify,
+    isLoading: isVerficationLoading,
+    start: startVerification,
+    clear: clearVerification,
+    addClaimsToVerifyBulk,
+    resetClaimsToVerify,
+    stop: stopVerification,
+  } = useClaimVerification();
 
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
       if (isAllItemsSelected) {
-        const claimIds = claim.items.map((claim) => claim.id);
-        verification.addClaimsToVerifyBulk(claimIds);
+        const claimIds = claims.map((claim) => claim.id);
+        addClaimsToVerifyBulk(claimIds);
       } else {
-        verification.resetClaimsToVerify();
+        resetClaimsToVerify();
       }
     },
-    [claim.items, isAllItemsSelected, verification],
+    [isAllItemsSelected, addClaimsToVerifyBulk, resetClaimsToVerify, claims],
   );
 
   const handleAllSelectionChange = (ev: ChangeEvent) => {
@@ -32,8 +41,8 @@ export default function ControlHorizontalBar({ className }: Props) {
   };
 
   const handleStartVerification = () => {
-    verification.start();
-    verification.addClaimsToVerifyBulk(verification.claimIdsToVerify);
+    startVerification();
+    addClaimsToVerifyBulk(claimIdsToVerify);
   };
 
   const handleRetry = () => {
@@ -42,26 +51,26 @@ export default function ControlHorizontalBar({ className }: Props) {
     );
     if (!ok) return;
 
-    verification.resetClaimsToVerify();
-    verification.clear();
-    claim.retry();
+    resetClaimsToVerify();
+    clearVerification();
+    retry();
   };
 
-  const isAllVerified = verification.items.length === claim.items.length;
+  const isAllVerified = verifications.length === claims.length;
 
   const allSelectionButtonStyle = useMemo(() => {
-    const isDisabled = verification.isLoading || isAllVerified;
+    const isDisabled = isAllVerified;
     return isDisabled
       ? 'bg-[#02020213] text-gray-400 cursor-not-allowed'
       : 'text-brand bg-[#1F3A9320] hover:bg-brand-hover';
-  }, [isAllVerified, verification.isLoading]);
+  }, [isAllVerified]);
 
   const startBatchButtonStyle = useMemo(() => {
-    const isDisabled = verification.isLoading || isAllVerified;
+    const isDisabled = isVerficationLoading || isAllVerified;
     return isDisabled
       ? 'bg-[#AEB9D1] text-gray-300 cursor-not-allowed'
       : 'bg-brand text-white hover:bg-brand-hover';
-  }, [isAllVerified, verification.isLoading]);
+  }, [isAllVerified, isVerficationLoading]);
 
   const retryButtonStyle = useMemo(
     () => `bg-surface-subtle hover:bg-surface-subtle-hover text-text-base`,
@@ -76,20 +85,20 @@ export default function ControlHorizontalBar({ className }: Props) {
       <div className="flex justify-center items-center gap-x-4 pr-6 border-gray-200 border-r border-solid">
         <Button
           className={`flex items-center gap-x-2 ${allSelectionButtonStyle}`}
-          disabled={verification.isLoading || isAllVerified}
+          disabled={isVerficationLoading || isAllVerified}
         >
           <input
             id="all-selector"
             type="checkbox"
-            disabled={verification.isLoading || isAllVerified}
+            disabled={isVerficationLoading || isAllVerified}
             checked={isAllItemsSelected}
             onChange={handleAllSelectionChange}
           />
           <label htmlFor="all-selector">전체 선택</label>
         </Button>
 
-        {verification.isLoading ? (
-          <Button className="bg-danger text-white" onClick={verification.stop}>
+        {isVerficationLoading ? (
+          <Button className="bg-danger text-white" onClick={stopVerification}>
             중단
           </Button>
         ) : (
@@ -99,14 +108,14 @@ export default function ControlHorizontalBar({ className }: Props) {
             onClick={handleStartVerification}
           >
             <strong className="inline-block w-3 text-[#FFEB3B]">
-              {verification.claimIdsToVerify.length}
+              {claimIdsToVerify.length}
             </strong>
             개 검증 시작
           </Button>
         )}
       </div>
 
-      <Button className={retryButtonStyle} onClick={claim.retry}>
+      <Button className={retryButtonStyle} onClick={handleRetry}>
         주장 탐지 재시도
       </Button>
     </div>

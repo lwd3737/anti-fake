@@ -6,6 +6,4 @@ import { ClaimVerification } from '@/models/claim-verification';
 // Response
 export interface CreateClaimsResponseDto extends Claim {}
 
-export interface CreateClaimVerificationResponseDto extends ClaimVerification {
-  type: 'claimVerification';
-}
+export interface CreateClaimVerificationResponseDto extends ClaimVerification {}

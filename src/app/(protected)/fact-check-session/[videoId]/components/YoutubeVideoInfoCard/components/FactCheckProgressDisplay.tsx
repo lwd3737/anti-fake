@@ -4,15 +4,13 @@ import { useClaim } from '../../../providers/ClaimProvider';
 import { useClaimVerification } from '../../../providers/ClaimVerificationProvider';
 
 export default function FactCheckProgressDisplay() {
-  const { items: detectionResults } = useClaim();
-  const { data: verificationResults } = useClaimVerification();
+  const { items: claims } = useClaim();
+  const { items: verifications } = useClaimVerification();
 
   const progressPercent = useMemo(() => {
-    const percent = Math.round(
-      (verificationResults.length / detectionResults.length) * 100,
-    );
+    const percent = Math.round((verifications.length / claims.length) * 100);
     return isNaN(percent) ? 0 : percent;
-  }, [detectionResults.length, verificationResults.length]);
+  }, [claims.length, verifications.length]);
 
   return (
     <div className="flex flex-col gap-y-2 bg-surface-subtle p-4 rounded-lg">
@@ -22,8 +20,8 @@ export default function FactCheckProgressDisplay() {
       </div>
       <progress
         className="w-full"
-        max={detectionResults.length}
-        value={verificationResults.length}
+        max={claims.length}
+        value={verifications.length}
       />
     </div>
   );

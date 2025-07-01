@@ -7,54 +7,42 @@ import EvidenceRetrievalService from '@/services/evidence-retrieval';
 import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const { claims } = (await req.json()) as VerifyClaimsRequestDto;
+  const { factCheckSessionId, claims } =
+    (await req.json()) as VerifyClaimsRequestDto;
 
   const evidenceRetrieval = new EvidenceRetrievalService(req.signal);
   const claimVerification = new ClaimVerificationService(req.signal);
 
   return streamResponse(async ({ send, close }) => {
-    await evidenceRetrieval
-      .retrieveBulk(claims)
-      .onRetrieved((retrievalResult) => {
+    evidenceRetrieval
+      .onRetrieved(async (retrievalResult) => {
         if (isFailure(retrievalResult)) {
-          send(retrievalResult);
-          console.debug(retrievalResult);
+          const error = retrievalResult;
+          send(error);
+          console.debug(error);
           return;
         }
 
-        const evidences = retrievalResult;
-      });
-    // TODO: 이벤트 기반으로 처리하는 방식으로 변경
-    // for (let idx = 0; idx < claims.length; idx++) {
-    //   const isCompleted = idx === claims.length - 1;
-    //   const claim = claims[idx];
+        const { claim, evidences, isCompleted } = retrievalResult;
+        const verification = await claimVerification.verify(
+          {
+            factCheckSessionId,
+            claim,
+            evidences,
+          },
+          isCompleted,
+        );
 
-    //   const retrievalResult = await evidenceRetrieval.retrieve(
-    //     claim.content,
-    //   );
+        const dto = {
+          ...verification,
+          claimId: claim.id,
+        } satisfies CreateClaimVerificationResponseDto;
+        send(dto);
 
-    //   if (isFailure(retrievalResult)) {
-    //     console.error(retrievalResult.error);
-    //   } else {
-    //     const evidenceSummaries = retrievalResult.map((item) => item.summary);
-    //     const verificationResult = await claimVerification.verify(
-    //       {
-    //         claim: claim.content,
-    //         evidence: evidenceSummaries,
-    //       },
-    //       isCompleted,
-    //     );
-    //     const dto = {
-    //       ...verificationResult,
-    //       type: 'claimVerification',
-    //       claimId: claim.id,
-    //       evidences: retrievalResult,
-    //     } satisfies CreateClaimVerificationResponseDto;
-
-    //     send(dto);
-    //   }
-    // }
-
-    close();
+        if (isCompleted) {
+          close();
+        }
+      })
+      .retrieveBulk(claims);
   });
 }

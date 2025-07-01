@@ -18,6 +18,7 @@ export interface GetClaimsResponseDto {
 
 export interface VerifyClaimsRequestDto {
   claims: Claim[];
+  factCheckSessionId: string;
 }
 
 export interface DeleteClaimsRequestDto {

@@ -3,13 +3,17 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
 import loadConfig from '@/config';
-import VERIFY_CLAIM_PROMPT from '@/prompts/verify-claim';
+import CLAIM_VERIFICATION_PROMPT from '@/prompts/claim-verification';
 import {
-  ClaimVerificationResult,
+  ClaimVerification,
   VerdictType,
+  VerificationEvidence,
 } from '@/models/claim-verification';
+import { Claim } from '@/models/claim';
+import { v4 as uuidv4 } from 'uuid';
+import claimVerificationRepo from '@/repositories/claim-verification';
 
-const ClaimVerificationResultSchema = z.object({
+const ClaimVerificationSchema = z.object({
   verdict: z
     .union([
       z.literal(VerdictType.TRUE),
@@ -19,14 +23,17 @@ const ClaimVerificationResultSchema = z.object({
       z.literal(VerdictType.FALSE),
       z.literal(VerdictType.UNKNOWN),
     ])
-    .describe('주장의 진실 여부 판결'),
-  reason: z.string().describe('주장에 대한 판결에 대한 이유 및 근거'),
+    .describe('주장의 사실 여부 판결'),
+  verdictReason: z.string().describe('주장에 대한 판결에 대한 이유 및 근거'),
 });
 
+type ClaimVerificationSchema = z.infer<typeof ClaimVerificationSchema>;
+
 export default class ClaimVerificationService {
-  private logger = new LLMHistoryLogger('claim-verifier', {
-    title: 'Claim verifier',
+  private logger = new LLMHistoryLogger('claim-verification', {
+    title: 'Claim verification',
   });
+  private cache: ClaimVerification[] = [];
 
   constructor(private signal: AbortSignal) {}
 
@@ -37,46 +44,86 @@ export default class ClaimVerificationService {
 
   public async verify(
     {
+      factCheckSessionId,
       claim,
-      evidence,
+      evidences,
     }: {
-      claim: string;
-      evidence: string[];
+      factCheckSessionId: string;
+      claim: Claim;
+      evidences: VerificationEvidence[];
     },
     isCompleted?: boolean,
-  ): Promise<ClaimVerificationResult> {
-    if (this.isDevMode) return this.verifyOnDevMode();
+  ): Promise<ClaimVerification> {
+    if (this.isDevMode) {
+      const { verdict, verdictReason } = await this.verifyOnDevMode();
+      return {
+        id: uuidv4(),
+        factCheckSessionId,
+        claimId: claim.id,
+        verdict,
+        verdictReason,
+        evidences,
+      };
+    }
 
-    const result = this.logger.monitor<ClaimVerificationResult>(async () => {
-      const prompt = `${claim}\n${evidence
-        .map((item, idx) => `${idx + 1}.${item}`)
-        .join('\n')}`;
+    // TODO: 에러 핸들링
+    const { verdict, verdictReason } =
+      await this.logger.monitor<ClaimVerificationSchema>(async () => {
+        const prompt = `
+        # Claim
+        ${claim.content}
 
-      const result = await generateObject({
-        model: openai('gpt-4o'),
-        system: VERIFY_CLAIM_PROMPT,
-        prompt,
-        mode: 'json',
-        schema: ClaimVerificationResultSchema,
-        schemaName: 'ClaimVerificationResult',
-        schemaDescription: '주장에 대한 검증 결과를 판단하세요.',
-        temperature: 0,
-        abortSignal: this.signal,
+        # Evidence
+        ${evidences
+          .map((item, idx) => `${idx + 1}. ${item.summary}`)
+          .join('\n')}`;
+
+        const result = await generateObject({
+          model: openai('gpt-4o'),
+          system: CLAIM_VERIFICATION_PROMPT,
+          prompt,
+          mode: 'json',
+          schema: ClaimVerificationSchema,
+          schemaName: 'ClaimVerification',
+          schemaDescription: '주장에 대한 검증 결과를 판단하세요.',
+          temperature: 0,
+          abortSignal: this.signal,
+        });
+
+        return result.object;
       });
 
-      return result.object;
-    });
+    const newVerification = {
+      id: uuidv4(),
+      factCheckSessionId,
+      claimId: claim.id,
+      verdict,
+      verdictReason,
+      evidences,
+    };
 
-    if (isCompleted) this.logger.save();
+    this.cache.push(newVerification);
 
-    return result;
+    if (isCompleted) {
+      await claimVerificationRepo.createMany(this.cache);
+      this.cache = [];
+
+      this.logger.save();
+    }
+
+    return newVerification;
   }
 
-  private async verifyOnDevMode(): Promise<ClaimVerificationResult> {
-    const { claimVerificationResults } = await import(
-      '/mock/claim-verification-results.json'
+  private async verifyOnDevMode(): Promise<
+    Pick<ClaimVerification, 'verdict' | 'verdictReason'>
+  > {
+    const { claimVerifications } = await import(
+      '/mock/claim-verification.json'
     );
-    const idx = Math.floor(Math.random() * claimVerificationResults.length);
-    return claimVerificationResults[idx] as ClaimVerificationResult;
+    const idx = Math.floor(Math.random() * claimVerifications.length);
+    return claimVerifications[idx] as Pick<
+      ClaimVerification,
+      'verdict' | 'verdictReason'
+    >;
   }
 }

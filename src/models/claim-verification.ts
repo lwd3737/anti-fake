@@ -1,5 +1,6 @@
 export interface ClaimVerification {
   id: string;
+  factCheckSessionId: string;
   claimId: string;
   verdict: VerdictType;
   verdictReason: string;
@@ -26,10 +27,4 @@ export enum VerdictType {
   MOSTLY_FALSE = 'MOSTLY_FALSE',
   FALSE = 'FALSE',
   UNKNOWN = 'UNKNOWN',
-}
-
-// deprecated
-export interface ClaimVerificationResult {
-  verdict: VerdictType;
-  reason: string;
 }

@@ -13,6 +13,8 @@ import {
 import { useClaim } from './ClaimProvider';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 import { APIRoutes } from '@/constants/routes';
+import { FactCheckSession } from '@/models/fact-check-session';
+import { Claim } from '@/models/claim';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
@@ -35,8 +37,10 @@ const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
 
 export default function ClaimVerificationProvider({
   children,
+  factCheckSession,
 }: {
   children: ReactNode;
+  factCheckSession: FactCheckSession;
 }) {
   const [items, setItems] = useState<ClaimVerification[]>([]);
 
@@ -89,19 +93,22 @@ export default function ClaimVerificationProvider({
       return;
     }
 
-    const claimsToVerify = claimIdsToVerify.map((id) =>
-      claims.find((claim) => claim.id === id),
-    );
+    const claimsToVerify = claimIdsToVerify
+      .map((id) => claims.find((claim) => claim.id === id))
+      .filter((claim): claim is Claim => claim !== undefined);
 
     const dto = {
+      factCheckSessionId: factCheckSession.id,
       claims: claimsToVerify,
-    } as VerifyClaimsRequestDto;
+    } satisfies VerifyClaimsRequestDto;
 
-    // await startStreaming('verify-claims', dto);
-    await startStreaming(APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS, dto);
+    await startStreaming(
+      APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS(factCheckSession.id),
+      dto,
+    );
 
     setClaimIdsToVerify([]);
-  }, [claimIdsToVerify, claims, startStreaming]);
+  }, [claimIdsToVerify, claims, factCheckSession.id, startStreaming]);
 
   const value: IClaimVerification = useMemo(
     () => ({

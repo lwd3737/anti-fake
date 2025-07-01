@@ -28,7 +28,9 @@ export default class EvidenceRetrievalService {
     // TODO: rate limit을 고려하여 요청 여러개를 하나의 단위로 묶어서 비동기로 실행하도록 수정
     // 그룹으로 묶인 요청 사이에는 delay를 주어 rate limit을 준수하도록 함
     this.logger.monitor<void>(async (log, error, save) => {
-      for (const claim of claims) {
+      for (let idx = 0; idx < claims.length; idx++) {
+        const claim = claims[idx];
+
         try {
           const retrievalResult = await this.retrieve(claim.content);
           if (isFailure(retrievalResult)) {
@@ -47,7 +49,11 @@ export default class EvidenceRetrievalService {
             });
           } else {
             const { evidences, metadata } = retrievalResult;
-            this.events.emit(EventType.RETRIEVED, evidences);
+            this.events.emit(EventType.RETRIEVED, {
+              claim,
+              evidences,
+              isCompleted: idx === claims.length - 1,
+            });
 
             if (metadata) {
               log({
@@ -73,7 +79,13 @@ export default class EvidenceRetrievalService {
   }
 
   public onRetrieved(
-    listener: (retrievalResult: Result<VerificationEvidence[]>) => void,
+    listener: (
+      retrievalResult: Result<{
+        claim: Claim;
+        evidences: VerificationEvidence[];
+        isCompleted: boolean;
+      }>,
+    ) => void,
   ): this {
     this.events.on(EventType.RETRIEVED, listener);
     return this;

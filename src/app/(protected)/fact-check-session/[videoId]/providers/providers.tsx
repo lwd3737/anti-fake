@@ -11,7 +11,9 @@ export default function FactCheckSessionProviders({
 }) {
   return (
     <ClaimProvider factCheckSession={factCheckSession}>
-      <ClaimVerificationProvider>{children}</ClaimVerificationProvider>
+      <ClaimVerificationProvider factCheckSession={factCheckSession}>
+        {children}
+      </ClaimVerificationProvider>
     </ClaimProvider>
   );
 }

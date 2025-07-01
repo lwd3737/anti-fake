@@ -1,4 +1,4 @@
-const VERIFY_CLAIM_PROMPT = `
+const CLAIM_VERIFICATION_PROMPT = `
 # **Role**
 You are a Claim Verification Expert. Analyze the provided evidence and determine the factual accuracy of the given claim.
 
@@ -42,4 +42,4 @@ There is evidence of life on Mars.
 2. Subsurface environments on Mars have been found to be suitable for microbial life.  
   `;
 
-export default VERIFY_CLAIM_PROMPT;
+export default CLAIM_VERIFICATION_PROMPT;
