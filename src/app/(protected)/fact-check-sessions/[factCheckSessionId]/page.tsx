@@ -2,48 +2,41 @@ import FactCheckList from './components/FactCheckList';
 import ControlHorizontalBar from './components/ControlHorizontalBar';
 import YoutubeVideoInfoCard from './components/YoutubeVideoInfoCard/YoutubeVideoInfoCard';
 import factCheckSessionRepo from '@/repositories/fact-check-session';
-import { ContentType } from '@/models/fact-check-session';
-import userRepo from '@/repositories/user';
-import { OauthProviderType } from '@/models/user';
 import { redirect } from 'next/navigation';
 import { PageRoutes } from '@/constants/routes';
 import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
+import { ContentType } from '@/models/fact-check-session';
+import { generateServerUrl } from '@/utils/url';
 
 export default async function FactCheckSessionPage({
-  params: { videoId },
+  params: { factCheckSessionId },
 }: {
-  params: { videoId: string };
+  params: { factCheckSessionId: string };
 }) {
-  const { providerSub } = await guardServer();
-
-  const user = await userRepo.findByProviderSub({
-    provider: OauthProviderType.GOOGLE,
-    providerSub,
-  });
-  if (!user) {
-    console.error('User not found');
-    return redirect(PageRoutes.LOGIN);
-  }
+  await guardServer();
 
   const factCheckSession =
-    (await factCheckSessionRepo.findByUserAndContent({
-      userId: user.id,
-      contentType: ContentType.YOUTUBE_VIDEO,
-      contentId: videoId,
-    })) ??
-    (await factCheckSessionRepo.create({
-      userId: user.id,
-      contentType: ContentType.YOUTUBE_VIDEO,
-      contentId: videoId,
-    }));
+    await factCheckSessionRepo.findById(factCheckSessionId);
+  if (!factCheckSession) {
+    // TODO: 404 페이지 추가
+    console.debug('Fact check session not found');
+    return redirect(generateServerUrl(PageRoutes.HOME));
+  }
+
+  if (factCheckSession.contentType !== ContentType.YOUTUBE_VIDEO) {
+    throw new Error('Fact check session is not a youtube video');
+  }
 
   // TODO: card 공통 컴포넌트 추출
   return (
     <FactCheckSessionProviders factCheckSession={factCheckSession}>
       <div className="flex flex-col h-full">
         <main className="flex flex-col flex-[1_1_0px] gap-y-8 mb-16 py-8 overflow-y-auto">
-          <YoutubeVideoInfoCard className="mx-12" videoId={videoId} />
+          <YoutubeVideoInfoCard
+            className="mx-12"
+            videoId={factCheckSession.contentId}
+          />
           <FactCheckList
             className="mx-12"
             factCheckSession={factCheckSession}

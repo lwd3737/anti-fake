@@ -2,18 +2,26 @@ import { setAccessTokenCookie } from '@/app/api/auth/set-access-token-cookie/fet
 import loadConfig from '@/config';
 import { CookieNames } from '@/constants/cookie';
 import { PageRoutes } from '@/constants/routes';
-import { User } from '@/models/user';
+import { OauthProviderType, User, UserRole } from '@/models/user';
+import userRepo from '@/repositories/user';
 import { isFailure } from '@/result';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-export const guardServer = async (): Promise<Pick<User, 'providerSub'>> => {
+export const guardServer = async (): Promise<{ user: User }> => {
   const { authInactiveMode } = loadConfig();
   if (authInactiveMode)
     return {
-      providerSub: 'mock-provider-sub',
+      user: {
+        id: 'mock-user-id',
+        provider: OauthProviderType.GOOGLE,
+        providerSub: 'mock-provider-sub',
+        email: 'mock-email',
+        role: UserRole.ADMIN,
+        refreshToken: 'mock-refresh-token',
+      } as User,
     };
 
   const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)?.value;
@@ -37,12 +45,24 @@ export const guardServer = async (): Promise<Pick<User, 'providerSub'>> => {
       setAccessTokenCookie(jwt);
 
       return {
-        providerSub,
+        user: await getUserOrRedirect(providerSub),
       };
     } catch (e) {
       return redirect(generateServerUrl(PageRoutes.LOGIN));
     }
   }
 
-  return { providerSub };
+  return { user: await getUserOrRedirect(providerSub) };
+};
+
+const getUserOrRedirect = async (providerSub: string) => {
+  const user = await userRepo.findByProviderSub({
+    provider: OauthProviderType.GOOGLE,
+    providerSub,
+  });
+  if (!user) {
+    console.error('User not found');
+    return redirect(PageRoutes.LOGIN);
+  }
+  return user;
 };

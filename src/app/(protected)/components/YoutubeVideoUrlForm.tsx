@@ -1,17 +1,14 @@
-'use client';
 import { PageRoutes } from '@/constants/routes';
+import { ContentType } from '@/models/fact-check-session';
+import { User } from '@/models/user';
+import factCheckSessionRepo from '@/repositories/fact-check-session';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { FormEventHandler } from 'react';
+import { redirect } from 'next/navigation';
 
-export default function YoutubeVideoUrlForm() {
-  const router = useRouter();
-
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-
-    const data = new FormData(e.currentTarget);
-    const videoUrl = data.get('videoUrl');
+export default function YoutubeVideoUrlForm({ user }: { user: User }) {
+  const getOrCreateFactCheckSession = async (formData: FormData) => {
+    'use server';
+    const videoUrl = formData.get('videoUrl');
     if (!videoUrl) return;
 
     const url = new URL(videoUrl as string);
@@ -24,11 +21,28 @@ export default function YoutubeVideoUrlForm() {
     }
 
     const videoId = url.searchParams.get('v');
-    router.push(PageRoutes.factCheckSession(videoId!));
+    if (!videoId) return;
+
+    const factCheckSession =
+      (await factCheckSessionRepo.findByUserAndContent({
+        userId: user.id,
+        contentType: ContentType.YOUTUBE_VIDEO,
+        contentId: videoId,
+      })) ??
+      (await factCheckSessionRepo.create({
+        userId: user.id,
+        contentType: ContentType.YOUTUBE_VIDEO,
+        contentId: videoId,
+      }));
+
+    return redirect(PageRoutes.factCheckSession(factCheckSession.id));
   };
 
   return (
-    <form className="flex flex-col gap-y-10 py-8" onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col gap-y-10 py-8"
+      action={getOrCreateFactCheckSession}
+    >
       <input
         className="bg-gray-50 px-5 py-6 border border-1 border-gray-300 border-solid rounded-md w-full"
         type="text"

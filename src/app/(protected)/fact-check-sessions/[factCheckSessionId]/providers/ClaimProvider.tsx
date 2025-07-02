@@ -54,7 +54,7 @@ export default function ClaimProvider({
   const isMountedRef = useRef(false);
 
   useEffect(
-    function detectClaimsOnMount() {
+    function getClaimsOnMount() {
       if (isMountedRef.current) return;
       isMountedRef.current = true;
 
@@ -90,20 +90,13 @@ export default function ClaimProvider({
         startStreaming<CreateClaimsRequestDto>(
           APIRoutes.factCheckSessions.claims(factCheckSession.id),
           {
-            userId: factCheckSession.userId,
             contentType: ContentType.YOUTUBE_VIDEO,
             contentId: factCheckSession.contentId,
           },
         );
       });
     },
-    [
-      router,
-      startStreaming,
-      factCheckSession.contentId,
-      factCheckSession.id,
-      factCheckSession.userId,
-    ],
+    [router, startStreaming, factCheckSession.contentId, factCheckSession.id],
   );
 
   const remove = useCallback((index: number) => {
@@ -121,17 +114,11 @@ export default function ClaimProvider({
     startStreaming<CreateClaimsRequestDto>(
       APIRoutes.factCheckSessions.claims(factCheckSession.id),
       {
-        userId: factCheckSession.userId,
         contentType: ContentType.YOUTUBE_VIDEO,
         contentId: factCheckSession.contentId,
       },
     );
-  }, [
-    factCheckSession.contentId,
-    factCheckSession.id,
-    factCheckSession.userId,
-    startStreaming,
-  ]);
+  }, [factCheckSession.contentId, factCheckSession.id, startStreaming]);
 
   const value: IClaimProvider = useMemo(
     () => ({

@@ -9,10 +9,7 @@ import { ErrorCode } from '@/gateway/error/error-code';
 import { handleRouteError } from '@/gateway/error/reponse-error-handler';
 import { streamResponse } from '@/gateway/streaming/stream-response';
 import { ContentType } from '@/models/fact-check-session';
-import { OauthProviderType } from '@/models/user';
 import claimRepo from '@/repositories/claim';
-import factCheckSessionRepo from '@/repositories/fact-check-session';
-import userRepo from '@/repositories/user';
 import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
@@ -25,27 +22,24 @@ export async function GET(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const guardResult = await guardRouteHandler(req);
+  const guardResult = await guardRouteHandler();
   if (!guardResult.isAuthenticated) return guardResult.redirect();
 
-  const user = await userRepo.findByProviderSub({
-    provider: OauthProviderType.GOOGLE,
-    providerSub: guardResult.providerSub,
-  });
-  if (!user) {
-    return handleRouteError(ErrorCode.UNAUTHENTICATED, 'User not found', 401);
-  }
+  const { user } = guardResult;
 
-  const authorizationResult = await new FactCheckSessionService().authoirze({
+  console.log('factCheckSessionId', factCheckSessionId);
+  const factCheckSessionResult = await new FactCheckSessionService().findById({
     factCheckSessionId,
-    ownerId: user.id,
+    userId: user.id,
   });
-  if (isFailure(authorizationResult)) {
-    const { code, message: error } = authorizationResult;
+  if (isFailure(factCheckSessionResult)) {
+    const { code, message: error } = factCheckSessionResult;
     return handleRouteError(code, error, 401);
   }
 
-  const factCheckSession = authorizationResult;
+  // FIX: factCheckSession 부재시 예외 처리 필요
+  const factCheckSession = factCheckSessionResult;
+  console.log('factCheckSession', factCheckSession);
   const claims = await claimRepo.findManyBySessionId(factCheckSession.id);
 
   return NextResponse.json({ claims } as GetClaimsResponseDto);
@@ -57,10 +51,10 @@ export async function POST(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const guardResult = await guardRouteHandler(req);
+  const guardResult = await guardRouteHandler();
   if (!guardResult.isAuthenticated) return guardResult.redirect();
 
-  const { userId, contentType, contentId } =
+  const { contentType, contentId } =
     (await req.json()) as CreateClaimsRequestDto;
   // TODO: Add more content types
   if (contentType !== ContentType.YOUTUBE_VIDEO)
@@ -70,12 +64,14 @@ export async function POST(
       400,
     );
 
-  const authorizationResult = await new FactCheckSessionService().authoirze({
+  const { user } = guardResult;
+
+  const factCheckSessionResult = await new FactCheckSessionService().findById({
     factCheckSessionId,
-    ownerId: userId,
+    userId: user.id,
   });
-  if (isFailure(authorizationResult)) {
-    const { code, message: error } = authorizationResult;
+  if (isFailure(factCheckSessionResult)) {
+    const { code, message: error } = factCheckSessionResult;
     return handleRouteError(code, error, 401);
   }
 
@@ -85,6 +81,7 @@ export async function POST(
   );
   if (isFailure(transcriptResult)) {
     console.error(transcriptResult);
+
     const { code, message: error } = transcriptResult;
     return handleRouteError(code, error, 400);
   }
@@ -113,7 +110,7 @@ export async function DELETE(
     params: { factCheckSessionId },
   }: { params: { factCheckSessionId: string } },
 ) {
-  const guardResult = await guardRouteHandler(req);
+  const guardResult = await guardRouteHandler();
   if (!guardResult.isAuthenticated) return guardResult.redirect();
 
   try {

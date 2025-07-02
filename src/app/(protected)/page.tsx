@@ -3,7 +3,7 @@ import YoutubeVideoUrlForm from './components/YoutubeVideoUrlForm';
 import { guardServer } from '@/gateway/auth/guard-server';
 
 export default async function Home() {
-  await guardServer();
+  const { user } = await guardServer();
 
   return (
     <main className="flex justify-center px-20 py-8 h-full">
@@ -23,7 +23,7 @@ export default async function Home() {
           </p>
         </div>
 
-        <YoutubeVideoUrlForm />
+        <YoutubeVideoUrlForm user={user} />
       </div>
     </main>
   );

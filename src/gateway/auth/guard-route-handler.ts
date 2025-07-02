@@ -1,24 +1,30 @@
 import loadConfig from '@/config';
 import { CookieNames } from '@/constants/cookie';
 import { PageRoutes } from '@/constants/routes';
-import { User } from '@/models/user';
+import { OauthProviderType, User, UserRole } from '@/models/user';
 import { isFailure } from '@/result';
 import { authService } from '@/services';
 import { generateServerUrl } from '@/utils/url';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import userRepo from '@/repositories/user';
 
-export const guardRouteHandler = async (
-  req: NextRequest,
-): Promise<
-  | ({ isAuthenticated: true } & Pick<User, 'providerSub'>)
+export const guardRouteHandler = async (): Promise<
+  | ({ isAuthenticated: true } & { user: User })
   | { isAuthenticated: false; redirect: () => NextResponse }
 > => {
   const { authInactiveMode } = loadConfig();
   if (authInactiveMode)
     return {
       isAuthenticated: true,
-      providerSub: 'mock-provider-sub',
+      user: {
+        providerSub: 'mock-provider-sub',
+        provider: OauthProviderType.GOOGLE,
+        id: 'mock-id',
+        email: 'mock-email',
+        role: UserRole.USER,
+        refreshToken: 'mock-refresh-token',
+      },
     };
 
   const accessToken = cookies().get(CookieNames.ACCESS_TOKEN)?.value;
@@ -36,6 +42,17 @@ export const guardRouteHandler = async (
     };
 
   const { isVerified, providerSub } = authenticateResult;
+  const user = await userRepo.findByProviderSub({
+    provider: OauthProviderType.GOOGLE,
+    providerSub,
+  });
+  if (!user) {
+    return {
+      isAuthenticated: false,
+      redirect: createRedirect(),
+    };
+  }
+
   if (!isVerified) {
     try {
       const refreshResult = await authService.refresh(providerSub);
@@ -50,7 +67,7 @@ export const guardRouteHandler = async (
 
       return {
         isAuthenticated: true,
-        providerSub,
+        user,
       };
     } catch (e) {
       return {
@@ -60,7 +77,10 @@ export const guardRouteHandler = async (
     }
   }
 
-  return { isAuthenticated: true, providerSub };
+  return {
+    isAuthenticated: true,
+    user,
+  };
 };
 
 const createRedirect = (): (() => NextResponse) => {

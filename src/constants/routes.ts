@@ -18,7 +18,8 @@ export const APIRoutes = {
 export const PageRoutes = {
   LOGIN: '/login',
   HOME: '/',
-  factCheckSession: (contentId: string) => `/fact-check-session/${contentId}`,
+  factCheckSession: (factCheckSessionId: string) =>
+    `/fact-check-sessions/${factCheckSessionId}`,
   ARCHIVE: '/archive',
   OAUTH_CALLBACK: '/oauth-callback',
   error: {

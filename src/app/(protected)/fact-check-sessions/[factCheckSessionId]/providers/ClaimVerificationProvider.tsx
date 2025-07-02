@@ -7,6 +7,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -96,12 +97,10 @@ export default function ClaimVerificationProvider({
     const claimsToVerify = claimIdsToVerify
       .map((id) => claims.find((claim) => claim.id === id))
       .filter((claim): claim is Claim => claim !== undefined);
-
     const dto = {
       factCheckSessionId: factCheckSession.id,
       claims: claimsToVerify,
     } satisfies VerifyClaimsRequestDto;
-
     await startStreaming(
       APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS(factCheckSession.id),
       dto,
@@ -109,6 +108,8 @@ export default function ClaimVerificationProvider({
 
     setClaimIdsToVerify([]);
   }, [claimIdsToVerify, claims, factCheckSession.id, startStreaming]);
+
+  useEffect(function getVerificationsOnMount() {}, []);
 
   const value: IClaimVerification = useMemo(
     () => ({

@@ -4,12 +4,12 @@ import factCheckSessionRepo from '@/repositories/fact-check-session';
 import { Result } from '@/result';
 
 export default class FactCheckSessionService {
-  public async authoirze({
+  public async findById({
     factCheckSessionId,
-    ownerId,
+    userId,
   }: {
     factCheckSessionId: string;
-    ownerId: string;
+    userId: string;
   }): Promise<Result<FactCheckSession>> {
     const factCheckSession =
       await factCheckSessionRepo.findById(factCheckSessionId);
@@ -20,7 +20,7 @@ export default class FactCheckSessionService {
       };
     }
 
-    if (factCheckSession.userId !== ownerId) {
+    if (factCheckSession.userId !== userId) {
       return {
         code: ErrorCode.UNAUTHORIZATION,
         message: "User is not factcheck session's owner",

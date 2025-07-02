@@ -2,7 +2,6 @@ import { Claim } from '@/models/claim';
 
 // Request
 export interface CreateClaimsRequestDto {
-  userId: string;
   contentType: 'YOUTUBE_VIDEO';
   contentId: string;
 }
