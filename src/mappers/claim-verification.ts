@@ -13,7 +13,9 @@ const claimVerificationMapper = {
       claimId: record.claimId,
       verdict: record.verdict as VerdictType,
       verdictReason: record.verdictReason,
-      evidences: record.evidences as unknown as VerificationEvidence[],
+      evidences: JSON.parse(
+        record.evidences as string,
+      ) as VerificationEvidence[],
     };
   },
 };

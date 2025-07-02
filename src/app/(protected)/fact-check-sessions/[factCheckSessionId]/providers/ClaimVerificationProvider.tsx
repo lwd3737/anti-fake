@@ -16,6 +16,8 @@ import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 import { APIRoutes } from '@/constants/routes';
 import { FactCheckSession } from '@/models/fact-check-session';
 import { Claim } from '@/models/claim';
+import { getClaimVerifications } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
+import { isFailure } from '@/result';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
@@ -109,7 +111,19 @@ export default function ClaimVerificationProvider({
     setClaimIdsToVerify([]);
   }, [claimIdsToVerify, claims, factCheckSession.id, startStreaming]);
 
-  useEffect(function getVerificationsOnMount() {}, []);
+  useEffect(
+    function getVerificationsOnMount() {
+      getClaimVerifications(factCheckSession.id).then((result) => {
+        if (isFailure(result)) {
+          alert('주장 검증을 불러오는데 실패했습니다.');
+          return;
+        }
+
+        setItems(result.claimVerifications);
+      });
+    },
+    [factCheckSession.id],
+  );
 
   const value: IClaimVerification = useMemo(
     () => ({

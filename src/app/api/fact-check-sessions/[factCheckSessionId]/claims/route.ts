@@ -2,7 +2,6 @@ import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
-  DeleteClaimsRequestDto,
 } from '@/gateway/dto/claim';
 import { CreateClaimsResponseDto } from '@/gateway/dto/fact-check';
 import { ErrorCode } from '@/gateway/error/error-code';
