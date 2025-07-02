@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ControlHorizontalBar({ className }: Props) {
-  const { items: claims, retry } = useClaim();
+  const { items: claims, retry: retryClaims } = useClaim();
   const {
     items: verifications,
     claimIdsToVerify,
@@ -45,15 +45,15 @@ export default function ControlHorizontalBar({ className }: Props) {
     addClaimsToVerifyBulk(claimIdsToVerify);
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     const ok = confirm(
       '주장 탐지 재시도는 모든 항목들을 초기화합니다. 계속하시겠습니까?',
     );
     if (!ok) return;
 
     resetClaimsToVerify();
-    clearVerification();
-    retry();
+    await clearVerification();
+    await retryClaims();
   };
 
   const isAllVerified = verifications.length === claims.length;

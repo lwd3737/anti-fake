@@ -11,3 +11,13 @@ export async function getClaimVerifications(
   );
   return await res.json();
 }
+
+export async function deleteClaimVerifications(
+  factCheckSessionId: string,
+): Promise<Result<void>> {
+  const res = await apiClient(
+    APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS(factCheckSessionId),
+    { method: 'DELETE' },
+  );
+  return await res.json();
+}

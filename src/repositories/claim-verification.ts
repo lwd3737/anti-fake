@@ -3,7 +3,7 @@ import prisma from './prisma';
 import claimVerificationMapper from '@/mappers/claim-verification';
 
 const claimVerificationRepo = {
-  async findByFactCheckSessionId(
+  async findBySessionId(
     factCheckSessionId: string,
   ): Promise<ClaimVerification[]> {
     const result = await prisma.claimVerification.findMany({
@@ -27,6 +27,14 @@ const claimVerificationRepo = {
         claimVerifications.length - result.count,
       );
     }
+  },
+
+  async deleteManyBySessionId(factCheckSessionId: string): Promise<void> {
+    await prisma.claimVerification.deleteMany({
+      where: {
+        factCheckSessionId,
+      },
+    });
   },
 };
 

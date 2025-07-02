@@ -26,7 +26,6 @@ export async function GET(
 
   const { user } = guardResult;
 
-  console.log('factCheckSessionId', factCheckSessionId);
   const factCheckSessionResult = await new FactCheckSessionService().findById({
     factCheckSessionId,
     userId: user.id,
@@ -38,7 +37,6 @@ export async function GET(
 
   // FIX: factCheckSession 부재시 예외 처리 필요
   const factCheckSession = factCheckSessionResult;
-  console.log('factCheckSession', factCheckSession);
   const claims = await claimRepo.findManyBySessionId(factCheckSession.id);
 
   return NextResponse.json({ claims } as GetClaimsResponseDto);

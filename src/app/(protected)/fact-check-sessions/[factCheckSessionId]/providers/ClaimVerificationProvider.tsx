@@ -16,7 +16,10 @@ import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 import { APIRoutes } from '@/constants/routes';
 import { FactCheckSession } from '@/models/fact-check-session';
 import { Claim } from '@/models/claim';
-import { getClaimVerifications } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
+import {
+  deleteClaimVerifications,
+  getClaimVerifications,
+} from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
 import { isFailure } from '@/result';
 
 export interface IClaimVerification {
@@ -31,7 +34,7 @@ export interface IClaimVerification {
   removeClaimsToVerifyBulk: (ids: string[]) => void;
   resetClaimsToVerify: () => void;
   remove: (index: number) => void;
-  clear: () => void;
+  clear: () => Promise<void>;
 }
 
 const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
@@ -55,9 +58,10 @@ export default function ClaimVerificationProvider({
     setItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const clear = useCallback(() => {
+  const clear = useCallback(async () => {
     setItems([]);
-  }, []);
+    await deleteClaimVerifications(factCheckSession.id);
+  }, [factCheckSession.id]);
 
   const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
     (chunks: unknown[]) => {

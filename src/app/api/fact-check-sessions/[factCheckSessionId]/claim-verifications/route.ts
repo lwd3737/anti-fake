@@ -12,10 +12,11 @@ import { handleRouteError } from '@/gateway/error/reponse-error-handler';
 import { ErrorCode } from '@/gateway/error/error-code';
 import FactCheckSessionService from '@/services/fact-check-session';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { factCheckSessionId: string } },
-) {
+interface Params {
+  factCheckSessionId: string;
+}
+
+export async function GET(req: NextRequest, { params }: { params: Params }) {
   const guardResult = await guardRouteHandler();
   if (!guardResult.isAuthenticated) return guardResult.redirect();
 
@@ -33,7 +34,7 @@ export async function GET(
 
   try {
     const verifications =
-      await claimVerificationRepo.findByFactCheckSessionId(factCheckSessionId);
+      await claimVerificationRepo.findBySessionId(factCheckSessionId);
 
     return NextResponse.json({
       claimVerifications: verifications,
@@ -47,9 +48,9 @@ export async function GET(
   }
 }
 
-export async function POST(req: NextRequest) {
-  const { factCheckSessionId, claims } =
-    (await req.json()) as VerifyClaimsRequestDto;
+export async function POST(req: NextRequest, { params }: { params: Params }) {
+  const { factCheckSessionId } = params;
+  const { claims } = (await req.json()) as VerifyClaimsRequestDto;
 
   const evidenceRetrieval = new EvidenceRetrievalService(req.signal);
   const claimVerification = new ClaimVerificationService(req.signal);
@@ -86,4 +87,20 @@ export async function POST(req: NextRequest) {
       })
       .retrieveBulk(claims);
   });
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Params }) {
+  const { factCheckSessionId } = params;
+
+  try {
+    await claimVerificationRepo.deleteManyBySessionId(factCheckSessionId);
+    return NextResponse.json({ ok: true }, { status: 200 });
+  } catch (error) {
+    console.error(error);
+    return handleRouteError(
+      ErrorCode.CLAIM_VERIFICATIONS_DELETE_FAILED,
+      'Claim verifications delete failed',
+      500,
+    );
+  }
 }

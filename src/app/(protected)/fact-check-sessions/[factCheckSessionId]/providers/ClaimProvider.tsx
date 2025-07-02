@@ -28,7 +28,7 @@ export interface IClaimProvider {
   isLoading: boolean;
   stop: () => void;
   remove: (index: number) => void;
-  retry: () => void;
+  retry: () => Promise<void>;
 }
 
 const ClaimDetectionContext = createContext<IClaimProvider | undefined>(
@@ -105,8 +105,9 @@ export default function ClaimProvider({
 
   const retry = useCallback(async () => {
     setItems([]);
-    const deletionResult = await deleteClaims(factCheckSession.id);
-    if (isFailure(deletionResult)) {
+
+    const deleteResult = await deleteClaims(factCheckSession.id);
+    if (isFailure(deleteResult)) {
       alert('팩트 체크 세션을 초기화하는데 실패했습니다.');
       return;
     }
