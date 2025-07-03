@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
 import { isGoogleApisError } from '@/gateway/error/google-apis-error';
-import { createYoutubeVideo, getYoutubeVideo } from '@/repositories/youtube';
+import youtubeRepo, { createYoutubeVideo } from '@/repositories/youtube';
 
 interface Props {
   videoId: string;
@@ -17,7 +17,7 @@ export default async function YoutubeVideoInfoCard({
   videoId,
   className,
 }: Props) {
-  let video = await getYoutubeVideo(videoId);
+  let video = await youtubeRepo.getVideo(videoId);
   if (!video) {
     const youtube = YoutubeService.create();
     const videoResult = await youtube.getVideo(videoId);
