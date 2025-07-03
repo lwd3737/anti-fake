@@ -4,6 +4,7 @@ import { ClaimVerification } from '@/models/claim-verification';
 import Image from 'next/image';
 import assert from 'assert';
 import { useMemo } from 'react';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface Props {
   claim: Claim;
@@ -36,8 +37,6 @@ export default function FactCheckItemCard({
         return 'checked.svg';
       case VerificationStatus.NOT_VERIFIED:
         return 'question-mark.svg';
-      case VerificationStatus.LOADING:
-        return 'loading.svg';
       default:
         assert(false, `Unknown status: ${status}`);
     }
@@ -65,15 +64,17 @@ export default function FactCheckItemCard({
     >
       <div className="flex justify-between items-start gap-x-10">
         <div className="flex flex-1 items-start gap-x-2">
-          <Image
-            className={`mt-1 ${
-              status === VerificationStatus.LOADING ? 'animate-spin' : ''
-            }`}
-            src={`/icons/${statusFileName}`}
-            alt={'status icon'}
-            width={18}
-            height={18}
-          />
+          {status === VerificationStatus.LOADING ? (
+            <LoadingSpinner className="mt-1" width={18} height={18} />
+          ) : (
+            <Image
+              className={`mt-1`}
+              src={`/icons/${statusFileName}`}
+              alt={'status icon'}
+              width={18}
+              height={18}
+            />
+          )}
           <p className="px-3 font-medium text-lg">
             {claim.index + 1}. {'"'}
             {claim.content}
