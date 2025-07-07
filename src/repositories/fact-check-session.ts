@@ -36,6 +36,13 @@ const factCheckSessionRepo = {
     });
     return found ? factCheckSessionMapper.toDomain(found) : null;
   },
+
+  async findAllByUserId(userId: string): Promise<FactCheckSession[]> {
+    const found = await prisma.factCheckSession.findMany({
+      where: { userId },
+    });
+    return found.map(factCheckSessionMapper.toDomain);
+  },
 };
 
 export default factCheckSessionRepo;

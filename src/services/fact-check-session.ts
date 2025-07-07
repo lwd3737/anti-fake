@@ -29,4 +29,21 @@ export default class FactCheckSessionService {
 
     return factCheckSession;
   }
+
+  public async findAllByUserId({
+    userId,
+  }: {
+    userId: string;
+  }): Promise<Result<FactCheckSession[]>> {
+    try {
+      const factCheckSessions =
+        await factCheckSessionRepo.findAllByUserId(userId);
+      return factCheckSessions;
+    } catch (error) {
+      return {
+        code: ErrorCode.FACT_CHECK_SESSIONS_READ_FAILED,
+        message: 'Failed to read fact check sessions',
+      };
+    }
+  }
 }

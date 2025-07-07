@@ -14,7 +14,16 @@ export const createYoutubeVideo = async (
 };
 
 const youtubeRepo = {
-  async getVideo(id: string) {
+  async getVideos(ids: string[]): Promise<YoutubeVideo[]> {
+    const found = await prisma.youtubeVideo.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    return found.map(youtubeVideoMapper.toDomain);
+  },
+
+  async getVideo(id: string): Promise<YoutubeVideo | null> {
     const found = await prisma.youtubeVideo.findUnique({
       where: {
         id,
@@ -23,7 +32,7 @@ const youtubeRepo = {
 
     return found ? youtubeVideoMapper.toDomain(found) : null;
   },
-  async createVideo(video: YoutubeVideo) {
+  async createVideo(video: YoutubeVideo): Promise<YoutubeVideo> {
     const created = await prisma.youtubeVideo.create({
       data: {
         id: video.id,

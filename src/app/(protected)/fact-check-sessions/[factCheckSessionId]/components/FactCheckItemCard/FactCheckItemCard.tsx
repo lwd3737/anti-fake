@@ -37,8 +37,6 @@ export default function FactCheckItemCard({
         return 'checked.svg';
       case VerificationStatus.NOT_VERIFIED:
         return 'question-mark.svg';
-      default:
-        assert(false, `Unknown status: ${status}`);
     }
   }, [status]);
 
