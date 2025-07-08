@@ -2,9 +2,9 @@ import { Claim } from '@/models/claim';
 import ClaimVerificationCardBody from './ClaimVerificationCardBody';
 import { ClaimVerification } from '@/models/claim-verification';
 import Image from 'next/image';
-import assert from 'assert';
 import { useMemo } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import CloseButton from '@/components/CloseButton';
 
 interface Props {
   claim: Claim;
@@ -79,9 +79,7 @@ export default function FactCheckItemCard({
             {'"'}
           </p>
         </div>
-        <button onClick={onRemove}>
-          <Image src="/icons/close.svg" alt="close" width={15} height={15} />
-        </button>
+        <CloseButton onClick={onRemove} />
       </div>
 
       {status === VerificationStatus.VERIFIED && (

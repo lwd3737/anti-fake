@@ -78,4 +78,15 @@ export default class FactCheckSessionService {
       };
     }
   }
+
+  async delete(id: string): Promise<Result<void>> {
+    try {
+      await factCheckSessionRepo.delete(id);
+    } catch (error) {
+      return {
+        code: ErrorCode.FACT_CHECK_SESSIONS_DELETE_FAILED,
+        message: 'Failed to delete fact check session',
+      };
+    }
+  }
 }

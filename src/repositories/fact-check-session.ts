@@ -43,6 +43,12 @@ const factCheckSessionRepo = {
     });
     return found.map(factCheckSessionMapper.toDomain);
   },
+
+  async delete(id: string): Promise<void> {
+    await prisma.factCheckSession.delete({
+      where: { id },
+    });
+  },
 };
 
 export default factCheckSessionRepo;

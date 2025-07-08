@@ -64,7 +64,7 @@ model FactCheckSession {
 model Claim {
   id                 String           @id @default(uuid())
   factCheckSessionId String
-  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id])
+  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)
   index              Int
   content            String
   detectionReason    String
@@ -77,7 +77,7 @@ model Claim {
 model ClaimVerification {
   id                 String           @id @default(uuid())
   factCheckSessionId String
-  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id])
+  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)
   claimId            String
   claim              Claim            @relation(fields: [claimId], references: [id])
   verdict            VerdictType
