@@ -26,7 +26,7 @@ export async function GET(
 
   const { user } = guardResult;
 
-  const factCheckSessionResult = await new FactCheckSessionService().findById({
+  const factCheckSessionResult = await new FactCheckSessionService().getOwn({
     factCheckSessionId,
     userId: user.id,
   });
@@ -63,7 +63,7 @@ export async function POST(
 
   const { user } = guardResult;
 
-  const factCheckSessionResult = await new FactCheckSessionService().findById({
+  const factCheckSessionResult = await new FactCheckSessionService().getOwn({
     factCheckSessionId,
     userId: user.id,
   });

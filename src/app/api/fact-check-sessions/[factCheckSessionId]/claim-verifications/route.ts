@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
   const { factCheckSessionId } = params;
   const { user } = guardResult;
 
-  const authorizationResult = await new FactCheckSessionService().findById({
+  const authorizationResult = await new FactCheckSessionService().getOwn({
     factCheckSessionId,
     userId: user.id,
   });

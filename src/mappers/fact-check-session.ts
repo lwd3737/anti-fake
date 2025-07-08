@@ -8,6 +8,7 @@ const factCheckSessionMapper = {
       userId: record.userId,
       contentType: record.contentType as ContentType,
       contentId: record.contentId,
+      createdAt: record.createdAt,
     };
   },
 };

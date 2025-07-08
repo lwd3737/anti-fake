@@ -56,6 +56,7 @@ model FactCheckSession {
 
   claimVerifications ClaimVerification[]
   claims             Claim[]
+  createdAt          DateTime            @default(now())
 
   @@unique([contentType, contentId])
 }

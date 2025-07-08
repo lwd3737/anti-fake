@@ -3,6 +3,7 @@ export interface FactCheckSession {
   userId: string;
   contentType: ContentType;
   contentId: string;
+  createdAt: Date;
 }
 
 export enum ContentType {
