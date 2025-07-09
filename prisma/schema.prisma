@@ -39,6 +39,7 @@ model YoutubeVideo {
   channelId    String   @unique
   channelTitle String
   thumbnailUrl String
+  transcript   String?
   publishedAt  DateTime
   updatedAt    DateTime @updatedAt
 }
