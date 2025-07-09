@@ -12,7 +12,7 @@ import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
-import YoutubeService from '@/services/youtube';
+import Youtube from '@/libs/youtube';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -72,7 +72,7 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const transcriptResult = await YoutubeService.generateTranscript(
+  const transcriptResult = await Youtube.generateTranscript(
     contentId,
     req.signal,
   );

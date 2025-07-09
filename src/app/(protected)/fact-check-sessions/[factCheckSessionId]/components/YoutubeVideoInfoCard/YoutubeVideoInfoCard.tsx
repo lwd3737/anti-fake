@@ -1,12 +1,9 @@
-import { PageRoutes } from '@/constants/routes';
-import YoutubeService from '@/services/youtube';
 import { formatDate } from '@/utils/date';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
-import { isGoogleApisError } from '@/gateway/error/google-apis-error';
-import youtubeRepo, { createYoutubeVideo } from '@/repositories/youtube';
+import YoutubeService from '@/services/youtube';
+import { isFailure } from '@/result';
 
 interface Props {
   videoId: string;
@@ -17,34 +14,14 @@ export default async function YoutubeVideoInfoCard({
   videoId,
   className,
 }: Props) {
-  let video = await youtubeRepo.getVideo(videoId);
-  if (!video) {
-    const youtube = YoutubeService.create();
-    const videoResult = await youtube.getVideo(videoId);
+  const video = await new YoutubeService().getOrCreateVideo(videoId);
+  if (isFailure(video))
+    return (
+      <div className="flex gap-x-4 bg-white shadow-sm p-6 rounded-sm">
+        <p>{video.message}</p>
+      </div>
+    );
 
-    // TODO: Result로 통일
-    if (isGoogleApisError(videoResult)) {
-      const { code, status } = videoResult;
-      switch (status) {
-        case 401:
-          return redirect(PageRoutes.LOGIN);
-        default:
-          throw new Error(
-            `Google API Error: ${code} ${status} ${videoResult.message}`,
-          );
-      }
-    }
-    const { id, title, channelId, channelTitle, thumbnail, publishedAt } =
-      videoResult;
-    video = await createYoutubeVideo({
-      id,
-      thumbnailUrl: thumbnail.url,
-      title,
-      channelTitle,
-      publishedAt,
-      channelId,
-    });
-  }
   const { thumbnailUrl, title, channelTitle, publishedAt } = video!;
 
   return (

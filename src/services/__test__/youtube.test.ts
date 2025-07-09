@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import YoutubeService from '../youtube';
+import Youtube from '../../libs/youtube';
 import { isFailure } from '@/result';
 
 describe('YoutubeService', () => {
   describe('generateTranscript', () => {
     it('should generate transcript', async () => {
-      const result = await YoutubeService.generateTranscript('_xL6ILW8VGQ');
+      const result = await Youtube.generateTranscript('_xL6ILW8VGQ');
       if (isFailure(result)) {
         expect(false).toBe(true);
         return;

@@ -1,4 +1,4 @@
-export interface VideoDto {
+export interface YoutubeVideoDto {
   id: string;
   title: string;
   description: string;
@@ -12,7 +12,7 @@ export interface VideoDto {
   publishedAt: string;
 }
 
-export interface SearchVideoChannelDto {
+export interface SearchYoutubeVideoChannelDto {
   channelId: string;
   channelTitle: string;
   description: string;
@@ -23,7 +23,7 @@ export interface SearchVideoChannelDto {
   };
 }
 
-export interface SearchVideosDto {
+export interface SearchYoutubeVideosDto {
   nextPageToken: string;
   videos: {
     channelId: string;
