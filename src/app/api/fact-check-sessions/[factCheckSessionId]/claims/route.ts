@@ -10,7 +10,6 @@ import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
-import Youtube from '@/libs/youtube';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
