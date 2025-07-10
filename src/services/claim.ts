@@ -13,6 +13,7 @@ import { isFailure, Result } from '@/result';
 import { createStreamController } from '@/utils/stream';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { Failure } from '@/gateway/error/reponse-error-handler';
+import Youtube from '@/libs/youtube';
 
 enum EventType {
   CLAIM_DETECTED = 'CLAIM_DETECTED',
@@ -49,10 +50,20 @@ export default class ClaimService {
   constructor(private signal: AbortSignal) {}
 
   // TODO: logger 추가
-  public async createClaimsStreamFromTranscript(
-    transcription: YoutubeVideoTranscription,
+  public async createClaimsStreamFromVideo(
+    videoId: string,
     factCheckSessionId: string,
   ): Promise<Result<ReadableStream>> {
+    const transcriptResult = await Youtube.generateTranscript(
+      videoId,
+      this.signal,
+    );
+    if (isFailure(transcriptResult)) {
+      const failure = transcriptResult;
+      return failure;
+    }
+
+    const transcription = transcriptResult;
     const transcriptParts = transcription.segments.map(
       ({ start, end, text }) => ({
         start,

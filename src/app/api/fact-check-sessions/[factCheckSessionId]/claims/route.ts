@@ -70,21 +70,9 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  // TODO: youtube 서비스로 교체
-  const transcriptResult = await Youtube.generateTranscript(
-    contentId,
-    req.signal,
-  );
-  if (isFailure(transcriptResult)) {
-    console.error(transcriptResult);
-
-    const { code, message: error } = transcriptResult;
-    return handleRouteError(code, error, 400);
-  }
-
   const streamResult = await new ClaimService(
     req.signal,
-  ).createClaimsStreamFromTranscript(transcriptResult, factCheckSessionId);
+  ).createClaimsStreamFromVideo(contentId, factCheckSessionId);
 
   if (isFailure(streamResult)) {
     const { code, message: error } = streamResult;
