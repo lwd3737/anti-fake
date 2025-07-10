@@ -3,10 +3,8 @@ import {
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
 } from '@/gateway/dto/claim';
-import { CreateClaimsResponseDto } from '@/gateway/dto/fact-check';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { handleRouteError } from '@/gateway/error/reponse-error-handler';
-import { streamResponse } from '@/gateway/streaming/stream-response';
 import { ContentType } from '@/models/fact-check-session';
 import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
@@ -72,6 +70,7 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
+  // TODO: youtube 서비스로 교체
   const transcriptResult = await Youtube.generateTranscript(
     contentId,
     req.signal,
@@ -83,22 +82,17 @@ export async function POST(
     return handleRouteError(code, error, 400);
   }
 
-  const claimService = new ClaimService(req.signal);
+  const streamResult = await new ClaimService(
+    req.signal,
+  ).createClaimsStreamFromTranscript(transcriptResult, factCheckSessionId);
 
-  return streamResponse(({ send, close }) => {
-    claimService
-      .onClaimDetected((claim) => {
-        send(claim satisfies CreateClaimsResponseDto);
-      })
-      .onFinished(async (claims) => {
-        close();
-      })
-      .onError((error) => {
-        console.error(error);
-        close();
-      })
-      .startTranscriptionDetection(transcriptResult, factCheckSessionId);
-  }, req.signal);
+  if (isFailure(streamResult)) {
+    const { code, message: error } = streamResult;
+    return handleRouteError(code, error, 500);
+  }
+
+  const stream = streamResult;
+  return new Response(stream);
 }
 
 export async function DELETE(

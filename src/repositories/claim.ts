@@ -19,6 +19,17 @@ const claimRepo = {
     }
   },
 
+  async create(factCheckSessionId: string, claim: Claim): Promise<void> {
+    const { startAt, endAt, ...data } = claim;
+    await prisma.claim.create({
+      data: {
+        factCheckSessionId,
+        metadata: { startAt, endAt },
+        ...data,
+      },
+    });
+  },
+
   async findManyBySessionId(factCheckSessionId: string): Promise<Claim[]> {
     const claims = await prisma.claim.findMany({
       where: {

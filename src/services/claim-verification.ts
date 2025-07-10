@@ -1,4 +1,4 @@
-import { openai } from '@/helpers/ai';
+import { openai } from '@/libs/ai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import LLMHistoryLogger from '@/logger/llm-history.logger';

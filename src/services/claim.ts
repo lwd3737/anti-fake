@@ -1,5 +1,5 @@
-import { AIModel, openai } from '@/helpers/ai';
-import { streamObject } from 'ai';
+import { AIModel, openai } from '@/libs/ai';
+import { streamObject, StreamObjectResult } from 'ai';
 import { z } from 'zod';
 import EventEmitter from 'events';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
@@ -9,6 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { YoutubeVideoTranscription } from '@/models/youtube';
 import YOUTUBE_CLAIM_DETECTION_PROMPT from '@/prompts/youtube-claim-detection';
 import claimRepo from '@/repositories/claim';
+import { isFailure, Result } from '@/result';
+import { createStreamController } from '@/utils/stream';
+import { ErrorCode } from '@/gateway/error/error-code';
+import { Failure } from '@/gateway/error/reponse-error-handler';
 
 enum EventType {
   CLAIM_DETECTED = 'CLAIM_DETECTED',
@@ -31,6 +35,8 @@ const ClaimSchema = z.object({
   endAt: z.number().describe('주장이 끝나는 시간(초)'),
 });
 
+type TClaimSchema = z.infer<typeof ClaimSchema>;
+
 const STREAM_INTERVAL = 100;
 
 export default class ClaimService {
@@ -41,6 +47,84 @@ export default class ClaimService {
   private claimsCache: Claim[] = [];
 
   constructor(private signal: AbortSignal) {}
+
+  // TODO: logger 추가
+  public async createClaimsStreamFromTranscript(
+    transcription: YoutubeVideoTranscription,
+    factCheckSessionId: string,
+  ): Promise<Result<ReadableStream>> {
+    const transcriptParts = transcription.segments.map(
+      ({ start, end, text }) => ({
+        start,
+        end,
+        text,
+      }),
+    );
+    const prompt = JSON.stringify(transcriptParts);
+
+    const streamResult = await this.streamClaims(prompt);
+    if (isFailure(streamResult)) {
+      const failure = streamResult;
+      return failure;
+    }
+
+    const { stream, sendChunk, closeStream } = createStreamController(
+      this.signal,
+    );
+
+    let index = 0;
+    for await (const claim of streamResult) {
+      const newClaim: Claim = {
+        id: uuidv4(),
+        index,
+        ...claim,
+      };
+      sendChunk(newClaim);
+
+      try {
+        await claimRepo.create(factCheckSessionId, newClaim);
+      } catch (error) {
+        // TODO: 에러 로깅
+        const failure: Failure = {
+          code: ErrorCode.CLAIMS_CREATE_FAILED,
+          message: 'Failed to create claim on repository',
+        };
+        console.error(error, failure);
+        sendChunk(failure);
+      }
+      index++;
+    }
+
+    closeStream();
+
+    return stream;
+  }
+
+  private async streamClaims(
+    prompt: string,
+  ): Promise<Result<AsyncIterable<TClaimSchema>>> {
+    try {
+      const streamResult = streamObject({
+        model: openai(AIModel.GPT_4O),
+        system: YOUTUBE_CLAIM_DETECTION_PROMPT,
+        prompt,
+        mode: 'json',
+        output: 'array',
+        schema: ClaimSchema,
+        schemaName: 'Claims',
+        schemaDescription:
+          '자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.',
+        temperature: 0,
+      });
+      return streamResult.elementStream;
+    } catch (error) {
+      return {
+        code: ErrorCode.CLAIMS_CREATE_FAILED,
+        message: 'Failed to stream claims from ai',
+        context: error as Record<string, any>,
+      };
+    }
+  }
 
   public async startTranscriptionDetection(
     transcription: YoutubeVideoTranscription,

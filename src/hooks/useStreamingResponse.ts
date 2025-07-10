@@ -27,8 +27,19 @@ const useStreamingResponse = (onChunk: (chunk: unknown[]) => void) => {
           signal: aborter.signal,
         });
 
+        if (!res.ok) {
+          isLoadingRef.current = false;
+          setIsLoading(false);
+          // TODO: 에러 화면에 표시
+          const error = await res.json();
+          throw new Error(error.message);
+        }
+
         const stream = res.body;
         if (!stream) {
+          isLoadingRef.current = false;
+          setIsLoading(false);
+          // TODO: 에러 화면에 표시
           throw new Error('Stream is null');
         }
 
