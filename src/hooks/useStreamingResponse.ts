@@ -1,9 +1,8 @@
-import { CHUNK_DELIMITER } from '@/gateway/streaming/stream-response';
+import { CHUNK_DELIMITER } from '@/gateway/streaming/streaming-response';
 import { json } from '@/utils/serialize';
-import assert from 'assert';
 import { useCallback, useRef, useState } from 'react';
 
-const useStreamingResponse = (onChunk: (chunk: unknown[]) => void) => {
+const useStreamingResponse = (onChunk: (chunks: unknown[]) => void) => {
   const onChunkRef = useRef(onChunk);
 
   const aborterRef = useRef(new AbortController());
@@ -68,9 +67,6 @@ const useStreamingResponse = (onChunk: (chunk: unknown[]) => void) => {
 
           onChunkRef.current(parsedChunks);
         }
-
-        isLoadingRef.current = false;
-        setIsLoading(false);
       } catch (e) {
         if ((e as Error).name === 'AbortError') {
           return;

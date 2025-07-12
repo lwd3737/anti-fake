@@ -1,7 +1,6 @@
 import { GetClaimVerificationsResponseDto } from '@/gateway/dto/claim-verification';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
-import { CreateClaimVerificationResponseDto } from '@/gateway/dto/fact-check';
-import { streamResponse } from '@/gateway/streaming/stream-response';
+import { streamingResponse } from '@/gateway/streaming/streaming-response';
 import claimVerificationRepo from '@/repositories/claim-verification';
 import { isFailure } from '@/result';
 import ClaimVerificationService from '@/services/claim-verification';
@@ -52,40 +51,34 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
   const { factCheckSessionId } = params;
   const { claims } = (await req.json()) as VerifyClaimsRequestDto;
 
-  const evidenceRetrieval = new EvidenceRetrievalService(req.signal);
-  const claimVerification = new ClaimVerificationService(req.signal);
+  const evidencesResultStream = new EvidenceRetrievalService(
+    req.signal,
+  ).retrieveEvidencesStream(claims);
 
-  return streamResponse(async ({ send, close }) => {
-    evidenceRetrieval
-      .onRetrieved(async (retrievalResult) => {
-        if (isFailure(retrievalResult)) {
-          const error = retrievalResult;
-          send(error);
-          console.debug(error);
-          return;
-        }
+  return streamingResponse(async ({ send, close }) => {
+    let idx = 0;
+    for await (const evidencesResult of evidencesResultStream) {
+      if (isFailure(evidencesResult)) {
+        const failure = evidencesResult;
+        console.error(failure);
+        continue;
+      }
 
-        const { claim, evidences, isCompleted } = retrievalResult;
-        const verification = await claimVerification.verify(
-          {
-            factCheckSessionId,
-            claim,
-            evidences,
-          },
-          isCompleted,
-        );
+      const evidences = evidencesResult;
+      const claim = claims[idx];
+      const verificationResult = await new ClaimVerificationService(
+        req.signal,
+      ).verify({
+        factCheckSessionId,
+        claim,
+        evidences,
+      });
 
-        const dto = {
-          ...verification,
-          claimId: claim.id,
-        } satisfies CreateClaimVerificationResponseDto;
-        send(dto);
+      send(verificationResult);
+      idx++;
+    }
 
-        if (isCompleted) {
-          close();
-        }
-      })
-      .retrieveBulk(claims);
+    close();
   });
 }
 

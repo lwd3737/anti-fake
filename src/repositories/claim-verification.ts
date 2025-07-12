@@ -29,6 +29,16 @@ const claimVerificationRepo = {
     }
   },
 
+  async create(claimVerification: ClaimVerification): Promise<void> {
+    const { evidences, ...data } = claimVerification;
+    await prisma.claimVerification.create({
+      data: {
+        ...data,
+        evidences: JSON.stringify(evidences),
+      },
+    });
+  },
+
   async deleteManyBySessionId(factCheckSessionId: string): Promise<void> {
     await prisma.claimVerification.deleteMany({
       where: {

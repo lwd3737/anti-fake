@@ -79,8 +79,8 @@ export default class GoogleSearch {
       },
     );
 
-    const { groundingChunks, groundingSupports } = generatedContent.response
-      .candidates?.[0].groundingMetadata as Omit<
+    const groundingMetadata = generatedContent.response.candidates?.[0]
+      .groundingMetadata as Omit<
       GroundingMetadata,
       'groundingChuncks' | 'groundingSupports'
     > & {
@@ -97,7 +97,23 @@ export default class GoogleSearch {
       }[];
     };
 
-    const sources = groundingChunks!.map(({ web }) => ({
+    const { groundingChunks, groundingSupports } = groundingMetadata || {};
+
+    if (!groundingChunks || !groundingSupports) {
+      return {
+        contents: [],
+        metadata: {
+          tokenUsage: {
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+          },
+          model: this.model.model,
+        },
+      };
+    }
+
+    const sources = groundingChunks.map(({ web }) => ({
       uri: web!.uri!,
       title: web!.title!,
     }));
@@ -106,7 +122,7 @@ export default class GoogleSearch {
     // 		!!citiation?.title && !!citiation.uri,
     // ) ?? [];
     const citations = await Promise.all(sources.map(this.getCitation));
-    const contents = groundingSupports!.map((support) => {
+    const contents = groundingSupports.map((support) => {
       const { segment, groundingChunkIndices } = support;
       const { text } = segment as unknown as { text?: string };
 

@@ -46,10 +46,18 @@ export default function ClaimProvider({
   const [items, setItems] = useState<Claim[]>([]);
 
   const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
-    (chunks: unknown[]) => {
-      setItems((prev) => [...prev, ...(chunks as Claim[])]);
+    (chunks) => {
+      const claims = chunks.filter(
+        (chunk): chunk is Claim => !isFailure(chunk),
+      );
+      // TODO: claim 에러 처리
+      setItems((prev) => [...prev, ...claims]);
     },
   );
+
+  const isClaimLoading = useMemo(() => {
+    return items.length === 0 && isLoading;
+  }, [items, isLoading]);
 
   const isMountedRef = useRef(false);
 
@@ -58,7 +66,7 @@ export default function ClaimProvider({
       if (isMountedRef.current) return;
       isMountedRef.current = true;
 
-      getClaims(factCheckSession.id).then((result) => {
+      getClaims(factCheckSession.id).then(async (result) => {
         if (isFailure(result)) {
           console.error(result);
 
@@ -87,7 +95,7 @@ export default function ClaimProvider({
           return;
         }
 
-        startStreaming<CreateClaimsRequestDto>(
+        await startStreaming<CreateClaimsRequestDto>(
           APIRoutes.factCheckSessions.claims(factCheckSession.id),
           {
             contentType: ContentType.YOUTUBE_VIDEO,
@@ -99,7 +107,7 @@ export default function ClaimProvider({
     [router, startStreaming, factCheckSession.contentId, factCheckSession.id],
   );
 
-  const remove = useCallback((index: number) => {
+  const remove = useCallback(async (index: number) => {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
@@ -112,7 +120,7 @@ export default function ClaimProvider({
       return;
     }
 
-    startStreaming<CreateClaimsRequestDto>(
+    await startStreaming<CreateClaimsRequestDto>(
       APIRoutes.factCheckSessions.claims(factCheckSession.id),
       {
         contentType: ContentType.YOUTUBE_VIDEO,
@@ -124,12 +132,12 @@ export default function ClaimProvider({
   const value: IClaimProvider = useMemo(
     () => ({
       items,
-      isLoading,
+      isLoading: isClaimLoading,
       stop: stopStreaming,
       remove,
       retry,
     }),
-    [items, isLoading, remove, retry, stopStreaming],
+    [items, isClaimLoading, remove, retry, stopStreaming],
   );
 
   return (

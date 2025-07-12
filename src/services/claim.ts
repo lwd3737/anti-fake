@@ -1,25 +1,16 @@
 import { AIModel, openai } from '@/libs/ai';
-import { streamObject, StreamObjectResult } from 'ai';
+import { streamObject } from 'ai';
 import { z } from 'zod';
-import EventEmitter from 'events';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
 import loadConfig from '@/config';
 import { Claim } from '@/models/claim';
 import { v4 as uuidv4 } from 'uuid';
-import { YoutubeVideoTranscription } from '@/models/youtube';
 import YOUTUBE_CLAIM_DETECTION_PROMPT from '@/prompts/youtube-claim-detection';
 import claimRepo from '@/repositories/claim';
 import { isFailure, Result } from '@/result';
-import { createStreamController } from '@/utils/stream';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { Failure } from '@/gateway/error/reponse-error-handler';
 import Youtube from '@/libs/youtube';
-
-enum EventType {
-  CLAIM_DETECTED = 'CLAIM_DETECTED',
-  FINISHED = 'FINISHED',
-  ERROR = 'ERROR',
-}
 
 const ClaimSchema = z.object({
   content: z
@@ -38,22 +29,18 @@ const ClaimSchema = z.object({
 
 type TClaimSchema = z.infer<typeof ClaimSchema>;
 
-const STREAM_INTERVAL = 100;
-
 export default class ClaimService {
-  private events = new EventEmitter();
   private logger = new LLMHistoryLogger('detect-claims', {
     title: 'Detect claims',
   });
-  private claimsCache: Claim[] = [];
 
   constructor(private signal: AbortSignal) {}
 
   // TODO: logger 추가
-  public async createClaimsStreamFromVideo(
+  public async *createClaimsFromVideo(
     videoId: string,
     factCheckSessionId: string,
-  ): Promise<Result<ReadableStream>> {
+  ): AsyncIterable<Result<Claim>> {
     const transcriptResult = await Youtube.generateTranscript(
       videoId,
       this.signal,
@@ -79,9 +66,9 @@ export default class ClaimService {
       return failure;
     }
 
-    const { stream, sendChunk, closeStream } = createStreamController(
-      this.signal,
-    );
+    // const { stream, sendChunk, closeStream } = createStreamController(
+    //   this.signal,
+    // );
 
     let index = 0;
     for await (const claim of streamResult) {
@@ -90,7 +77,8 @@ export default class ClaimService {
         index,
         ...claim,
       };
-      sendChunk(newClaim);
+      yield newClaim;
+      // await sendChunk(newClaim);
 
       try {
         await claimRepo.create(factCheckSessionId, newClaim);
@@ -100,15 +88,17 @@ export default class ClaimService {
           code: ErrorCode.CLAIMS_CREATE_FAILED,
           message: 'Failed to create claim on repository',
         };
+        // await sendChunk(failure);
         console.error(error, failure);
-        sendChunk(failure);
+        yield failure;
       }
       index++;
     }
 
-    closeStream();
+    // closeStream();
 
-    return stream;
+    // TODO: stream -> asyncIterable 변경
+    // return stream;
   }
 
   private async streamClaims(

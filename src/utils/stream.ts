@@ -1,29 +1,28 @@
-import { CHUNK_DELIMITER } from '@/gateway/streaming/stream-response';
+import { CHUNK_DELIMITER } from '@/gateway/streaming/streaming-response';
 import { json } from './serialize';
 
 export const createStreamController = (signal: AbortSignal) => {
-  let send: (chunk: any) => void;
-  let close: () => void;
+  let controller: ReadableStreamDefaultController | null = null;
 
   const stream = new ReadableStream({
-    async start(controller) {
+    async start(streamController) {
+      controller = streamController;
+
       signal.addEventListener('abort', () => {
-        controller.close();
+        controller?.close();
       });
-
-      send = (chunk) => {
-        controller.enqueue(`${json(chunk)}${CHUNK_DELIMITER}`);
-      };
-
-      close = () => {
-        controller.close();
-      };
     },
   });
 
   return {
     stream,
-    sendChunk: (chunk: any) => send(chunk),
-    closeStream: () => close(),
+    sendChunk: async (chunk: any) => {
+      if (controller) {
+        controller.enqueue(`${json(chunk)}${CHUNK_DELIMITER}`);
+      }
+    },
+    closeStream: async () => {
+      controller?.close();
+    },
   };
 };

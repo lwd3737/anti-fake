@@ -5,6 +5,7 @@ import {
 } from '@/gateway/dto/claim';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { handleRouteError } from '@/gateway/error/reponse-error-handler';
+import { streamingResponse } from '@/gateway/streaming/streaming-response';
 import { ContentType } from '@/models/fact-check-session';
 import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
@@ -69,17 +70,17 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const streamResult = await new ClaimService(
-    req.signal,
-  ).createClaimsStreamFromVideo(contentId, factCheckSessionId);
+  const claims = await new ClaimService(req.signal).createClaimsFromVideo(
+    contentId,
+    factCheckSessionId,
+  );
 
-  if (isFailure(streamResult)) {
-    const { code, message: error } = streamResult;
-    return handleRouteError(code, error, 500);
-  }
-
-  const stream = streamResult;
-  return new Response(stream);
+  return streamingResponse(async ({ send, close }) => {
+    for await (const claimResult of claims) {
+      send(claimResult);
+    }
+    close();
+  });
 }
 
 export async function DELETE(

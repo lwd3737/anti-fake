@@ -1,4 +1,5 @@
 import { Claim } from '@/models/claim';
+import { Result } from '@/result';
 
 // Request
 export interface CreateClaimsRequestDto {
@@ -14,6 +15,8 @@ export interface VerifyClaimRequestDto {
 export interface GetClaimsResponseDto {
   claims: Claim[];
 }
+
+export type CreateClaimResponseDto = Result<Claim>;
 
 export interface VerifyClaimsRequestDto {
   claims: Claim[];

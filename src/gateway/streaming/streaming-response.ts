@@ -1,8 +1,8 @@
 import { json } from '@/utils/serialize';
 
-export const CHUNK_DELIMITER = '\n\r';
+export const CHUNK_DELIMITER = '\r\n';
 
-export const streamResponse = (
+export const streamingResponse = (
   callback: (helpers: {
     send: (chunk: any) => void;
     close: () => void;
