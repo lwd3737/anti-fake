@@ -11,6 +11,7 @@ import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
+import YoutubeService from '@/services/youtube';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -70,12 +71,23 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const claims = await new ClaimService(req.signal).createClaimsFromVideo(
-    contentId,
-    factCheckSessionId,
-  );
-
   return streamingResponse(async ({ send, close }) => {
+    const transcriptResult =
+      await new YoutubeService().generateTranscriptFromVideo(
+        contentId,
+        req.signal,
+      );
+    if (isFailure(transcriptResult)) {
+      const failure = transcriptResult;
+      send(failure);
+      return;
+    }
+
+    const transcript = transcriptResult;
+    const claims = await new ClaimService(
+      req.signal,
+    ).createClaimsFromTranscript(transcript, factCheckSessionId);
+
     for await (const claimResult of claims) {
       send(claimResult);
     }

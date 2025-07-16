@@ -1,17 +1,6 @@
 import youtubeVideoMapper from '@/mappers/youtube';
 import prisma from './prisma';
-import { Prisma } from '/prisma/generated/prisma';
-import { YoutubeVideo } from '@/models/youtube';
-
-export const createYoutubeVideo = async (
-  data: Prisma.YoutubeVideoCreateInput,
-  select?: Prisma.YoutubeVideoSelect,
-) => {
-  return await prisma.youtubeVideo.create({
-    data,
-    select,
-  });
-};
+import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
 
 const youtubeRepo = {
   async findVideos(ids: string[]): Promise<YoutubeVideo[]> {
@@ -32,18 +21,54 @@ const youtubeRepo = {
 
     return found ? youtubeVideoMapper.fromPersistence(found) : null;
   },
-  async createVideo(video: YoutubeVideo): Promise<YoutubeVideo> {
+
+  async createVideo({
+    id,
+    title,
+    channelId,
+    channelTitle,
+    thumbnailUrl,
+    publishedAt,
+  }: YoutubeVideo): Promise<YoutubeVideo> {
     const created = await prisma.youtubeVideo.create({
       data: {
-        id: video.id,
-        title: video.title,
-        channelId: video.channelId,
-        channelTitle: video.channelTitle,
-        thumbnailUrl: video.thumbnailUrl,
-        publishedAt: video.publishedAt,
+        id,
+        title,
+        channelId,
+        channelTitle,
+        thumbnailUrl,
+        publishedAt,
       },
     });
     return youtubeVideoMapper.fromPersistence(created);
+  },
+
+  async updateTranscript(
+    videoId: string,
+    transcript: YoutubeVideoTranscript,
+  ): Promise<void> {
+    await prisma.youtubeVideo.update({
+      where: { id: videoId },
+      data: {
+        transcript: transcript.text,
+        transcriptMetadata: {
+          duration: transcript.duration,
+          segments: transcript.segments,
+        },
+      },
+    });
+  },
+
+  async updateTranscriptSummary(
+    videoId: string,
+    summary: string,
+  ): Promise<void> {
+    await prisma.youtubeVideo.update({
+      where: { id: videoId },
+      data: {
+        transcriptSummary: summary,
+      },
+    });
   },
 };
 

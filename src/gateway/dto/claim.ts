@@ -7,8 +7,12 @@ export interface CreateClaimsRequestDto {
   contentId: string;
 }
 
-export interface VerifyClaimRequestDto {
-  claim: Claim;
+// export interface VerifyClaimRequestDto {
+//   claim: Claim;
+// }
+export interface VerifyClaimsRequestDto {
+  claims: Claim[];
+  factCheckSessionId: string;
 }
 
 // Response
@@ -16,12 +20,8 @@ export interface GetClaimsResponseDto {
   claims: Claim[];
 }
 
-export type CreateClaimResponseDto = Result<Claim>;
-
-export interface VerifyClaimsRequestDto {
-  claims: Claim[];
-  factCheckSessionId: string;
-}
+// TODO: 클라이언트에 적용
+export type ClaimResponseChunkDto = Result<Claim>;
 
 export interface DeleteClaimsRequestDto {
   factCheckSessionId: string;

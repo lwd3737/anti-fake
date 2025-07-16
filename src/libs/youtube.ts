@@ -14,7 +14,25 @@ import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
 import os from 'os';
-import { YoutubeVideoTranscription } from '@/models/youtube';
+import { YoutubeVideoTranscript } from '@/models/youtube';
+
+interface WhisperTranscription {
+  task: string;
+  language: string;
+  text: string;
+  duration: number;
+  segments: {
+    id: string;
+    start: number;
+    end: number;
+    text: string;
+    tokens: number[];
+    temperature: number;
+    avg_logprob: number;
+    compression_ratio: number;
+    no_speech_prob: number;
+  }[];
+}
 
 export default class Youtube {
   private youtube: youtube_v3.Youtube;
@@ -22,7 +40,7 @@ export default class Youtube {
   public static async generateTranscript(
     videoId: string,
     signal?: AbortSignal,
-  ): Promise<Result<YoutubeVideoTranscription>> {
+  ): Promise<Result<YoutubeVideoTranscript>> {
     const ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg');
     if (!fs.existsSync(ffmpegPath)) {
       throw new Error(
@@ -85,16 +103,21 @@ export default class Youtube {
       ].join(' ');
 
       const { stdout, stderr } = await execAsync(curlCommand);
-
       if (stderr) console.debug('Curl stderr:', stderr);
 
       try {
-        const transcription = JSON.parse(stdout);
+        const transcription = JSON.parse(stdout) as WhisperTranscription;
+        const { text, duration, segments } = transcription;
 
-        if (transcription.error) {
-          throw new Error(transcription.error.message);
-        }
-        return transcription;
+        return {
+          text,
+          duration,
+          segments: segments.map(({ text, start, end }) => ({
+            text,
+            start,
+            end,
+          })),
+        };
       } catch (parseError) {
         console.error('Failed to parse transcription:', parseError);
         throw parseError;

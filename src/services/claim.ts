@@ -11,6 +11,8 @@ import { isFailure, Result } from '@/result';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { Failure } from '@/gateway/error/reponse-error-handler';
 import Youtube from '@/libs/youtube';
+import YoutubeService from './youtube';
+import { YoutubeVideoTranscript } from '@/models/youtube';
 
 const ClaimSchema = z.object({
   content: z
@@ -37,48 +39,27 @@ export default class ClaimService {
   constructor(private signal: AbortSignal) {}
 
   // TODO: logger 추가
-  public async *createClaimsFromVideo(
-    videoId: string,
+  public async *createClaimsFromTranscript(
+    transcript: YoutubeVideoTranscript,
     factCheckSessionId: string,
   ): AsyncIterable<Result<Claim>> {
-    const transcriptResult = await Youtube.generateTranscript(
-      videoId,
-      this.signal,
-    );
-    if (isFailure(transcriptResult)) {
-      const failure = transcriptResult;
+    const prompt = JSON.stringify(transcript.segments);
+
+    const claimsResult = await this.streamClaims(prompt);
+    if (isFailure(claimsResult)) {
+      const failure = claimsResult;
       return failure;
     }
-
-    const transcription = transcriptResult;
-    const transcriptParts = transcription.segments.map(
-      ({ start, end, text }) => ({
-        start,
-        end,
-        text,
-      }),
-    );
-    const prompt = JSON.stringify(transcriptParts);
-
-    const streamResult = await this.streamClaims(prompt);
-    if (isFailure(streamResult)) {
-      const failure = streamResult;
-      return failure;
-    }
-
-    // const { stream, sendChunk, closeStream } = createStreamController(
-    //   this.signal,
-    // );
 
     let index = 0;
-    for await (const claim of streamResult) {
+    for await (const claim of claimsResult) {
       const newClaim: Claim = {
         id: uuidv4(),
         index,
         ...claim,
       };
+
       yield newClaim;
-      // await sendChunk(newClaim);
 
       try {
         await claimRepo.create(factCheckSessionId, newClaim);
@@ -88,17 +69,11 @@ export default class ClaimService {
           code: ErrorCode.CLAIMS_CREATE_FAILED,
           message: 'Failed to create claim on repository',
         };
-        // await sendChunk(failure);
         console.error(error, failure);
         yield failure;
       }
       index++;
     }
-
-    // closeStream();
-
-    // TODO: stream -> asyncIterable 변경
-    // return stream;
   }
 
   private async streamClaims(

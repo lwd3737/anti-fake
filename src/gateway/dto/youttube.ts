@@ -37,3 +37,5 @@ export interface SearchYoutubeVideosDto {
     };
   }[];
 }
+
+// export type YoutubeVideoTranscriptResponseDto
