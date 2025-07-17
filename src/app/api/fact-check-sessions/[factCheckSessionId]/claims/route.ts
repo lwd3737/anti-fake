@@ -72,14 +72,13 @@ export async function POST(
   }
 
   return streamingResponse(async ({ send, close }) => {
-    const transcriptResult =
-      await new YoutubeService().generateTranscriptFromVideo(
-        contentId,
-        req.signal,
-      );
+    const transcriptResult = await new YoutubeService().getTranscript(
+      contentId,
+    );
     if (isFailure(transcriptResult)) {
       const failure = transcriptResult;
       send(failure);
+      close();
       return;
     }
 

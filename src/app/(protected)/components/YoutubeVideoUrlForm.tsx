@@ -16,8 +16,7 @@ export default function YoutubeVideoUrlForm({ user }: { user: User }) {
       (url.host !== 'www.youtube.com' || url.pathname !== '/watch',
       !url.searchParams.get('v'))
     ) {
-      alert('유튜브 URL 형식이 아닙니다. 다시 입력해주세요.');
-      return;
+      throw new Error('유튜브 URL 형식이 아닙니다. 다시 입력해주세요.');
     }
 
     const videoId = url.searchParams.get('v');

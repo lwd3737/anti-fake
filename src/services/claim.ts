@@ -10,16 +10,13 @@ import claimRepo from '@/repositories/claim';
 import { isFailure, Result } from '@/result';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { Failure } from '@/gateway/error/reponse-error-handler';
-import Youtube from '@/libs/youtube';
-import YoutubeService from './youtube';
 import { YoutubeVideoTranscript } from '@/models/youtube';
 
 const ClaimSchema = z.object({
-  content: z
+  content: z.string().describe('검증 가능한 주장의 핵심 내용'),
+  context: z
     .string()
-    .describe(
-      '검증 가능한 주장과 그 맥락을 포함한 문장들. 주장 자체뿐만 아니라 주장을 이해하는데 필요한 문맥도 함께 포함합니다',
-    ),
+    .describe('주장을 이해하기 위한 맥락 정보 (주제, 배경, 관련 상황 등)'),
   detectionReason: z
     .string()
     .describe(
@@ -43,6 +40,7 @@ export default class ClaimService {
     transcript: YoutubeVideoTranscript,
     factCheckSessionId: string,
   ): AsyncIterable<Result<Claim>> {
+    console.log('segments', transcript.segments);
     const prompt = JSON.stringify(transcript.segments);
 
     const claimsResult = await this.streamClaims(prompt);

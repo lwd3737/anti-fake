@@ -34,16 +34,16 @@ enum UserRole {
 }
 
 model YoutubeVideo {
-  id                String   @id // youtube video id
-  title             String
-  channelId         String   @unique
-  channelTitle      String
-  thumbnailUrl      String
-  transcript        String?
-  transcriptSummary String?
-  duration          Int?
-  publishedAt       DateTime
-  updatedAt         DateTime @updatedAt
+  id                 String   @id // youtube video id
+  title              String
+  channelId          String   @unique
+  channelTitle       String
+  thumbnailUrl       String
+  transcript         String
+  transcriptMetadata Json
+  transcriptSummary  String
+  publishedAt        DateTime
+  updatedAt          DateTime @updatedAt
 }
 
 enum ContentType {
@@ -70,6 +70,7 @@ model Claim {
   faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)
   index              Int
   content            String
+  context            String
   detectionReason    String
   metadata           Json?
   createdAt          DateTime         @default(now())

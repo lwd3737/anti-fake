@@ -1,6 +1,6 @@
-import youtubeVideoMapper from '@/mappers/youtube';
+import { youtubeVideoMapper } from '@/mappers/youtube';
 import prisma from './prisma';
-import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
+import { YoutubeVideo } from '@/models/youtube';
 
 const youtubeRepo = {
   async findVideos(ids: string[]): Promise<YoutubeVideo[]> {
@@ -12,7 +12,7 @@ const youtubeRepo = {
     return found.map(youtubeVideoMapper.fromPersistence);
   },
 
-  async findVideoById(id: string): Promise<YoutubeVideo | null> {
+  async findVideoById(id: string): Promise<Required<YoutubeVideo> | null> {
     const found = await prisma.youtubeVideo.findUnique({
       where: {
         id,
@@ -21,50 +21,20 @@ const youtubeRepo = {
     return found ? youtubeVideoMapper.fromPersistence(found) : null;
   },
 
-  async createVideo({
-    id,
-    title,
-    channelId,
-    channelTitle,
-    thumbnailUrl,
-    publishedAt,
-  }: YoutubeVideo): Promise<YoutubeVideo> {
+  async createVideo(video: Required<YoutubeVideo>): Promise<YoutubeVideo> {
+    const { transcript, transcriptSummary, ...rest } = video;
     const created = await prisma.youtubeVideo.create({
       data: {
-        id,
-        title,
-        channelId,
-        channelTitle,
-        thumbnailUrl,
-        publishedAt,
+        ...rest,
+        transcriptMetadata: {
+          duration: transcript.duration,
+          segments: transcript.segments,
+        },
+        transcript: transcript.text,
+        transcriptSummary,
       },
     });
     return youtubeVideoMapper.fromPersistence(created);
-  },
-
-  async updateTranscript(
-    videoId: string,
-    transcript: YoutubeVideoTranscript,
-  ): Promise<void> {
-    await prisma.youtubeVideo.update({
-      where: { id: videoId },
-      data: {
-        transcript: transcript.text,
-        duration: transcript.duration,
-      },
-    });
-  },
-
-  async updateTranscriptSummary(
-    videoId: string,
-    summary: string,
-  ): Promise<void> {
-    await prisma.youtubeVideo.update({
-      where: { id: videoId },
-      data: {
-        transcriptSummary: summary,
-      },
-    });
   },
 };
 

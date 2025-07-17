@@ -60,7 +60,7 @@ export default function FactCheckItemCard({
       className={`flex flex-col flex-1 gap-y-4 bg-white shadow-sm p-6 rounded-sm ${stateStyle}`}
       onClick={handleClick}
     >
-      <div className="flex justify-between items-start gap-x-10">
+      <div className="flex justify-between items-start gap-x-2">
         <div className="flex flex-1 items-start gap-x-2">
           {status === VerificationStatus.LOADING ? (
             <LoadingSpinner className="mt-1" width={18} height={18} />
@@ -73,11 +73,21 @@ export default function FactCheckItemCard({
               height={18}
             />
           )}
-          <p className="px-3 font-medium text-lg">
-            {claim.index + 1}. {'"'}
-            {claim.content}
-            {'"'}
-          </p>
+          <div className="flex flex-col gap-y-1">
+            <p className="px-3 font-medium text-lg">
+              {claim.index + 1}. {'"'}
+              {claim.content}
+              {'"'}
+            </p>
+            <div className="flex flex-col gap-y-1 px-3">
+              <p className="font-semibold text-gray-500 text-sm">
+                💬 맥락 요약
+              </p>
+              <p className="px-4 font-medium text-gray-500 text-sm">
+                {claim.context}
+              </p>
+            </div>
+          </div>
         </div>
         <CloseButton onClick={onRemove} />
       </div>

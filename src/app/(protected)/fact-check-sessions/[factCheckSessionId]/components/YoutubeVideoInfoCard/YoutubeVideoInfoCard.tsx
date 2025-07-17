@@ -2,28 +2,20 @@ import { formatDate } from '@/utils/date';
 import Image from 'next/image';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
-import YoutubeService from '@/services/youtube';
-import { isFailure } from '@/result';
-import { Suspense } from 'react';
 import TranscriptSummary from './components/TranscriptSummary';
+import { YoutubeVideo } from '@/models/youtube';
 
 interface Props {
-  videoId: string;
+  video: Required<YoutubeVideo>;
   className?: string;
 }
 
 export default async function YoutubeVideoInfoCard({
-  videoId,
+  video,
   className,
 }: Props) {
-  const videoResult = await new YoutubeService().getOrCreateVideo(videoId);
-  if (isFailure(videoResult)) {
-    const error = videoResult;
-    console.debug(error);
-    throw new Error(error.message);
-  }
-
-  const { thumbnailUrl, title, channelTitle, publishedAt } = videoResult!;
+  const { thumbnailUrl, title, channelTitle, transcriptSummary, publishedAt } =
+    video;
 
   return (
     <div className={` bg-white shadow-sm p-6 rounded-sm ${className}`}>
@@ -32,7 +24,7 @@ export default async function YoutubeVideoInfoCard({
           url={thumbnailUrl}
           width={120}
           height={120}
-          videoId={videoId}
+          videoId={video.id}
         />
 
         <div className="flex-1">
@@ -64,10 +56,8 @@ export default async function YoutubeVideoInfoCard({
           </div>
         </div>
       </div>
-      <div className="bg-gray-50 mt-4 p-4 border border-gray-100 rounded-sm">
-        <Suspense fallback={<div className="text-sm">요약 중...</div>}>
-          <TranscriptSummary videoId={videoId} />
-        </Suspense>
+      <div className="bg-gray-50 mt-4 p-4 rounded-lg">
+        <TranscriptSummary videoId={video.id} summary={transcriptSummary} />
       </div>
     </div>
   );

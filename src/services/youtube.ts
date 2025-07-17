@@ -1,36 +1,47 @@
 import Youtube from '@/libs/youtube';
 import { isFailure, Result } from '@/result';
 import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
-import youtubeVideoMapper from '@/mappers/youtube';
+import { youtubeVideoMapper } from '@/mappers/youtube';
 import youtubeRepo from '@/repositories/youtube';
 import { ErrorCode } from '@/gateway/error/error-code';
-import { generateText, streamObject, streamText } from 'ai';
+import { generateText } from 'ai';
 import { AIModel, openai } from '@/libs/ai';
 
 export default class YoutubeService {
-  public async getOrCreateVideo(id: string): Promise<Result<YoutubeVideo>> {
+  public async getOrCreateVideo(
+    id: string,
+  ): Promise<Result<Required<YoutubeVideo>>> {
     const found = await youtubeRepo.findVideoById(id);
-    if (found) return found;
+    if (found) return found as Required<YoutubeVideo>;
 
     const youtube = new Youtube();
     const videoResult = await youtube.getVideo(id);
     if (isFailure(videoResult)) return videoResult;
 
-    const dto = videoResult;
-    if (!dto)
+    const video = videoResult;
+    if (!video)
       return {
         code: ErrorCode.YOUTUBE_VIDEO_NOT_FOUND,
         message: `Youtube video not found from google server`,
       };
 
-    const newVideo = youtubeVideoMapper.fromDto(dto);
-    return await youtubeRepo.createVideo(newVideo);
+    const transcriptResult = await this.generateTranscriptFromVideo(id);
+    if (isFailure(transcriptResult)) return transcriptResult;
+
+    const transcript = transcriptResult;
+    const dto = youtubeVideoMapper.fromDto(video);
+
+    return (await youtubeRepo.createVideo({
+      ...dto,
+      transcript: transcript.original,
+      transcriptSummary: transcript.summary,
+    })) as Required<YoutubeVideo>;
   }
 
-  public async generateTranscriptFromVideo(
+  private async generateTranscriptFromVideo(
     videoId: string,
-    signal: AbortSignal,
-  ): Promise<Result<YoutubeVideoTranscript>> {
+    signal?: AbortSignal,
+  ): Promise<Result<{ original: YoutubeVideoTranscript; summary: string }>> {
     const transcriptResult = await Youtube.generateTranscript(videoId, signal);
     if (isFailure(transcriptResult)) {
       const failure = transcriptResult;
@@ -39,46 +50,12 @@ export default class YoutubeService {
 
     const transcript = transcriptResult;
 
-    try {
-      await youtubeRepo.updateTranscript(videoId, transcript);
-    } catch (error) {
-      return {
-        code: ErrorCode.YOUTUBE_TRANSCRIPT_UPDATE_FAILED,
-        message: `Failed to update transcript on repository`,
-        context: {
-          videoId,
-          error,
-        },
-      };
-    }
-
-    return transcript;
-  }
-
-  public async summarizeTranscript(videoId: string): Promise<Result<string>> {
-    const video = await youtubeRepo.findVideoById(videoId);
-    if (!video) {
-      return {
-        code: ErrorCode.YOUTUBE_VIDEO_NOT_FOUND,
-        message: `Youtube video not found from repository`,
-      };
-    }
-
-    if (video.transcriptSummary) return video.transcriptSummary;
-
-    if (!video.transcript) {
-      return {
-        code: ErrorCode.YOUTUBE_TRANSCRIPT_NOT_FOUND,
-        message: `Youtube video transcript not found from repository`,
-      };
-    }
-
     let summary: string;
     try {
       const summaryResult = await generateText({
         model: openai(AIModel.GPT_4O),
         system: `유튜브 영상 자막을 요약하세요.`,
-        prompt: video.transcript,
+        prompt: transcript.text,
         temperature: 0,
       });
       summary = summaryResult.text;
@@ -93,18 +70,19 @@ export default class YoutubeService {
       };
     }
 
-    try {
-      await youtubeRepo.updateTranscriptSummary(videoId, summary);
-      return summary;
-    } catch (error) {
+    return { original: transcript, summary: summary };
+  }
+
+  public async getTranscript(
+    videoId: string,
+  ): Promise<Result<YoutubeVideoTranscript>> {
+    const found = await youtubeRepo.findVideoById(videoId);
+    if (!found)
       return {
-        code: ErrorCode.YOUTUBE_TRANSCRIPT_SUMMARY_UPDATE_FAILED,
-        message: `Failed to update transcript summary on repository`,
-        context: {
-          videoId,
-          error,
-        },
+        code: ErrorCode.YOUTUBE_VIDEO_NOT_FOUND,
+        message: `Youtube video not found`,
       };
-    }
+
+    return found.transcript;
   }
 }

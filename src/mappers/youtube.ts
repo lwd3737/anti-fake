@@ -1,17 +1,18 @@
-import { YoutubeVideo } from '@/models/youtube';
+import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
 import { YoutubeVideo as PrismaYoutubeVideo } from '/prisma/generated/prisma';
 import { YoutubeVideoDto } from '@/gateway/dto/youttube';
 
-const youtubeVideoMapper = {
-  fromPersistence(record: PrismaYoutubeVideo): YoutubeVideo {
+export const youtubeVideoMapper = {
+  fromPersistence(record: PrismaYoutubeVideo): Required<YoutubeVideo> {
+    const transcript = youtubeVideoTranscriptMapper.fromPersistence(record);
     return {
       id: record.id,
       title: record.title,
       channelId: record.channelId,
       channelTitle: record.channelTitle,
       thumbnailUrl: record.thumbnailUrl,
-      transcript: record.transcript ?? undefined,
-      transcriptSummary: record.transcriptSummary ?? undefined,
+      transcript,
+      transcriptSummary: record.transcriptSummary,
       publishedAt: record.publishedAt,
     };
   },
@@ -28,4 +29,20 @@ const youtubeVideoMapper = {
   },
 };
 
-export default youtubeVideoMapper;
+export const youtubeVideoTranscriptMapper = {
+  fromPersistence(record: PrismaYoutubeVideo): YoutubeVideoTranscript {
+    const { duration, segments } = record.transcriptMetadata as unknown as {
+      duration: number;
+      segments: {
+        start: number;
+        end: number;
+        text: string;
+      }[];
+    };
+    return {
+      text: record.transcript,
+      duration,
+      segments,
+    };
+  },
+};

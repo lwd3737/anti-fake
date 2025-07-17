@@ -8,6 +8,8 @@ import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
 import { ContentType } from '@/models/fact-check-session';
 import { generateServerUrl } from '@/utils/url';
+import YoutubeService from '@/services/youtube';
+import { isFailure } from '@/result';
 
 export default async function FactCheckSessionPage({
   params: { factCheckSessionId },
@@ -23,20 +25,27 @@ export default async function FactCheckSessionPage({
     console.debug('Fact check session not found');
     return redirect(generateServerUrl(PageRoutes.HOME));
   }
-
   if (factCheckSession.contentType !== ContentType.YOUTUBE_VIDEO) {
     throw new Error('Fact check session is not a youtube video');
   }
+
+  const videoResult = await new YoutubeService().getOrCreateVideo(
+    factCheckSession.contentId,
+  );
+  if (isFailure(videoResult)) {
+    const error = videoResult;
+    console.debug('Youtube video get or create failed', error);
+    throw new Error(error.message);
+  }
+
+  const video = videoResult;
 
   // TODO: card 공통 컴포넌트 추출
   return (
     <FactCheckSessionProviders factCheckSession={factCheckSession}>
       <div className="flex flex-col h-full">
         <main className="flex flex-col flex-[1_1_0px] gap-y-8 mb-16 py-8 overflow-y-auto">
-          <YoutubeVideoInfoCard
-            className="mx-12"
-            videoId={factCheckSession.contentId}
-          />
+          <YoutubeVideoInfoCard className="mx-12" video={video} />
           <FactCheckList
             className="mx-12"
             factCheckSession={factCheckSession}
