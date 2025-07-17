@@ -7,30 +7,30 @@ import { PageRoutes } from '@/constants/routes';
 import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
 import { ContentType } from '@/models/fact-check-session';
-import { generateServerUrl } from '@/utils/url';
 import YoutubeService from '@/services/youtube';
 import { isFailure } from '@/result';
+import FactCheckSessionService from '@/services/fact-check-session';
 
 export default async function FactCheckSessionPage({
   params: { factCheckSessionId },
 }: {
   params: { factCheckSessionId: string };
 }) {
-  await guardServer();
+  const { user } = await guardServer();
 
-  const factCheckSession =
-    await factCheckSessionRepo.findById(factCheckSessionId);
-  if (!factCheckSession) {
-    // TODO: 404 페이지 추가
-    console.debug('Fact check session not found');
-    return redirect(generateServerUrl(PageRoutes.HOME));
-  }
-  if (factCheckSession.contentType !== ContentType.YOUTUBE_VIDEO) {
-    throw new Error('Fact check session is not a youtube video');
+  const sessionResult = await new FactCheckSessionService().getOwn({
+    factCheckSessionId,
+    userId: user.id,
+  });
+  if (isFailure(sessionResult)) {
+    const error = sessionResult;
+    console.debug('Fact check session get failed', error);
+    throw new Error(error.message);
   }
 
+  const session = sessionResult;
   const videoResult = await new YoutubeService().getOrCreateVideo(
-    factCheckSession.contentId,
+    session.contentId,
   );
   if (isFailure(videoResult)) {
     const error = videoResult;
@@ -42,14 +42,11 @@ export default async function FactCheckSessionPage({
 
   // TODO: card 공통 컴포넌트 추출
   return (
-    <FactCheckSessionProviders factCheckSession={factCheckSession}>
+    <FactCheckSessionProviders factCheckSession={session}>
       <div className="flex flex-col h-full">
         <main className="flex flex-col flex-[1_1_0px] gap-y-8 mb-16 py-8 overflow-y-auto">
           <YoutubeVideoInfoCard className="mx-12" video={video} />
-          <FactCheckList
-            className="mx-12"
-            factCheckSession={factCheckSession}
-          />
+          <FactCheckList className="mx-12" factCheckSession={session} />
         </main>
 
         <footer className="right-0 bottom-0 left-0 z-200 fixed h-16">

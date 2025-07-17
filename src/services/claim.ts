@@ -40,7 +40,6 @@ export default class ClaimService {
     transcript: YoutubeVideoTranscript,
     factCheckSessionId: string,
   ): AsyncIterable<Result<Claim>> {
-    console.log('segments', transcript.segments);
     const prompt = JSON.stringify(transcript.segments);
 
     const claimsResult = await this.streamClaims(prompt);
