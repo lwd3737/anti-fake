@@ -4,16 +4,8 @@ import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
 import youtubeVideoMapper from '@/mappers/youtube';
 import youtubeRepo from '@/repositories/youtube';
 import { ErrorCode } from '@/gateway/error/error-code';
-import { streamObject } from 'ai';
+import { generateText, streamObject, streamText } from 'ai';
 import { AIModel, openai } from '@/libs/ai';
-import { z } from 'zod';
-import { Failure } from '@/gateway/error/reponse-error-handler';
-
-const ClaimSchema = z.object({
-  summary: z.string().describe('유튜브 영상 자막을 요약한 내용'),
-});
-
-type TClaimSchema = z.infer<typeof ClaimSchema>;
 
 export default class YoutubeService {
   public async getOrCreateVideo(id: string): Promise<Result<YoutubeVideo>> {
@@ -72,6 +64,8 @@ export default class YoutubeService {
       };
     }
 
+    if (video.transcriptSummary) return video.transcriptSummary;
+
     if (!video.transcript) {
       return {
         code: ErrorCode.YOUTUBE_TRANSCRIPT_NOT_FOUND,
@@ -81,16 +75,13 @@ export default class YoutubeService {
 
     let summary: string;
     try {
-      const summaryResult = streamObject({
+      const summaryResult = await generateText({
         model: openai(AIModel.GPT_4O),
         system: `유튜브 영상 자막을 요약하세요.`,
         prompt: video.transcript,
-        schema: ClaimSchema,
-        schemaName: 'YoutubeVideoTranscriptSummary',
-        schemaDescription: '유튜브 영상 자막을 요약한 내용',
         temperature: 0,
       });
-      summary = (await summaryResult.object).summary;
+      summary = summaryResult.text;
     } catch (error) {
       return {
         code: ErrorCode.YOUTUBE_TRANSCRIPT_SUMMARY_GENERATE_FAILED,

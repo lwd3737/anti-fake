@@ -18,7 +18,6 @@ const youtubeRepo = {
         id,
       },
     });
-
     return found ? youtubeVideoMapper.fromPersistence(found) : null;
   },
 
@@ -51,10 +50,7 @@ const youtubeRepo = {
       where: { id: videoId },
       data: {
         transcript: transcript.text,
-        transcriptMetadata: {
-          duration: transcript.duration,
-          segments: transcript.segments,
-        },
+        duration: transcript.duration,
       },
     });
   },

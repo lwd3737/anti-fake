@@ -10,6 +10,8 @@ const youtubeVideoMapper = {
       channelId: record.channelId,
       channelTitle: record.channelTitle,
       thumbnailUrl: record.thumbnailUrl,
+      transcript: record.transcript ?? undefined,
+      transcriptSummary: record.transcriptSummary ?? undefined,
       publishedAt: record.publishedAt,
     };
   },

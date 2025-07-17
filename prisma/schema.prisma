@@ -34,16 +34,16 @@ enum UserRole {
 }
 
 model YoutubeVideo {
-  id                 String   @id // youtube video id
-  title              String
-  channelId          String   @unique
-  channelTitle       String
-  thumbnailUrl       String
-  transcript         String?
-  transcriptMetadata Json?
-  transcriptSummary  String?
-  publishedAt        DateTime
-  updatedAt          DateTime @updatedAt
+  id                String   @id // youtube video id
+  title             String
+  channelId         String   @unique
+  channelTitle      String
+  thumbnailUrl      String
+  transcript        String?
+  transcriptSummary String?
+  duration          Int?
+  publishedAt       DateTime
+  updatedAt         DateTime @updatedAt
 }
 
 enum ContentType {

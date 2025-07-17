@@ -5,6 +5,7 @@ export interface YoutubeVideo {
   channelTitle: string;
   thumbnailUrl: string;
   transcript?: string;
+  transcriptSummary?: string;
   publishedAt: Date;
 }
 

@@ -183,6 +183,10 @@ export default class Youtube {
       return {
         code: ErrorCode.YOUTUBE_VIDEO_GET_FAILED,
         message: `Youtube video get failed from google server`,
+        context: {
+          videoId: id,
+          error,
+        },
       };
     }
   }
