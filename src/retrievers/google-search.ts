@@ -117,10 +117,7 @@ export default class GoogleSearch {
       uri: web!.uri!,
       title: web!.title!,
     }));
-    // .filter<GroundingSource>(
-    // 	(citiation): citiation is GroundingSource =>
-    // 		!!citiation?.title && !!citiation.uri,
-    // ) ?? [];
+
     const citations = await Promise.all(sources.map(this.getCitation));
     const contents = groundingSupports.map((support) => {
       const { segment, groundingChunkIndices } = support;
@@ -131,7 +128,6 @@ export default class GoogleSearch {
         citations: groundingChunkIndices.map((idx) => citations[idx]),
       };
     });
-    // .filter((summary): summary is string => !!summary) ?? [];
 
     const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
       generatedContent.response.usageMetadata ?? {};
@@ -153,46 +149,67 @@ export default class GoogleSearch {
     source: GroundingSource,
   ): Promise<WebSearchCitation> {
     const { uri, title: domain } = source;
-    const res = await fetch(uri, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-      },
-    });
 
-    const html = await res.text();
+    try {
+      const res = await fetch(uri, {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        },
+        redirect: 'follow',
+        signal: this.signal,
+        // @ts-ignore - undici specific option
+        maxRedirections: 5,
+      });
 
-    const $ = cheerio.load(html);
-    const head = $('head');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
 
-    const title =
-      head.find('meta[property="og:title"]').attr('content') ??
-      head.find('title').text();
-    const description =
-      head.find('meta[property="og:description"]').attr('content') ??
-      head.find('meta[name=description]').attr('content');
-    const image =
-      head.find('link[rel="icon"]').attr('href') ??
-      head.find('link[rel="icons"]').attr('href');
-    const siteName =
-      head.find('meta[property="og:site_name"]').attr('content') ??
-      head.find('meta[name="application-name"]').attr('content') ??
-      domain;
-    const url =
-      head.find('meta[property="og:url"]').attr('content') ??
-      `https://${domain}`;
+      const html = await res.text();
 
-    const resolvedImage = image?.startsWith('/')
-      ? `${new URL(url).origin}${image}`
-      : image;
+      const $ = cheerio.load(html);
+      const head = $('head');
 
-    return {
-      title,
-      description,
-      imageUrl: resolvedImage ? decodeURIComponent(resolvedImage) : undefined,
-      siteName,
-      url: decodeURIComponent(url),
-    };
+      const title =
+        head.find('meta[property="og:title"]').attr('content') ??
+        head.find('title').text();
+      const description =
+        head.find('meta[property="og:description"]').attr('content') ??
+        head.find('meta[name=description]').attr('content');
+      const image =
+        head.find('link[rel="icon"]').attr('href') ??
+        head.find('link[rel="icons"]').attr('href');
+      const siteName =
+        head.find('meta[property="og:site_name"]').attr('content') ??
+        head.find('meta[name="application-name"]').attr('content') ??
+        domain;
+      const url =
+        head.find('meta[property="og:url"]').attr('content') ??
+        `https://${domain}`;
+
+      const resolvedImage = image?.startsWith('/')
+        ? `${new URL(url).origin}${image}`
+        : image;
+
+      return {
+        title,
+        description,
+        imageUrl: resolvedImage ? decodeURIComponent(resolvedImage) : undefined,
+        siteName,
+        url: decodeURIComponent(url),
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch citation for ${uri}:`, error);
+      // Return fallback citation with basic info
+      return {
+        title: domain,
+        description: undefined,
+        imageUrl: undefined,
+        siteName: domain,
+        url: uri,
+      };
+    }
   }
 
   private parseJsonContent(content: string) {

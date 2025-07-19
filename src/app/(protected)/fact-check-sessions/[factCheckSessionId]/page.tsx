@@ -1,12 +1,8 @@
 import FactCheckList from './components/FactCheckList';
 import ControlHorizontalBar from './components/ControlHorizontalBar';
 import YoutubeVideoInfoCard from './components/YoutubeVideoInfoCard/YoutubeVideoInfoCard';
-import factCheckSessionRepo from '@/repositories/fact-check-session';
-import { redirect } from 'next/navigation';
-import { PageRoutes } from '@/constants/routes';
 import FactCheckSessionProviders from './providers/providers';
 import { guardServer } from '@/gateway/auth/guard-server';
-import { ContentType } from '@/models/fact-check-session';
 import YoutubeService from '@/services/youtube';
 import { isFailure } from '@/result';
 import FactCheckSessionService from '@/services/fact-check-session';

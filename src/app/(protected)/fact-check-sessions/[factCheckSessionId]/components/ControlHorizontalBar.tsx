@@ -1,8 +1,9 @@
 'use client';
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useClaim } from '../providers/ClaimProvider';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import Button from '@/components/Button';
+import { ClaimVerification } from '@/models/claim-verification';
 
 interface Props {
   className?: string;
@@ -21,12 +22,25 @@ export default function ControlHorizontalBar({ className }: Props) {
     stop: stopVerification,
   } = useClaimVerification();
 
+  const verificationsByClaimId = useMemo(
+    () =>
+      verifications.reduce(
+        (result, verification) => {
+          result[verification.claimId] = verification;
+          return result;
+        },
+        {} as Record<string, ClaimVerification>,
+      ),
+    [verifications],
+  );
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
       if (isAllItemsSelected) {
-        const claimIds = claims.map((claim) => claim.id);
+        const claimIds = claims
+          .filter((claim) => !verificationsByClaimId[claim.id])
+          .map((claim) => claim.id);
         addClaimsToVerifyBulk(claimIds);
       } else {
         resetClaimsToVerify();
