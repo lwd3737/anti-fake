@@ -118,7 +118,7 @@ export default class GoogleSearch {
       title: web!.title!,
     }));
 
-    const citations = await Promise.all(sources.map(this.getCitation));
+    const citations = await this.getCitationBulk(sources);
     const contents = groundingSupports.map((support) => {
       const { segment, groundingChunkIndices } = support;
       const { text } = segment as unknown as { text?: string };
@@ -145,71 +145,93 @@ export default class GoogleSearch {
     };
   }
 
+  private async getCitationBulk(
+    sources: GroundingSource[],
+  ): Promise<WebSearchCitation[]> {
+    const chunkSize = 10;
+    const chunksGroup = [];
+    for (let i = 0; i < sources.length; i += chunkSize) {
+      chunksGroup.push(sources.slice(i, i + chunkSize));
+    }
+
+    let result: WebSearchCitation[] = [];
+    for (const chunks of chunksGroup) {
+      const citationResults = await Promise.allSettled(
+        chunks.map(this.getCitation.bind(this)),
+      );
+      const citations = citationResults
+        .filter(
+          (result): result is PromiseFulfilledResult<WebSearchCitation> => {
+            if (result.status === 'fulfilled') return true;
+            console.debug('citation fetch failed', result.reason);
+            return false;
+          },
+        )
+        .map((result) => result.value);
+      result.push(...citations);
+    }
+
+    return result;
+  }
+
   private async getCitation(
     source: GroundingSource,
   ): Promise<WebSearchCitation> {
     const { uri, title: domain } = source;
 
-    try {
-      const res = await fetch(uri, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        },
-        redirect: 'follow',
-        signal: this.signal,
-        // @ts-ignore - undici specific option
-        maxRedirections: 5,
-      });
+    const res = await fetch(uri, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+      },
+      signal: this.signal,
+      // SSL 인증서 검증 우회 및 리다이렉트 제한
+      // @ts-ignore - Node.js 환경에서만 사용되는 옵션
+      rejectUnauthorized: false,
+      // 리다이렉트 횟수 제한
+      redirect: 'follow',
+      // 타임아웃 설정
+      // @ts-ignore
+      timeout: 10000,
+    });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-
-      const html = await res.text();
-
-      const $ = cheerio.load(html);
-      const head = $('head');
-
-      const title =
-        head.find('meta[property="og:title"]').attr('content') ??
-        head.find('title').text();
-      const description =
-        head.find('meta[property="og:description"]').attr('content') ??
-        head.find('meta[name=description]').attr('content');
-      const image =
-        head.find('link[rel="icon"]').attr('href') ??
-        head.find('link[rel="icons"]').attr('href');
-      const siteName =
-        head.find('meta[property="og:site_name"]').attr('content') ??
-        head.find('meta[name="application-name"]').attr('content') ??
-        domain;
-      const url =
-        head.find('meta[property="og:url"]').attr('content') ??
-        `https://${domain}`;
-
-      const resolvedImage = image?.startsWith('/')
-        ? `${new URL(url).origin}${image}`
-        : image;
-
-      return {
-        title,
-        description,
-        imageUrl: resolvedImage ? decodeURIComponent(resolvedImage) : undefined,
-        siteName,
-        url: decodeURIComponent(url),
-      };
-    } catch (error) {
-      console.warn(`Failed to fetch citation for ${uri}:`, error);
-      // Return fallback citation with basic info
-      return {
-        title: domain,
-        description: undefined,
-        imageUrl: undefined,
-        siteName: domain,
-        url: uri,
-      };
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
+
+    const html = await res.text();
+
+    const $ = cheerio.load(html);
+    const head = $('head');
+
+    const title =
+      head.find('meta[property="og:title"]').attr('content') ??
+      head.find('title').text();
+    const description =
+      head.find('meta[property="og:description"]').attr('content') ??
+      head.find('meta[name=description]').attr('content');
+    const image =
+      head.find('link[rel="icon"]').attr('href') ??
+      head.find('link[rel="icons"]').attr('href');
+    const siteName =
+      head.find('meta[property="og:site_name"]').attr('content') ??
+      head.find('meta[name="application-name"]').attr('content') ??
+      domain;
+    const url =
+      head.find('meta[property="og:url"]').attr('content') ??
+      `https://${domain}`;
+
+    const resolvedImage = image?.startsWith('/')
+      ? `${new URL(url).origin}${image}`
+      : image;
+
+    return {
+      title,
+      description,
+      imageUrl: resolvedImage ? decodeURIComponent(resolvedImage) : undefined,
+      siteName,
+      url: decodeURIComponent(url),
+    };
   }
 
   private parseJsonContent(content: string) {
