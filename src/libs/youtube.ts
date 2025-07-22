@@ -21,23 +21,27 @@ import {
 import { openai } from './ai';
 import { readFile } from 'fs/promises';
 
-interface WhisperTranscription {
-  task: string;
-  language: string;
-  text: string;
-  duration: number;
-  segments: {
-    id: string;
-    start: number;
-    end: number;
-    text: string;
-    tokens: number[];
-    temperature: number;
-    avg_logprob: number;
-    compression_ratio: number;
-    no_speech_prob: number;
-  }[];
-}
+// interface WhisperTranscription {
+//   task: string;
+//   language: string;
+//   text: string;
+//   duration: number;
+//   segments: {
+//     id: string;
+//     start: number;
+//     end: number;
+//     text: string;
+//     tokens: number[];
+//     temperature: number;
+//     avg_logprob: number;
+//     compression_ratio: number;
+//     no_speech_prob: number;
+//   }[];
+// }
+
+export type GenerateTranscriptErrorCode =
+  | ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
+  | ErrorCode.OPENAI_TRANSCRIPTION_FAILED;
 
 export default class Youtube {
   private youtube: youtube_v3.Youtube;
@@ -45,12 +49,13 @@ export default class Youtube {
   public static async generateTranscript(
     videoId: string,
     signal?: AbortSignal,
-  ): Promise<Result<YoutubeVideoTranscript>> {
+  ): Promise<Result<YoutubeVideoTranscript, GenerateTranscriptErrorCode>> {
     const ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg');
     if (!fs.existsSync(ffmpegPath)) {
-      throw new Error(
-        'ffmpeg binary not found. Please run npm run init first.',
-      );
+      return {
+        code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
+        message: 'ffmpeg binary not found. Please run npm run init first.',
+      };
     }
 
     const url = `https://www.youtube.com/watch?v=${videoId}`;
@@ -218,14 +223,25 @@ export default class Youtube {
     });
   }
 
-  public async getVideo(id: string): Promise<Result<YoutubeVideoDto | null>> {
+  public async getVideo(
+    id: string,
+  ): Promise<
+    Result<YoutubeVideoDto | null, ErrorCode.YOUTUBE_VIDEO_GET_FAILED>
+  > {
     try {
       const res = await this.youtube.videos.list({
         part: ['id', 'snippet'],
         id: [id],
       });
       if (this.isFailed(res)) {
-        throw new Error(`Youtube video search is failed: ${res.statusText}`);
+        return {
+          code: ErrorCode.YOUTUBE_VIDEO_GET_FAILED,
+          message: `Youtube video get failed from google server`,
+          context: {
+            videoId: id,
+            error: res.statusText,
+          },
+        };
       }
 
       const video = res.data.items?.map((item) => {

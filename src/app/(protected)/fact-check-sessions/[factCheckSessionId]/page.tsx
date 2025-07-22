@@ -29,9 +29,10 @@ export default async function FactCheckSessionPage({
     session.contentId,
   );
   if (isFailure(videoResult)) {
-    const error = videoResult;
-    console.debug('Youtube video get or create failed', error);
-    throw new Error(error.message);
+    const failure = videoResult;
+    console.debug('Youtube video get or create failed');
+    // TODO: 에러 핸들링 추가
+    return 'Youtube video get or create failed';
   }
 
   const video = videoResult;

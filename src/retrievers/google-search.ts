@@ -202,7 +202,6 @@ export default class GoogleSearch {
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get('location');
       if (!location) throw new Error('location header not found');
-      console.log('redirecting to', location);
       return this.getCitation({ uri: location, title: domain });
     }
 
