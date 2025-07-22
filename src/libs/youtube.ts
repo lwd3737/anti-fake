@@ -12,7 +12,6 @@ import { ErrorCode } from '@/gateway/error/error-code';
 import YTDlpWrap from 'yt-dlp-wrap';
 import path from 'path';
 import fs from 'fs';
-import axios from 'axios';
 import os from 'os';
 import { YoutubeVideoTranscript } from '@/models/youtube';
 import {
