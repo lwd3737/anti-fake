@@ -199,6 +199,13 @@ export default class GoogleSearch {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
 
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) throw new Error('location header not found');
+      console.log('redirecting to', location);
+      return this.getCitation({ uri: location, title: domain });
+    }
+
     const html = await res.text();
 
     const $ = cheerio.load(html);

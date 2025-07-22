@@ -55,10 +55,6 @@ export default function ClaimProvider({
     },
   );
 
-  const isClaimLoading = useMemo(() => {
-    return items.length === 0 && isLoading;
-  }, [items, isLoading]);
-
   const isMountedRef = useRef(false);
 
   useEffect(
@@ -132,12 +128,12 @@ export default function ClaimProvider({
   const value: IClaimProvider = useMemo(
     () => ({
       items,
-      isLoading: isClaimLoading,
+      isLoading,
       stop: stopStreaming,
       remove,
       retry,
     }),
-    [items, isClaimLoading, remove, retry, stopStreaming],
+    [items, isLoading, remove, retry, stopStreaming],
   );
 
   return (

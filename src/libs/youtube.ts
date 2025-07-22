@@ -107,6 +107,7 @@ export default class Youtube {
 
       try {
         const transcription = JSON.parse(stdout) as WhisperTranscription;
+        console.log('transcription', transcription);
         const { text, duration, segments } = transcription;
 
         return {
