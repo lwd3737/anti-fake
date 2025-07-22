@@ -104,8 +104,8 @@ export default class GoogleSearch {
         contents: [],
         metadata: {
           tokenUsage: {
-            promptTokens: 0,
-            completionTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
             totalTokens: 0,
           },
           model: this.model.model,
@@ -136,8 +136,8 @@ export default class GoogleSearch {
       contents,
       metadata: {
         tokenUsage: {
-          promptTokens: promptTokenCount ?? 0,
-          completionTokens: candidatesTokenCount ?? 0,
+          inputTokens: promptTokenCount ?? 0,
+          outputTokens: candidatesTokenCount ?? 0,
           totalTokens: totalTokenCount ?? 0,
         },
         model: this.model.model,

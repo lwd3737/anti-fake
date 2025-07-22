@@ -15,6 +15,12 @@ import fs from 'fs';
 import axios from 'axios';
 import os from 'os';
 import { YoutubeVideoTranscript } from '@/models/youtube';
+import {
+  experimental_transcribe as transcribe,
+  NoContentGeneratedError,
+} from 'ai';
+import { openai } from './ai';
+import { readFile } from 'fs/promises';
 
 interface WhisperTranscription {
   task: string;
@@ -77,64 +83,134 @@ export default class Youtube {
     );
 
     try {
-      const { exec } = require('child_process');
-      const { promisify } = require('util');
-      const execAsync = promisify(exec);
-      const curlCommand = [
-        'curl',
-        '-X POST',
-        'https://api.openai.com/v1/audio/transcriptions',
-        '-H',
-        `"Authorization: Bearer ${loadConfig().openai.apiKey}"`,
-        '-H',
-        '"Content-Type: multipart/form-data"',
-        '-F',
-        `"file=@${tempFile}"`,
-        '-F',
-        '"model=whisper-1"',
-        '-F',
-        '"language=ko"',
-        '-F',
-        '"response_format=verbose_json"',
-        '-F',
-        '"temperature=0"',
-        // '--max-time',
-        // '120',
-      ].join(' ');
-
-      const { stdout, stderr } = await execAsync(curlCommand);
-      if (stderr) console.debug('Curl stderr:', stderr);
-
-      try {
-        const transcription = JSON.parse(stdout) as WhisperTranscription;
-        console.log('transcription', transcription);
-        const { text, duration, segments } = transcription;
-
-        return {
-          text,
-          duration,
-          segments: segments.map(({ text, start, end }) => ({
-            text,
-            start,
-            end,
-          })),
-        };
-      } catch (parseError) {
-        console.error('Failed to parse transcription:', parseError);
-        throw parseError;
-      }
     } catch (error) {
-      const message = 'Failed to transcribe audio';
-      console.error(message, error);
-
-      if (axios.isAxiosError(error)) console.error(error.response?.data);
-
-      return {
-        code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
-        message: error instanceof Error ? error.message : message,
-      };
+      if (NoContentGeneratedError.isInstance(error)) {
+        return {
+          code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
+          message: 'No transcript generated from ai',
+          context: error,
+        };
+      }
     }
+    const transcript = await transcribe({
+      model: openai.transcription('whisper-1'),
+      audio: await readFile(tempFile),
+    });
+    transcript.warnings.forEach((warning) => {
+      console.warn('warning', warning);
+    });
+
+    const { text, segments, durationInSeconds } = transcript;
+
+    return {
+      text,
+      duration: durationInSeconds ?? 0,
+      segments: segments.map(({ text, startSecond, endSecond }) => ({
+        text,
+        start: startSecond,
+        end: endSecond,
+      })),
+    };
   }
+
+  // public static async old__generateTranscript(
+  //   videoId: string,
+  //   signal?: AbortSignal,
+  // ): Promise<Result<YoutubeVideoTranscript>> {
+  //   const ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg');
+  //   if (!fs.existsSync(ffmpegPath)) {
+  //     throw new Error(
+  //       'ffmpeg binary not found. Please run npm run init first.',
+  //     );
+  //   }
+
+  //   const url = `https://www.youtube.com/watch?v=${videoId}`;
+  //   const ytDlp = new YTDlpWrap(path.join(process.cwd(), 'bin', 'yt-dlp'));
+
+  //   const tempDir = os.tmpdir();
+  //   const tempFile = path.join(tempDir, `${videoId}.mp3`);
+  //   fs.mkdirSync(tempDir, { recursive: true });
+
+  //   await ytDlp.execPromise(
+  //     [
+  //       url,
+  //       '-f',
+  //       'bestaudio',
+  //       '--extract-audio',
+  //       '--audio-format',
+  //       'mp3',
+  //       '--audio-quality',
+  //       '0',
+  //       '--no-playlist',
+  //       '--ffmpeg-location',
+  //       ffmpegPath,
+  //       '-o',
+  //       tempFile,
+  //     ],
+  //     {
+  //       signal,
+  //     },
+  //   );
+
+  //   try {
+  //     const { exec } = require('child_process');
+  //     const { promisify } = require('util');
+  //     const execAsync = promisify(exec);
+  //     const curlCommand = [
+  //       'curl',
+  //       '-X POST',
+  //       'https://api.openai.com/v1/audio/transcriptions',
+  //       '-H',
+  //       `"Authorization: Bearer ${loadConfig().openai.apiKey}"`,
+  //       '-H',
+  //       '"Content-Type: multipart/form-data"',
+  //       '-F',
+  //       `"file=@${tempFile}"`,
+  //       '-F',
+  //       '"model=whisper-1"',
+  //       '-F',
+  //       '"language=ko"',
+  //       '-F',
+  //       '"response_format=verbose_json"',
+  //       '-F',
+  //       '"temperature=0"',
+  //       // '--max-time',
+  //       // '120',
+  //     ].join(' ');
+
+  //     const { stdout, stderr } = await execAsync(curlCommand);
+  //     if (stderr) console.debug('Curl stderr:', stderr);
+
+  //     try {
+  //       const transcription = JSON.parse(stdout) as WhisperTranscription;
+  //       console.log('transcription', transcription);
+  //       const { text, duration, segments } = transcription;
+
+  //       return {
+  //         text,
+  //         duration,
+  //         segments: segments.map(({ text, start, end }) => ({
+  //           text,
+  //           start,
+  //           end,
+  //         })),
+  //       };
+  //     } catch (parseError) {
+  //       console.error('Failed to parse transcription:', parseError);
+  //       throw parseError;
+  //     }
+  //   } catch (error) {
+  //     const message = 'Failed to transcribe audio';
+  //     console.error(message, error);
+
+  //     if (axios.isAxiosError(error)) console.error(error.response?.data);
+
+  //     return {
+  //       code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
+  //       message: error instanceof Error ? error.message : message,
+  //     };
+  //   }
+  // }
 
   constructor() {
     this.youtube = google.youtube({

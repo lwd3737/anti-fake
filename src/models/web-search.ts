@@ -8,7 +8,7 @@ export interface WebSearchResponse {
 }
 
 export interface WebSearchMetadata {
-  tokenUsage: TokenUsage;
+  tokenUsage: LanguageModelUsage;
   model: string;
 }
 

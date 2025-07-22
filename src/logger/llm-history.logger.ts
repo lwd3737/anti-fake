@@ -15,7 +15,7 @@ interface UsageRecord {
 	prompt: string;
 	output: any;
 	context?: Record<string, any>;
-	tokenUsage: TokenUsage;
+	tokenUsage: LanguageModelUsage;
 	generationTime: number;
 	createdAt: string;
 }
