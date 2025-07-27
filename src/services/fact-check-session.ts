@@ -63,14 +63,23 @@ export default class FactCheckSessionService {
       const videoIds = sessions.map(({ contentId }) => contentId);
       const videos = await youtubeRepo.findVideos(videoIds);
 
-      return sessions.map(({ id, contentId, createdAt, _count }, idx) => ({
-        id,
-        contentId,
-        createdAt,
-        video: videos[idx],
-        claimCount: _count.claims,
-        verificationCount: _count.claimVerifications,
-      }));
+      return sessions
+        .map(({ id, contentId, createdAt, _count }, idx) => {
+          const video = videos[idx];
+          if (!video) {
+            return null;
+          }
+
+          return {
+            id,
+            contentId,
+            createdAt,
+            video: videos[idx],
+            claimCount: _count.claims,
+            verificationCount: _count.claimVerifications,
+          };
+        })
+        .filter((archive) => archive !== null);
     } catch (error) {
       return {
         code: ErrorCode.FACT_CHECK_SESSIONS_READ_FAILED,

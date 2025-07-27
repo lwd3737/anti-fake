@@ -22,6 +22,8 @@ export default async function ArchivePage() {
     }
   };
 
+  console.log('archiveResult', archiveResult);
+
   const archive = archiveResult;
   return archive.length > 0 ? (
     <ul className="gap-x-6 gap-y-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
