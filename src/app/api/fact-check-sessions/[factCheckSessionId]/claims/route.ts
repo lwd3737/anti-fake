@@ -97,6 +97,7 @@ export async function POST(
     for await (const claim of claimsStream) {
       send(claim);
     }
+    close();
   });
 }
 

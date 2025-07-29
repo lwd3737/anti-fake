@@ -1,5 +1,4 @@
 import { Claim } from '@/models/claim';
-import { Result } from '@/result';
 import { ErrorCode } from '../error/error-code';
 import { Failure } from '../error/reponse-error-handler';
 

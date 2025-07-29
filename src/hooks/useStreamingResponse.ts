@@ -32,6 +32,7 @@ const useStreamingResponse = <Chunk = unknown, TError = unknown>(
         if (!res.ok) {
           const error = await res.json();
           setError(error);
+          setIsLoading(false);
           return;
         }
 
