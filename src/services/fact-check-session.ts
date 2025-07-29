@@ -13,7 +13,12 @@ export default class FactCheckSessionService {
   }: {
     factCheckSessionId: string;
     userId: string;
-  }): Promise<Result<FactCheckSession>> {
+  }): Promise<
+    Result<
+      FactCheckSession,
+      ErrorCode.FACT_CHECK_SESSION_NOT_FOUND | ErrorCode.UNAUTHORIZATION
+    >
+  > {
     const factCheckSession =
       await factCheckSessionRepo.findById(factCheckSessionId);
     if (!factCheckSession) {

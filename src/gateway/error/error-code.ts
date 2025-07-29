@@ -1,3 +1,4 @@
+// TODO: 추상화 계층으로 나누기: domain, service, infra(repo, lib), gateway(dto)
 export enum ErrorCode {
   // auth
   AUTH_CODE_NOT_INCLUDED = 'AUTH_CODE_NOT_INCLUDED',
@@ -12,7 +13,7 @@ export enum ErrorCode {
   YOUTUBE_TRANSCRIPTION_FAILED = 'YOUTUBE_TRANSCRIPTION_FAILED',
   YOUTUBE_TRANSCRIPT_SUMMARY_GENERATE_FAILED = 'YOUTUBE_TRANSCRIPT_SUMMARY_GENERATE_FAILED',
 
-  // OpenAI
+  // AI
   OPENAI_TRANSCRIPTION_FAILED = 'OPENAI_TRANSCRIPTION_FAILED',
 
   // Fact Check

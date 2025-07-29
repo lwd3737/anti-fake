@@ -6,6 +6,8 @@ import FactCheckItemCard, {
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import { FactCheckSession } from '@/models/fact-check-session';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useMemo } from 'react';
+import { ErrorCode } from '@/gateway/error/error-code';
 
 interface Props {
   factCheckSession: FactCheckSession;
@@ -15,6 +17,7 @@ interface Props {
 export default function FactCheckList({ factCheckSession, className }: Props) {
   const {
     items: claims,
+    error: claimsError,
     isLoading: isClaimsLoading,
     remove: removeClaim,
   } = useClaim();
@@ -32,8 +35,22 @@ export default function FactCheckList({ factCheckSession, className }: Props) {
     removeVerification(index);
   };
 
+  const errorMessage = useMemo(() => {
+    if (!claimsError) return null;
+    switch (claimsError.code) {
+      case ErrorCode.CLAIMS_CREATE_FAILED:
+        return '주장 생성에 실패했습니다. 다시 시도해주세요.';
+      default:
+        console.debug(claimsError);
+        return null;
+    }
+  }, [claimsError]);
+
   return (
     <ol className={`flex flex-col gap-y-10 ${className}`}>
+      {errorMessage && (
+        <div className="text-red-500 text-center">{errorMessage}</div>
+      )}
       {claims.map((claim) => {
         const verificationItem = verifications.find(
           (item) => item.claimId === claim.id,

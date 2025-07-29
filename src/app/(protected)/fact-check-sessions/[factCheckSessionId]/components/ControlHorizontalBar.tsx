@@ -35,6 +35,14 @@ export default function ControlHorizontalBar({ className }: Props) {
   );
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
+  const selectAllClaims = useCallback(() => {
+    const claimIds = claims
+      .filter((claim) => !verificationsByClaimId[claim.id])
+      .map((claim) => claim.id);
+    console.log('claimIds', claimIds);
+    addClaimsToVerifyBulk(claimIds);
+  }, []);
+
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
       if (isAllItemsSelected) {

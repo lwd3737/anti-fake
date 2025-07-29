@@ -36,16 +36,18 @@ export default class ClaimService {
   constructor(private signal: AbortSignal) {}
 
   // TODO: logger 추가
-  public async *createClaimsFromTranscript(
+  public async *streamClaimFromTranscript(
     transcript: YoutubeVideoTranscript,
     factCheckSessionId: string,
-  ): AsyncIterable<Result<Claim>> {
+  ): AsyncIterable<Claim> {
     const prompt = JSON.stringify(transcript.segments);
 
-    const claimsResult = await this.streamClaims(prompt);
+    const claimsResult = await this.streamClaim(prompt);
     if (isFailure(claimsResult)) {
+      console.error(claimsResult);
       const failure = claimsResult;
-      return failure;
+      // return failure;
+      throw failure;
     }
 
     let index = 0;
@@ -61,21 +63,24 @@ export default class ClaimService {
       try {
         await claimRepo.create(factCheckSessionId, newClaim);
       } catch (error) {
-        // TODO: 에러 로깅
-        const failure: Failure = {
+        // TODO: 에러 로깅, 클라이언트에 전송
+        const failure: Failure<ErrorCode.CLAIMS_CREATE_FAILED> = {
           code: ErrorCode.CLAIMS_CREATE_FAILED,
           message: 'Failed to create claim on repository',
         };
-        console.error(error, failure);
-        yield failure;
+        console.debug(error, failure);
+        // yield failure;
       }
+
       index++;
     }
   }
 
-  private async streamClaims(
+  private async streamClaim(
     prompt: string,
-  ): Promise<Result<AsyncIterable<TClaimSchema>>> {
+  ): Promise<
+    Result<AsyncIterable<TClaimSchema>, ErrorCode.CLAIMS_CREATE_FAILED>
+  > {
     try {
       const streamResult = streamObject({
         model: openai(AIModel.GPT_4O_MINI),

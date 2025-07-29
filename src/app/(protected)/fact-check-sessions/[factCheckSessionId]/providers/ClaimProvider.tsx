@@ -4,7 +4,11 @@ import {
   getClaims,
 } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
 import { APIRoutes, PageRoutes } from '@/constants/routes';
-import { CreateClaimsRequestDto } from '@/gateway/dto/claim';
+import {
+  ClaimResponseChunkDto,
+  CreateClaimsErrorDto,
+  CreateClaimsRequestDto,
+} from '@/gateway/dto/claim';
 import { ErrorCode } from '@/gateway/error/error-code';
 import useStreamingResponse from '@/hooks/useStreamingResponse';
 import { Claim } from '@/models/claim';
@@ -25,6 +29,7 @@ import {
 
 export interface IClaimProvider {
   items: Claim[];
+  error: CreateClaimsErrorDto | null;
   isLoading: boolean;
   stop: () => void;
   remove: (index: number) => void;
@@ -45,15 +50,12 @@ export default function ClaimProvider({
   const router = useRouter();
   const [items, setItems] = useState<Claim[]>([]);
 
-  const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
-    (chunks) => {
-      const claims = chunks.filter(
-        (chunk): chunk is Claim => !isFailure(chunk),
-      );
-      // TODO: claim 에러 처리
-      setItems((prev) => [...prev, ...claims]);
-    },
-  );
+  const { isLoading, error, startStreaming, stopStreaming } =
+    useStreamingResponse<ClaimResponseChunkDto, CreateClaimsErrorDto>(
+      (chunks) => {
+        setItems((prev) => [...prev, ...chunks]);
+      },
+    );
 
   const isMountedRef = useRef(false);
 
@@ -103,6 +105,26 @@ export default function ClaimProvider({
     [router, startStreaming, factCheckSession.contentId, factCheckSession.id],
   );
 
+  useEffect(
+    function handleError() {
+      if (!error) return;
+      switch (error.code) {
+        case ErrorCode.UNAUTHORIZATION:
+          router.replace(PageRoutes.HOME);
+          return;
+        case ErrorCode.FACT_CHECK_SESSION_NOT_FOUND:
+          alert('팩트 체크 세션을 찾을 수 없습니다.');
+          router.replace(PageRoutes.HOME);
+          return;
+        case ErrorCode.YOUTUBE_VIDEO_NOT_FOUND:
+          alert('유튜브 비디오를 찾을 수 없습니다.');
+          router.replace(PageRoutes.HOME);
+          return;
+      }
+    },
+    [error],
+  );
+
   const remove = useCallback(async (index: number) => {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }, []);
@@ -129,11 +151,12 @@ export default function ClaimProvider({
     () => ({
       items,
       isLoading,
+      error,
       stop: stopStreaming,
       remove,
       retry,
     }),
-    [items, isLoading, remove, retry, stopStreaming],
+    [items, isLoading, remove, retry, stopStreaming, error],
   );
 
   return (

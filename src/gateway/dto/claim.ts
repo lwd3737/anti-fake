@@ -1,5 +1,7 @@
 import { Claim } from '@/models/claim';
 import { Result } from '@/result';
+import { ErrorCode } from '../error/error-code';
+import { Failure } from '../error/reponse-error-handler';
 
 // Request
 export interface CreateClaimsRequestDto {
@@ -20,8 +22,14 @@ export interface GetClaimsResponseDto {
   claims: Claim[];
 }
 
-// TODO: 클라이언트에 적용
-export type ClaimResponseChunkDto = Result<Claim>;
+export type CreateClaimsErrorDto = Failure<
+  | ErrorCode.UNAUTHORIZATION
+  | ErrorCode.FACT_CHECK_SESSION_NOT_FOUND
+  | ErrorCode.YOUTUBE_VIDEO_NOT_FOUND
+  | ErrorCode.CLAIMS_CREATE_FAILED
+>;
+
+export type ClaimResponseChunkDto = Claim;
 
 export interface DeleteClaimsRequestDto {
   factCheckSessionId: string;

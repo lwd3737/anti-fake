@@ -4,8 +4,12 @@ import {
   GetClaimsResponseDto,
 } from '@/gateway/dto/claim';
 import { ErrorCode } from '@/gateway/error/error-code';
-import { handleRouteError } from '@/gateway/error/reponse-error-handler';
+import {
+  Failure,
+  handleRouteError,
+} from '@/gateway/error/reponse-error-handler';
 import { streamingResponse } from '@/gateway/streaming/streaming-response';
+import { Claim } from '@/models/claim';
 import { ContentType } from '@/models/fact-check-session';
 import claimRepo from '@/repositories/claim';
 import { isFailure } from '@/result';
@@ -71,26 +75,28 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  return streamingResponse(async ({ send, close }) => {
-    const transcriptResult = await new YoutubeService().getTranscript(
-      contentId,
+  const transcriptResult = await new YoutubeService().getTranscript(contentId);
+  if (isFailure(transcriptResult)) {
+    const { code, message } = transcriptResult;
+    return handleRouteError(code, message, 500);
+  }
+
+  let claimsStream: AsyncIterable<Claim>;
+  const transcript = transcriptResult;
+  try {
+    claimsStream = new ClaimService(req.signal).streamClaimFromTranscript(
+      transcript,
+      factCheckSessionId,
     );
-    if (isFailure(transcriptResult)) {
-      const failure = transcriptResult;
-      send(failure);
-      close();
-      return;
-    }
+  } catch (error) {
+    const { code, message } = error as Failure<ErrorCode.CLAIMS_CREATE_FAILED>;
+    return handleRouteError(code, message, 500);
+  }
 
-    const transcript = transcriptResult;
-    const claims = await new ClaimService(
-      req.signal,
-    ).createClaimsFromTranscript(transcript, factCheckSessionId);
-
-    for await (const claimResult of claims) {
-      send(claimResult);
+  return streamingResponse(async ({ send, close }) => {
+    for await (const claim of claimsStream) {
+      send(claim);
     }
-    close();
   });
 }
 

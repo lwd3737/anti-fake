@@ -91,7 +91,9 @@ export default class YoutubeService {
 
   public async getTranscript(
     videoId: string,
-  ): Promise<Result<YoutubeVideoTranscript>> {
+  ): Promise<
+    Result<YoutubeVideoTranscript, ErrorCode.YOUTUBE_VIDEO_NOT_FOUND>
+  > {
     const found = await youtubeRepo.findVideoById(videoId);
     if (!found)
       return {

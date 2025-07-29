@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation';
 import FactCheckStartButton from './FactCheckStartButton';
 
 export default async function YoutubeVideoUrlForm({ user }: { user: User }) {
-  // FIX: 버튼 클릭시 호출 안됨
   const getOrCreateFactCheckSession = async (formData: FormData) => {
     'use server';
 
