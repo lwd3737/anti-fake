@@ -8,7 +8,6 @@ describe('Youtube lib', () => {
     const transcriptResult = await Youtube.generateTranscript(videoId);
     if (isFailure(transcriptResult)) expect(false).toBeTruthy();
 
-    console.log('transcript', transcriptResult);
     expect(transcriptResult).toBeDefined();
   }, 100000);
 

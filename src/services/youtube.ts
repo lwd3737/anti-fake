@@ -69,7 +69,7 @@ export default class YoutubeService {
     let summary: string;
     try {
       const summaryResult = await generateText({
-        model: openai(AIModel.GPT_4O),
+        model: openai(AIModel.GPT_4O_MINI),
         system: `유튜브 영상 자막을 한국어로 요약합니다.`,
         prompt: transcript.text,
         temperature: 0,

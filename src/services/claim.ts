@@ -78,7 +78,7 @@ export default class ClaimService {
   ): Promise<Result<AsyncIterable<TClaimSchema>>> {
     try {
       const streamResult = streamObject({
-        model: openai(AIModel.GPT_4O),
+        model: openai(AIModel.GPT_4O_MINI),
         system: YOUTUBE_CLAIM_DETECTION_PROMPT,
         prompt,
         mode: 'json',
