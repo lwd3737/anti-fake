@@ -23,6 +23,7 @@ export default function FactCheckList({ factCheckSession, className }: Props) {
   } = useClaim();
   const {
     items: verifications,
+    errors: verificationErrors,
     isLoading: isVerificationsLoading,
     remove: removeVerification,
     claimIdsToVerify,
@@ -55,12 +56,20 @@ export default function FactCheckList({ factCheckSession, className }: Props) {
         const verificationItem = verifications.find(
           (item) => item.claimId === claim.id,
         );
+        const verificationError = verificationErrors.find(
+          (item) => item.claimId === claim.id,
+        );
         const isSelected = claimIdsToVerify.includes(claim.id);
-        const status = verificationItem
-          ? VerificationStatus.VERIFIED
-          : isSelected && isVerificationsLoading
-            ? VerificationStatus.LOADING
-            : VerificationStatus.NOT_VERIFIED;
+        let status: VerificationStatus;
+        if (verificationItem) {
+          status = VerificationStatus.VERIFIED;
+        } else if (isSelected && isVerificationsLoading) {
+          status = VerificationStatus.LOADING;
+        } else if (verificationError) {
+          status = VerificationStatus.ERROR;
+        } else {
+          status = VerificationStatus.NOT_VERIFIED;
+        }
 
         // TODO: theme 적용
         return (
@@ -69,6 +78,7 @@ export default function FactCheckList({ factCheckSession, className }: Props) {
               key={claim.index}
               claim={claim}
               verification={verificationItem}
+              verificationError={verificationError?.message}
               status={status}
               isSelected={isSelected}
               onSelect={() =>

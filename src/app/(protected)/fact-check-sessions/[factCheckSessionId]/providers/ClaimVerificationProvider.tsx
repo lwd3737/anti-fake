@@ -21,9 +21,14 @@ import {
   getClaimVerifications,
 } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
 import { isFailure } from '@/result';
+import {
+  VerifyClaimChunkErrorDto,
+  VerifyClaimResponseChunkDto,
+} from '@/gateway/dto/claim-verification';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
+  errors: ClaimVerificationError[];
   isLoading: boolean;
   claimIdsToVerify: string[];
   start: () => void;
@@ -35,6 +40,11 @@ export interface IClaimVerification {
   resetClaimsToVerify: () => void;
   remove: (index: number) => void;
   clear: () => Promise<void>;
+}
+
+export interface ClaimVerificationError {
+  claimId: string;
+  message: string;
 }
 
 const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
@@ -49,6 +59,7 @@ export default function ClaimVerificationProvider({
   factCheckSession: FactCheckSession;
 }) {
   const [items, setItems] = useState<ClaimVerification[]>([]);
+  const [errors, setErrors] = useState<ClaimVerificationError[]>([]);
 
   const append = useCallback((data: ClaimVerification[]) => {
     setItems((prev) => [...prev, ...data]);
@@ -63,11 +74,23 @@ export default function ClaimVerificationProvider({
     await deleteClaimVerifications(factCheckSession.id);
   }, [factCheckSession.id]);
 
-  const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
-    (chunks: unknown[]) => {
-      append(chunks as ClaimVerification[]);
-    },
-  );
+  const { isLoading, startStreaming, stopStreaming } =
+    useStreamingResponse<VerifyClaimResponseChunkDto>((chunks) => {
+      const verifications = chunks.filter(
+        (chunk): chunk is ClaimVerification => !isFailure(chunk),
+      );
+      append(verifications);
+
+      const errors = chunks
+        .filter((chunk): chunk is VerifyClaimChunkErrorDto => isFailure(chunk))
+        .map(
+          (chunk): ClaimVerificationError => ({
+            claimId: chunk.context!.claimId,
+            message: '검증 중 오류가 발생했습니다.',
+          }),
+        );
+      setErrors((prev) => [...prev, ...errors]);
+    });
 
   const [claimIdsToVerify, setClaimIdsToVerify] = useState<string[]>([]);
 
@@ -132,6 +155,7 @@ export default function ClaimVerificationProvider({
   const value: IClaimVerification = useMemo(
     () => ({
       items,
+      errors,
       isLoading,
       claimIdsToVerify,
       start,
@@ -146,6 +170,7 @@ export default function ClaimVerificationProvider({
     }),
     [
       items,
+      errors,
       isLoading,
       claimIdsToVerify,
       start,

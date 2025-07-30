@@ -60,7 +60,8 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     for await (const evidencesResult of evidencesResultStream) {
       if (isFailure(evidencesResult)) {
         const failure = evidencesResult;
-        console.error(failure);
+        send(failure);
+        console.debug(failure);
         continue;
       }
 

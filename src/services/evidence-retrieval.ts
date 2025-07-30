@@ -20,15 +20,27 @@ export default class EvidenceRetrievalService {
 
   public async *retrieveEvidencesStream(
     claims: Claim[],
-  ): AsyncGenerator<Result<VerificationEvidence[]>, void, unknown> {
+  ): AsyncGenerator<
+    Result<
+      VerificationEvidence[],
+      ErrorCode.EVIDENCE_RETRIEVAL_FAILED,
+      { claimId: string }
+    >,
+    void,
+    unknown
+  > {
     for (const claim of claims) {
       const retrievalResult = await this.retrieve(claim.content);
 
       if (isFailure(retrievalResult)) {
         const failure = retrievalResult;
+        yield {
+          ...failure,
+          context: { claimId: claim.id },
+        };
+
         // TODO: error 로깅
-        console.error(failure);
-        yield failure;
+        console.debug(failure);
         continue;
       }
 
@@ -41,7 +53,10 @@ export default class EvidenceRetrievalService {
   public async retrieve(
     claimContent: string,
   ): Promise<
-    Result<{ evidences: VerificationEvidence[]; metadata?: WebSearchMetadata }>
+    Result<
+      { evidences: VerificationEvidence[]; metadata?: WebSearchMetadata },
+      ErrorCode.EVIDENCE_RETRIEVAL_FAILED
+    >
   > {
     // if (this.isDevMode) return this.retrieveOnDevMode(claimContent);
 

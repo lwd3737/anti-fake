@@ -47,13 +47,6 @@ export default function EvidenceCollapse({
         }`}
       >
         {evidences.map(({ summary, citations: citaions }, index) => {
-          // const { summary: content, citationIndexes: citationIndices } =
-          //   summary;
-          // const { citations } = evidences;
-          // const filteredCitations = citationIndices
-          //   .map((index) => citations[index])
-          //   .filter(Boolean);
-
           return (
             <li
               className={`flex flex-col gap-y-1

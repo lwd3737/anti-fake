@@ -2,7 +2,7 @@ import { CHUNK_DELIMITER } from '@/gateway/streaming/streaming-response';
 import { json } from '@/utils/serialize';
 import { useCallback, useRef, useState } from 'react';
 
-const useStreamingResponse = <Chunk = unknown, TError = unknown>(
+const useStreamingResponse = <Chunk = unknown, FetchError = unknown>(
   onChunk: (chunks: Chunk[]) => void,
 ) => {
   const onChunkRef = useRef(onChunk);
@@ -13,7 +13,7 @@ const useStreamingResponse = <Chunk = unknown, TError = unknown>(
   // 로딩 상태를 실시간 반영하기 위해 추가
   const isLoadingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<TError | null>(null);
+  const [error, setError] = useState<FetchError | null>(null);
 
   const startStreaming = useCallback(
     async <Payload = unknown>(path: string, payload: Payload) => {

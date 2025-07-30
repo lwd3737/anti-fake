@@ -40,6 +40,7 @@ export async function GET(
 
   // FIX: factCheckSession 부재시 예외 처리 필요
   const factCheckSession = factCheckSessionResult;
+  // TODO: context 추가
   const claims = await claimRepo.findManyBySessionId(factCheckSession.id);
 
   return NextResponse.json({ claims } as GetClaimsResponseDto);
