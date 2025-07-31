@@ -36,7 +36,7 @@ const claimRepo = {
         factCheckSessionId,
       },
     });
-    return claims.map(claimMapper.toDomain);
+    return claims.map(claimMapper.fromPersistence);
   },
 
   async deleteManyBySessionId(factCheckSessionId: string): Promise<void> {
