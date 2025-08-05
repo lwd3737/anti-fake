@@ -1,3 +1,6 @@
+import { GenerateTranscriptErrorCode } from '@/libs/youtube';
+import { Result } from '@/result';
+
 export interface YoutubeVideoDto {
   id: string;
   title: string;
@@ -37,3 +40,14 @@ export interface SearchYoutubeVideosDto {
     };
   }[];
 }
+
+export interface GenerateTranscriptRequestDto {
+  videoId: string;
+}
+
+export type GenerateTranscriptResponseDto = Result<
+  {
+    summary: string;
+  },
+  GenerateTranscriptErrorCode
+>;

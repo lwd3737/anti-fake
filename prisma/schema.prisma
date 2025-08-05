@@ -39,9 +39,9 @@ model YoutubeVideo {
   channelId          String   @unique
   channelTitle       String
   thumbnailUrl       String
-  transcript         String
-  transcriptMetadata Json
-  transcriptSummary  String
+  transcript         String?
+  transcriptMetadata Json?
+  transcriptSummary  String?
   publishedAt        DateTime
   updatedAt          DateTime @updatedAt
 }

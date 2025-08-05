@@ -35,13 +35,13 @@ export default function ControlHorizontalBar({ className }: Props) {
   );
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
-  const selectAllClaims = useCallback(() => {
-    const claimIds = claims
-      .filter((claim) => !verificationsByClaimId[claim.id])
-      .map((claim) => claim.id);
-    console.log('claimIds', claimIds);
-    addClaimsToVerifyBulk(claimIds);
-  }, []);
+  // const selectAllClaims = useCallback(() => {
+  //   const claimIds = claims
+  //     .filter((claim) => !verificationsByClaimId[claim.id])
+  //     .map((claim) => claim.id);
+  //   console.log('claimIds', claimIds);
+  //   addClaimsToVerifyBulk(claimIds);
+  // }, [claims, verificationsByClaimId, addClaimsToVerifyBulk]);
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
@@ -54,7 +54,13 @@ export default function ControlHorizontalBar({ className }: Props) {
         resetClaimsToVerify();
       }
     },
-    [isAllItemsSelected, addClaimsToVerifyBulk, resetClaimsToVerify, claims],
+    [
+      isAllItemsSelected,
+      addClaimsToVerifyBulk,
+      resetClaimsToVerify,
+      claims,
+      verificationsByClaimId,
+    ],
   );
 
   const handleAllSelectionChange = (ev: ChangeEvent) => {

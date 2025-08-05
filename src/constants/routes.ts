@@ -13,6 +13,9 @@ export const APIRoutes = {
     CLAIM_VERIFICATIONS: (factCheckSessionId: string) =>
       `/api/fact-check-sessions/${factCheckSessionId}/claim-verifications`,
   },
+  youtube: {
+    TRANSCRIPT: `/api/youtube/transcript`,
+  },
 };
 
 export const PageRoutes = {

@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useMemo } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import CloseButton from '@/components/CloseButton';
-import { ClaimVerificationError } from '../../providers/ClaimVerificationProvider';
 
 interface Props {
   claim: Claim;

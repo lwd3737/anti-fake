@@ -122,7 +122,7 @@ export default function ClaimProvider({
           return;
       }
     },
-    [error],
+    [error, router],
   );
 
   const remove = useCallback(async (index: number) => {

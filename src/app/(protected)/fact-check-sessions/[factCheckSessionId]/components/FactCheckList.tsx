@@ -10,11 +10,10 @@ import { useMemo } from 'react';
 import { ErrorCode } from '@/gateway/error/error-code';
 
 interface Props {
-  factCheckSession: FactCheckSession;
   className?: string;
 }
 
-export default function FactCheckList({ factCheckSession, className }: Props) {
+export default function FactCheckList({ className }: Props) {
   const {
     items: claims,
     error: claimsError,

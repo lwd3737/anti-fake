@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Params }) {
     await claimVerificationRepo.deleteManyBySessionId(factCheckSessionId);
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.debug(error);
     return handleRouteError(
       ErrorCode.CLAIM_VERIFICATIONS_DELETE_FAILED,
       'Claim verifications delete failed',

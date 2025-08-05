@@ -6,19 +6,21 @@ import TranscriptSummary from './components/TranscriptSummary';
 import { YoutubeVideo } from '@/models/youtube';
 
 interface Props {
-  video: Required<YoutubeVideo>;
+  video: YoutubeVideo;
+  isSummaryLoading: boolean;
   className?: string;
 }
 
-export default async function YoutubeVideoInfoCard({
+export default function YoutubeVideoInfoCard({
   video,
+  isSummaryLoading,
   className,
 }: Props) {
   const { thumbnailUrl, title, channelTitle, transcriptSummary, publishedAt } =
     video;
 
   return (
-    <div className={` bg-white shadow-sm p-6 rounded-sm ${className}`}>
+    <div className={`bg-white shadow-sm p-6 rounded-sm ${className}`}>
       <div className="flex gap-x-4">
         <VideoThumbnailLink
           url={thumbnailUrl}
@@ -57,7 +59,12 @@ export default async function YoutubeVideoInfoCard({
         </div>
       </div>
       <div className="bg-gray-50 mt-4 p-4 rounded-lg">
-        <TranscriptSummary videoId={video.id} summary={transcriptSummary} />
+        {transcriptSummary && (
+          <TranscriptSummary
+            isLoading={isSummaryLoading}
+            summary={transcriptSummary}
+          />
+        )}
       </div>
     </div>
   );

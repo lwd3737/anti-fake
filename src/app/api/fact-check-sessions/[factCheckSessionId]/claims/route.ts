@@ -84,6 +84,14 @@ export async function POST(
 
   let claimsStream: AsyncIterable<Claim>;
   const transcript = transcriptResult;
+  if (!transcript) {
+    return handleRouteError(
+      ErrorCode.YOUTUBE_TRANSCRIPT_NOT_FOUND,
+      'Youtube video transcript not found',
+      404,
+    );
+  }
+
   try {
     claimsStream = new ClaimService(req.signal).streamClaimFromTranscript(
       transcript,

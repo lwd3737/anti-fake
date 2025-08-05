@@ -61,6 +61,7 @@ export default class Youtube {
     const chunkDuration = 600; // 10분
     execSync(
       `./bin/ffmpeg -i ${filePath} -f segment -segment_time ${chunkDuration} -c copy ${chunkDir}/chunk_%03d.mp3`,
+      { stdio: 'ignore' },
     );
     const chunkFiles = (await readdir(chunkDir)).sort();
     const chunkPaths = chunkFiles.map((fileName) =>

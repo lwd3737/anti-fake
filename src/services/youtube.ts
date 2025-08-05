@@ -15,7 +15,7 @@ export type GetOrCreateVideoErrorCode =
 export default class YoutubeService {
   public async getOrCreateVideo(
     id: string,
-  ): Promise<Result<Required<YoutubeVideo>, GetOrCreateVideoErrorCode>> {
+  ): Promise<Result<YoutubeVideo, GetOrCreateVideoErrorCode>> {
     const found = await youtubeRepo.findVideoById(id);
     if (found) return found as Required<YoutubeVideo>;
 
@@ -33,28 +33,16 @@ export default class YoutubeService {
         message: `Youtube video not found from google server`,
       };
 
-    const transcriptResult = await this.generateTranscriptFromVideo(id);
-    if (isFailure(transcriptResult)) {
-      const failure = transcriptResult;
-      return failure;
-    }
-
-    const transcript = transcriptResult;
     const dto = youtubeVideoMapper.fromDto(video);
-
-    return (await youtubeRepo.createVideo({
-      ...dto,
-      transcript: transcript.original,
-      transcriptSummary: transcript.summary,
-    })) as Required<YoutubeVideo>;
+    return await youtubeRepo.upsertVideo(dto);
   }
 
-  private async generateTranscriptFromVideo(
+  public async generateTranscriptFromVideo(
     videoId: string,
     signal?: AbortSignal,
   ): Promise<
     Result<
-      { original: YoutubeVideoTranscript; summary: string },
+      { transcript: YoutubeVideoTranscript; summary: string },
       GenerateTranscriptErrorCode
     >
   > {
@@ -81,18 +69,23 @@ export default class YoutubeService {
         message: `Failed to generate transcript summary`,
         context: {
           videoId,
-          error,
+          detail: error,
         },
       };
     }
 
-    return { original: transcript, summary: summary };
+    await youtubeRepo.updateTranscript(videoId, {
+      transcript,
+      transcriptSummary: summary,
+    });
+
+    return { transcript, summary };
   }
 
   public async getTranscript(
     videoId: string,
   ): Promise<
-    Result<YoutubeVideoTranscript, ErrorCode.YOUTUBE_VIDEO_NOT_FOUND>
+    Result<YoutubeVideoTranscript | null, ErrorCode.YOUTUBE_VIDEO_NOT_FOUND>
   > {
     const found = await youtubeRepo.findVideoById(videoId);
     if (!found)
@@ -101,6 +94,6 @@ export default class YoutubeService {
         message: `Youtube video not found`,
       };
 
-    return found.transcript;
+    return found.transcript ?? null;
   }
 }

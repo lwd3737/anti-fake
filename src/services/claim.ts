@@ -44,7 +44,7 @@ export default class ClaimService {
 
     const claimsResult = await this.streamClaim(prompt);
     if (isFailure(claimsResult)) {
-      console.error(claimsResult);
+      console.debug(claimsResult);
       const failure = claimsResult;
       // return failure;
       throw failure;

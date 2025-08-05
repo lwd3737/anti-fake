@@ -61,6 +61,7 @@ export default class EvidenceRetrievalService {
     // if (this.isDevMode) return this.retrieveOnDevMode(claimContent);
 
     try {
+      // throw Error('test');
       const { metadata, contents: evidences } = await this.webSearch.search(
         claimContent,
         {
