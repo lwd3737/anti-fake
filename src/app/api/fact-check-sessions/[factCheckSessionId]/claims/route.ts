@@ -9,7 +9,6 @@ import {
   Failure,
   handleRouteError,
 } from '@/gateway/error/reponse-error-handler';
-import { streamingResponse } from '@/gateway/streaming/streaming-response';
 import { Claim } from '@/models/claim';
 import { ContentType } from '@/models/fact-check-session';
 import claimRepo from '@/repositories/claim';
@@ -85,6 +84,7 @@ export async function POST(
 
   let transcript = transcriptResult;
   const youtubeService = new YoutubeService();
+
   if (!transcript) {
     const transcriptResult = await youtubeService.generateTranscript(contentId);
     if (isFailure(transcriptResult)) {
@@ -96,6 +96,7 @@ export async function POST(
   }
 
   const summaryResult = await youtubeService.summarizeTranscript(
+    contentId,
     transcript.text,
   );
   if (isFailure(summaryResult)) {

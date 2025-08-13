@@ -47,6 +47,38 @@ const youtubeRepo = {
     return youtubeVideoMapper.fromPersistence(upserted);
   },
 
+  async updateVideo(
+    id: string,
+    data: Partial<Omit<YoutubeVideo, 'id'>>,
+  ): Promise<YoutubeVideo> {
+    const {
+      title,
+      channelId,
+      channelTitle,
+      thumbnailUrl,
+      transcript,
+      summary,
+      publishedAt,
+    } = data;
+    const updated = await prisma.youtubeVideo.update({
+      where: { id },
+      data: {
+        title,
+        channelId,
+        channelTitle,
+        thumbnailUrl,
+        publishedAt,
+        transcript: transcript?.text,
+        transcriptMetadata: {
+          segments: transcript?.segments,
+          duration: transcript?.duration,
+        },
+        transcriptSummary: summary,
+      },
+    });
+    return youtubeVideoMapper.fromPersistence(updated);
+  },
+
   async updateTranscript(
     videoId: string,
     {

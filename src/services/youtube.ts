@@ -37,11 +37,24 @@ export default class YoutubeService {
     return await youtubeRepo.upsertVideo(dto);
   }
 
-  public async generateTranscript(videoId: string) {
-    return await Youtube.generateTranscript(videoId);
+  public async generateTranscript(
+    videoId: string,
+  ): Promise<Result<YoutubeVideoTranscript, GenerateTranscriptErrorCode>> {
+    const transcriptResult = await Youtube.generateTranscript(videoId);
+    if (isFailure(transcriptResult)) {
+      const failure = transcriptResult;
+      return failure;
+    }
+
+    await youtubeRepo.updateVideo(videoId, {
+      transcript: transcriptResult,
+    });
+
+    return transcriptResult;
   }
 
   public async summarizeTranscript(
+    videoId: string,
     transcriptText: string,
   ): Promise<Result<string, ErrorCode.OPENAI_TRANSCRIPTION_FAILED>> {
     try {
@@ -51,7 +64,10 @@ export default class YoutubeService {
         prompt: transcriptText,
       });
 
-      return summaryResult.text;
+      const summary = summaryResult.text;
+      await youtubeRepo.updateVideo(videoId, { summary });
+
+      return summary;
     } catch (error) {
       return {
         code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,

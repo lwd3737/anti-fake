@@ -8,7 +8,7 @@ interface Props {
 export default function VideoSummary({ isLoading, summary }: Props) {
   return (
     <div className="flex flex-col gap-y-2 max-h-[30vh] overflow-y-auto">
-      <h6 className="font-medium text-sm">요약</h6>
+      {!isLoading && <h6 className="font-medium text-sm">요약</h6>}
       <p className="text-gray-500 text-sm">
         {isLoading ? (
           <div className="flex justify-center items-center">
