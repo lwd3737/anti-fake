@@ -3,11 +3,9 @@ import FactCheckItemCard, {
   VerificationStatus,
 } from './FactCheckItemCard/FactCheckItemCard';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
-import { FactCheckSession } from '@/models/fact-check-session';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useMemo } from 'react';
-import { ErrorCode } from '@/gateway/error/error-code';
-import { useClaim } from '../providers/ClaimProvider.new';
+import { useClaim } from '../providers/ClaimProvider';
 
 interface Props {
   className?: string;
@@ -81,7 +79,7 @@ export default function FactCheckList({ className }: Props) {
           </li>
         );
       })}
-      {claim.status === 'streaming' && (
+      {claim.status === 'claimsStreaming' && (
         <div className="flex justify-center items-center h-full">
           <LoadingSpinner width={30} height={30} />
         </div>

@@ -24,7 +24,7 @@ import {
   VerifyClaimChunkErrorDto,
   VerifyClaimResponseChunkDto,
 } from '@/gateway/dto/claim-verification';
-import { useClaim } from './ClaimProvider.new';
+import { useClaim } from './ClaimProvider';
 
 export interface IClaimVerification {
   items: ClaimVerification[];

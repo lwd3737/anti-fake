@@ -38,7 +38,7 @@ export interface DeleteClaimsRequestDto {
 export type CreateClaimMessageDto = UIMessage<
   never,
   {
-    ready: {
+    'video-summary': {
       summary: string;
     };
     claim: {

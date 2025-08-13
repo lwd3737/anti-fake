@@ -108,7 +108,7 @@ export async function POST(
       const summary = summaryResult;
 
       writer.write({
-        type: 'data-ready',
+        type: 'data-video-summary',
         data: {
           summary,
         },

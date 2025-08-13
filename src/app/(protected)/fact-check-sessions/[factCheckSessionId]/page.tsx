@@ -38,7 +38,10 @@ export default async function FactCheckSessionPage({
 
   // TODO: card 공통 컴포넌트 추출
   return (
-    <FactCheckSessionProviders factCheckSession={session}>
+    <FactCheckSessionProviders
+      factCheckSession={session}
+      videoSummary={video.summary ?? null}
+    >
       <div className="flex flex-col h-full">
         <main className="flex flex-col flex-[1_1_0px] gap-y-8 mb-16 py-8 overflow-y-auto">
           <FactCheckContent video={video} />

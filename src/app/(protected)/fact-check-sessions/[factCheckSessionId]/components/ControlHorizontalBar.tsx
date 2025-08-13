@@ -3,7 +3,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import Button from '@/components/Button';
 import { ClaimVerification } from '@/models/claim-verification';
-import { useClaim } from '../providers/ClaimProvider.new';
+import { useClaim } from '../providers/ClaimProvider';
 
 interface Props {
   className?: string;

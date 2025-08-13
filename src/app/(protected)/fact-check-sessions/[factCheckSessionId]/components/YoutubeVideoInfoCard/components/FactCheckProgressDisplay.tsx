@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import { useClaimVerification } from '../../../providers/ClaimVerificationProvider';
-import { useClaim } from '../../../providers/ClaimProvider.new';
+import { useClaim } from '../../../providers/ClaimProvider';
 
 export default function FactCheckProgressDisplay() {
   const claim = useClaim();

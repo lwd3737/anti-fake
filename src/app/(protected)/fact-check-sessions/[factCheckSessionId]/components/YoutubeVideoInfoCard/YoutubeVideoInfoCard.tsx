@@ -2,7 +2,7 @@ import { formatDate } from '@/utils/date';
 import Image from 'next/image';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
-import TranscriptSummary from './components/TranscriptSummary';
+import VideoSummary from './components/VideoSummary';
 import { YoutubeVideo } from '@/models/youtube';
 
 interface Props {
@@ -16,13 +16,7 @@ export default function YoutubeVideoInfoCard({
   isSummaryLoading,
   className,
 }: Props) {
-  const {
-    thumbnailUrl,
-    title,
-    channelTitle,
-    summary: transcriptSummary,
-    publishedAt,
-  } = video;
+  const { thumbnailUrl, title, channelTitle, summary, publishedAt } = video;
 
   return (
     <div className={`bg-white shadow-sm p-6 rounded-sm ${className}`}>
@@ -64,12 +58,7 @@ export default function YoutubeVideoInfoCard({
         </div>
       </div>
       <div className="bg-gray-50 mt-4 p-4 rounded-lg">
-        {transcriptSummary && (
-          <TranscriptSummary
-            isLoading={isSummaryLoading}
-            summary={transcriptSummary}
-          />
-        )}
+        {<VideoSummary isLoading={isSummaryLoading} summary={summary} />}
       </div>
     </div>
   );
