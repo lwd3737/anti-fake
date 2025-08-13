@@ -26,11 +26,19 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  experimental_useObject as useObject,
+  useCompletion,
+  useChat,
+} from '@ai-sdk/react';
+import { ClaimSchema } from '@/schemas/claim';
+import { ChatStatus, DefaultChatTransport } from 'ai';
 
+// TODO: 인터페이스 변경
 export interface IClaimProvider {
   items: Claim[];
-  error: CreateClaimsErrorDto | null;
-  isLoading: boolean;
+  error: Error | undefined;
+  status: ChatStatus;
   stop: () => void;
   remove: (index: number) => void;
   retry: () => Promise<void>;
@@ -50,12 +58,36 @@ export default function ClaimProvider({
   const router = useRouter();
   const [items, setItems] = useState<Claim[]>([]);
 
-  const { isLoading, error, startStreaming, stopStreaming } =
-    useStreamingResponse<ClaimResponseChunkDto, CreateClaimsErrorDto>(
-      (chunks) => {
-        setItems((prev) => [...prev, ...chunks]);
+  // const { isLoading, error, startStreaming, stopStreaming } =
+  //   useStreamingResponse<ClaimResponseChunkDto, CreateClaimsErrorDto>(
+  //     (chunks) => {
+  //       setItems((prev) => [...prev, ...chunks]);
+  //     },
+  //   );
+
+  // const {  isLoading, error, handleSubmit } = useCompletion({
+  //   api: APIRoutes.factCheckSessions.claims(factCheckSession.id),
+  //   body: {
+  //     contentType: ContentType.YOUTUBE_VIDEO,
+  //     contentId: factCheckSession.contentId,
+  //   },
+  // });
+
+  // TODO: 추출
+  const { messages, sendMessage, status, error, stop } = useChat({
+    transport: new DefaultChatTransport({
+      api: APIRoutes.factCheckSessions.claims(factCheckSession.id),
+      body: {
+        contentType: ContentType.YOUTUBE_VIDEO,
+        contentId: factCheckSession.contentId,
       },
-    );
+    }),
+  });
+
+  // const { object, error, isLoading, submit, stop } = useObject({
+  //   api: APIRoutes.factCheckSessions.claims(factCheckSession.id),
+  //   schema: ClaimSchema,
+  // });
 
   const isMountedRef = useRef(false);
 
@@ -93,34 +125,41 @@ export default function ClaimProvider({
           return;
         }
 
-        await startStreaming<CreateClaimsRequestDto>(
-          APIRoutes.factCheckSessions.claims(factCheckSession.id),
-          {
-            contentType: ContentType.YOUTUBE_VIDEO,
-            contentId: factCheckSession.contentId,
-          },
-        );
+        await sendMessage();
+
+        // submit({
+        //   contentType: ContentType.YOUTUBE_VIDEO,
+        //   contentId: factCheckSession.contentId,
+        // });
+
+        // await startStreaming<CreateClaimsRequestDto>(
+        //   APIRoutes.factCheckSessions.claims(factCheckSession.id),
+        //   {
+        //     contentType: ContentType.YOUTUBE_VIDEO,
+        //     contentId: factCheckSession.contentId,
+        //   },
+        // );
       });
     },
-    [router, startStreaming, factCheckSession.contentId, factCheckSession.id],
+    [router, factCheckSession.contentId, factCheckSession.id, sendMessage],
   );
 
   useEffect(
     function handleError() {
       if (!error) return;
-      switch (error.code) {
-        case ErrorCode.UNAUTHORIZATION:
-          router.replace(PageRoutes.HOME);
-          return;
-        case ErrorCode.FACT_CHECK_SESSION_NOT_FOUND:
-          alert('팩트 체크 세션을 찾을 수 없습니다.');
-          router.replace(PageRoutes.HOME);
-          return;
-        case ErrorCode.YOUTUBE_VIDEO_NOT_FOUND:
-          alert('유튜브 비디오를 찾을 수 없습니다.');
-          router.replace(PageRoutes.HOME);
-          return;
-      }
+      // switch (error.code) {
+      //   case ErrorCode.UNAUTHORIZATION:
+      //     router.replace(PageRoutes.HOME);
+      //     return;
+      //   case ErrorCode.FACT_CHECK_SESSION_NOT_FOUND:
+      //     alert('팩트 체크 세션을 찾을 수 없습니다.');
+      //     router.replace(PageRoutes.HOME);
+      //     return;
+      //   case ErrorCode.YOUTUBE_VIDEO_NOT_FOUND:
+      //     alert('유튜브 비디오를 찾을 수 없습니다.');
+      //     router.replace(PageRoutes.HOME);
+      //     return;
+      // }
     },
     [error, router],
   );
@@ -138,25 +177,31 @@ export default function ClaimProvider({
       return;
     }
 
-    await startStreaming<CreateClaimsRequestDto>(
-      APIRoutes.factCheckSessions.claims(factCheckSession.id),
-      {
-        contentType: ContentType.YOUTUBE_VIDEO,
-        contentId: factCheckSession.contentId,
-      },
-    );
-  }, [factCheckSession.contentId, factCheckSession.id, startStreaming]);
+    await sendMessage();
+
+    // await startStreaming<CreateClaimsRequestDto>(
+    //   APIRoutes.factCheckSessions.claims(factCheckSession.id),
+    //   {
+    //     contentType: ContentType.YOUTUBE_VIDEO,
+    //     contentId: factCheckSession.contentId,
+    //   },
+    // );
+    // submit({
+    //   contentType: ContentType.YOUTUBE_VIDEO,
+    //   contentId: factCheckSession.content  Id,
+    // });
+  }, [factCheckSession.id, sendMessage]);
 
   const value: IClaimProvider = useMemo(
     () => ({
       items,
-      isLoading,
+      status,
       error,
-      stop: stopStreaming,
+      stop,
       remove,
       retry,
     }),
-    [items, isLoading, remove, retry, stopStreaming, error],
+    [items, status, error, stop, remove, retry],
   );
 
   return (

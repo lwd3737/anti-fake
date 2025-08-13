@@ -1,5 +1,4 @@
 'use client';
-import { useClaim } from '../providers/ClaimProvider';
 import FactCheckItemCard, {
   VerificationStatus,
 } from './FactCheckItemCard/FactCheckItemCard';
@@ -8,18 +7,14 @@ import { FactCheckSession } from '@/models/fact-check-session';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useMemo } from 'react';
 import { ErrorCode } from '@/gateway/error/error-code';
+import { useClaim } from '../providers/ClaimProvider.new';
 
 interface Props {
   className?: string;
 }
 
 export default function FactCheckList({ className }: Props) {
-  const {
-    items: claims,
-    error: claimsError,
-    isLoading: isClaimsLoading,
-    remove: removeClaim,
-  } = useClaim();
+  const claim = useClaim();
   const {
     items: verifications,
     errors: verificationErrors,
@@ -31,27 +26,22 @@ export default function FactCheckList({ className }: Props) {
   } = useClaimVerification();
 
   const removeItem = (index: number) => {
-    removeClaim(index);
+    claim.remove(index);
     removeVerification(index);
   };
 
   const errorMessage = useMemo(() => {
-    if (!claimsError) return null;
-    switch (claimsError.code) {
-      case ErrorCode.CLAIMS_CREATE_FAILED:
-        return '주장 생성에 실패했습니다. 다시 시도해주세요.';
-      default:
-        console.debug(claimsError);
-        return null;
-    }
-  }, [claimsError]);
+    if (!claim.errors.CLAIM_CREATE_FAILED) return null;
+
+    return `(${claim.errors.CLAIM_CREATE_FAILED.count}) ${claim.errors.CLAIM_CREATE_FAILED.message}`;
+  }, [claim.errors]);
 
   return (
     <ol className={`flex flex-col gap-y-10 ${className}`}>
       {errorMessage && (
         <div className="text-red-500 text-center">{errorMessage}</div>
       )}
-      {claims.map((claim) => {
+      {claim.items.map((claim) => {
         const verificationItem = verifications.find(
           (item) => item.claimId === claim.id,
         );
@@ -91,7 +81,7 @@ export default function FactCheckList({ className }: Props) {
           </li>
         );
       })}
-      {isClaimsLoading && (
+      {claim.status === 'streaming' && (
         <div className="flex justify-center items-center h-full">
           <LoadingSpinner width={30} height={30} />
         </div>

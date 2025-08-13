@@ -16,8 +16,13 @@ export default function YoutubeVideoInfoCard({
   isSummaryLoading,
   className,
 }: Props) {
-  const { thumbnailUrl, title, channelTitle, transcriptSummary, publishedAt } =
-    video;
+  const {
+    thumbnailUrl,
+    title,
+    channelTitle,
+    summary: transcriptSummary,
+    publishedAt,
+  } = video;
 
   return (
     <div className={`bg-white shadow-sm p-6 rounded-sm ${className}`}>

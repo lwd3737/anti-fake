@@ -1,5 +1,6 @@
 import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import {
+  CreateClaimMessageDto,
   CreateClaimsRequestDto,
   GetClaimsResponseDto,
 } from '@/gateway/dto/claim';
@@ -16,6 +17,7 @@ import { isFailure } from '@/result';
 import ClaimService from '@/services/claim';
 import FactCheckSessionService from '@/services/fact-check-session';
 import YoutubeService from '@/services/youtube';
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -38,7 +40,6 @@ export async function GET(
     return handleRouteError(code, error, 401);
   }
 
-  // FIX: factCheckSession 부재시 예외 처리 필요
   const factCheckSession = factCheckSessionResult;
   // TODO: context 추가
   const claims = await claimRepo.findManyBySessionId(factCheckSession.id);
@@ -82,32 +83,69 @@ export async function POST(
     return handleRouteError(code, message, 500);
   }
 
-  let claimsStream: AsyncIterable<Claim>;
-  const transcript = transcriptResult;
+  let transcript = transcriptResult;
+  const youtubeService = new YoutubeService();
   if (!transcript) {
-    return handleRouteError(
-      ErrorCode.YOUTUBE_TRANSCRIPT_NOT_FOUND,
-      'Youtube video transcript not found',
-      404,
-    );
+    const transcriptResult = await youtubeService.generateTranscript(contentId);
+    if (isFailure(transcriptResult)) {
+      const { code, message } = transcriptResult;
+      return handleRouteError(code, message, 500);
+    }
+
+    transcript = transcriptResult;
   }
 
-  try {
-    claimsStream = new ClaimService(req.signal).streamClaimFromTranscript(
-      transcript,
-      factCheckSessionId,
-    );
-  } catch (error) {
-    const { code, message } = error as Failure<ErrorCode.CLAIMS_CREATE_FAILED>;
+  const summaryResult = await youtubeService.summarizeTranscript(
+    transcript.text,
+  );
+  if (isFailure(summaryResult)) {
+    const { code, message } = summaryResult;
     return handleRouteError(code, message, 500);
   }
 
-  return streamingResponse(async ({ send, close }) => {
-    for await (const claim of claimsStream) {
-      send(claim);
-    }
-    close();
+  const stream = createUIMessageStream<CreateClaimMessageDto>({
+    async execute({ writer }) {
+      const summary = summaryResult;
+
+      writer.write({
+        type: 'data-ready',
+        data: {
+          summary,
+        },
+        transient: true,
+      });
+
+      let claimsStream: AsyncIterable<Claim>;
+      try {
+        claimsStream = new ClaimService(req.signal).streamClaimFromTranscript(
+          transcript,
+          factCheckSessionId,
+        );
+
+        for await (const claim of claimsStream) {
+          writer.write({
+            type: 'data-claim',
+            data: { claim },
+            transient: true,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        const { code } = error as Failure<ErrorCode.CLAIM_CREATE_FAILED>;
+
+        writer.write({
+          type: 'data-error',
+          data: {
+            code,
+            message: 'claim stream error',
+          },
+          transient: true,
+        });
+      }
+    },
   });
+
+  return createUIMessageStreamResponse({ stream });
 }
 
 export async function DELETE(

@@ -37,12 +37,38 @@ export default class YoutubeService {
     return await youtubeRepo.upsertVideo(dto);
   }
 
+  public async generateTranscript(videoId: string) {
+    return await Youtube.generateTranscript(videoId);
+  }
+
+  public async summarizeTranscript(
+    transcriptText: string,
+  ): Promise<Result<string, ErrorCode.OPENAI_TRANSCRIPTION_FAILED>> {
+    try {
+      const summaryResult = await generateText({
+        model: openai(AIModel.GPT_4O_MINI),
+        system: `유튜브 영상 자막을 한국어로 요약합니다.`,
+        prompt: transcriptText,
+      });
+
+      return summaryResult.text;
+    } catch (error) {
+      return {
+        code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
+        message: `Failed to generate transcript summary`,
+        context: {
+          detail: error,
+        },
+      };
+    }
+  }
+
   public async generateTranscriptFromVideo(
     videoId: string,
     signal?: AbortSignal,
   ): Promise<
     Result<
-      { transcript: YoutubeVideoTranscript; summary: string },
+      { original: YoutubeVideoTranscript; summary: string },
       GenerateTranscriptErrorCode
     >
   > {
@@ -53,7 +79,6 @@ export default class YoutubeService {
     }
 
     const transcript = transcriptResult;
-
     let summary: string;
     try {
       const summaryResult = await generateText({
@@ -79,7 +104,7 @@ export default class YoutubeService {
       transcriptSummary: summary,
     });
 
-    return { transcript, summary };
+    return { original: transcript, summary };
   }
 
   public async getTranscript(

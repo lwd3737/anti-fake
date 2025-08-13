@@ -1,3 +1,4 @@
+// Deprecated
 import { json } from '@/utils/serialize';
 
 export const CHUNK_DELIMITER = '\r\n';

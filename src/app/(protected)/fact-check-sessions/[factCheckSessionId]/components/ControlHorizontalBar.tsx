@@ -1,9 +1,9 @@
 'use client';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useClaim } from '../providers/ClaimProvider';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import Button from '@/components/Button';
 import { ClaimVerification } from '@/models/claim-verification';
+import { useClaim } from '../providers/ClaimProvider.new';
 
 interface Props {
   className?: string;

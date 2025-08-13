@@ -1,5 +1,5 @@
 import { FactCheckSession } from '@/models/fact-check-session';
-import ClaimProvider from './ClaimProvider';
+import New__ClaimProvider from './ClaimProvider.new';
 import ClaimVerificationProvider from './ClaimVerificationProvider';
 
 export default function FactCheckSessionProviders({
@@ -10,10 +10,10 @@ export default function FactCheckSessionProviders({
   factCheckSession: FactCheckSession;
 }) {
   return (
-    <ClaimProvider factCheckSession={factCheckSession}>
+    <New__ClaimProvider factCheckSession={factCheckSession}>
       <ClaimVerificationProvider factCheckSession={factCheckSession}>
         {children}
       </ClaimVerificationProvider>
-    </ClaimProvider>
+    </New__ClaimProvider>
   );
 }

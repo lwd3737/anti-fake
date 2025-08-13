@@ -12,7 +12,7 @@ export const youtubeVideoMapper = {
       channelTitle: record.channelTitle,
       thumbnailUrl: record.thumbnailUrl,
       transcript,
-      transcriptSummary: record.transcriptSummary,
+      summary: record.transcriptSummary,
       publishedAt: record.publishedAt,
     };
   },

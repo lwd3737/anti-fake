@@ -11,7 +11,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useClaim } from './ClaimProvider';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 import { APIRoutes } from '@/constants/routes';
 import { FactCheckSession } from '@/models/fact-check-session';
@@ -25,6 +24,7 @@ import {
   VerifyClaimChunkErrorDto,
   VerifyClaimResponseChunkDto,
 } from '@/gateway/dto/claim-verification';
+import { useClaim } from './ClaimProvider.new';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
@@ -114,7 +114,7 @@ export default function ClaimVerificationProvider({
     setClaimIdsToVerify([]);
   }, []);
 
-  const { items: claims } = useClaim();
+  const claim = useClaim();
 
   const start = useCallback(async () => {
     const hasClaimToVerify = claimIdsToVerify.length > 0;
@@ -124,7 +124,7 @@ export default function ClaimVerificationProvider({
     }
 
     const claimsToVerify = claimIdsToVerify
-      .map((id) => claims.find((claim) => claim.id === id))
+      .map((id) => claim.items.find((claim) => claim.id === id))
       .filter((claim): claim is Claim => claim !== undefined);
     const dto = {
       factCheckSessionId: factCheckSession.id,
@@ -136,7 +136,7 @@ export default function ClaimVerificationProvider({
     );
 
     setClaimIdsToVerify([]);
-  }, [claimIdsToVerify, claims, factCheckSession.id, startStreaming]);
+  }, [claimIdsToVerify, claim.items, factCheckSession.id, startStreaming]);
 
   useEffect(
     function getVerificationsOnMount() {

@@ -1,6 +1,7 @@
 import { Claim } from '@/models/claim';
 import { ErrorCode } from '../error/error-code';
 import { Failure } from '../error/reponse-error-handler';
+import { UIMessage } from 'ai';
 
 // Request
 export interface CreateClaimsRequestDto {
@@ -25,7 +26,7 @@ export type CreateClaimsErrorDto = Failure<
   | ErrorCode.UNAUTHORIZATION
   | ErrorCode.FACT_CHECK_SESSION_NOT_FOUND
   | ErrorCode.YOUTUBE_VIDEO_NOT_FOUND
-  | ErrorCode.CLAIMS_CREATE_FAILED
+  | ErrorCode.CLAIM_CREATE_FAILED
 >;
 
 export type ClaimResponseChunkDto = Claim;
@@ -33,3 +34,19 @@ export type ClaimResponseChunkDto = Claim;
 export interface DeleteClaimsRequestDto {
   factCheckSessionId: string;
 }
+
+export type CreateClaimMessageDto = UIMessage<
+  never,
+  {
+    ready: {
+      summary: string;
+    };
+    claim: {
+      claim: Claim;
+    };
+    error: {
+      code: ErrorCode.CLAIM_CREATE_FAILED;
+      message: string;
+    };
+  }
+>;

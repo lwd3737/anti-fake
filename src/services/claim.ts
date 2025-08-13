@@ -11,27 +11,12 @@ import { isFailure, Result } from '@/result';
 import { ErrorCode } from '@/gateway/error/error-code';
 import { Failure } from '@/gateway/error/reponse-error-handler';
 import { YoutubeVideoTranscript } from '@/models/youtube';
-
-const ClaimSchema = z.object({
-  content: z.string().describe('검증 가능한 주장의 핵심 내용'),
-  context: z
-    .string()
-    .describe('주장을 이해하기 위한 맥락 정보 (주제, 배경, 관련 상황 등)'),
-  detectionReason: z
-    .string()
-    .describe(
-      '이 주장이 사실 검증이 가능하고 가치가 있다고 판단한 근거를 설명합니다',
-    ),
-  startAt: z.number().describe('주장이 시작되는 시간(초)'),
-  endAt: z.number().describe('주장이 끝나는 시간(초)'),
-});
-
-type TClaimSchema = z.infer<typeof ClaimSchema>;
+import { ClaimSchema } from '@/schemas/claim';
 
 export default class ClaimService {
-  private logger = new LLMHistoryLogger('detect-claims', {
-    title: 'Detect claims',
-  });
+  // private logger = new LLMHistoryLogger('detect-claims', {
+  //   title: 'Detect claims',
+  // });
 
   constructor(private signal: AbortSignal) {}
 
@@ -64,8 +49,8 @@ export default class ClaimService {
         await claimRepo.create(factCheckSessionId, newClaim);
       } catch (error) {
         // TODO: 에러 로깅, 클라이언트에 전송
-        const failure: Failure<ErrorCode.CLAIMS_CREATE_FAILED> = {
-          code: ErrorCode.CLAIMS_CREATE_FAILED,
+        const failure: Failure<ErrorCode.CLAIM_CREATE_FAILED> = {
+          code: ErrorCode.CLAIM_CREATE_FAILED,
           message: 'Failed to create claim on repository',
         };
         console.debug(error, failure);
@@ -79,7 +64,7 @@ export default class ClaimService {
   private async streamClaim(
     prompt: string,
   ): Promise<
-    Result<AsyncIterable<TClaimSchema>, ErrorCode.CLAIMS_CREATE_FAILED>
+    Result<AsyncIterable<ClaimSchema>, ErrorCode.CLAIM_CREATE_FAILED>
   > {
     try {
       const streamResult = streamObject({
@@ -93,11 +78,12 @@ export default class ClaimService {
         schemaDescription:
           '자막에서 사실적으로 검증 가능하고 검증할 가치가 있는 주장과 이유를 나타냅니다.',
         temperature: 0,
+        abortSignal: this.signal,
       });
       return streamResult.elementStream;
     } catch (error) {
       return {
-        code: ErrorCode.CLAIMS_CREATE_FAILED,
+        code: ErrorCode.CLAIM_CREATE_FAILED,
         message: 'Failed to stream claims from ai',
         context: error as Record<string, any>,
       };
