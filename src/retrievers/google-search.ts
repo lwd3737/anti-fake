@@ -167,7 +167,8 @@ export default class GoogleSearch {
             return false;
           },
         )
-        .map((result) => result.value);
+        .map((result) => result.value)
+        .filter((citation) => !!citation);
       result.push(...citations);
     }
 

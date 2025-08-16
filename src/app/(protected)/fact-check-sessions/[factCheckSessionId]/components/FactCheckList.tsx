@@ -13,19 +13,11 @@ interface Props {
 
 export default function FactCheckList({ className }: Props) {
   const claim = useClaim();
-  const {
-    items: verifications,
-    errors: verificationErrors,
-    isLoading: isVerificationsLoading,
-    remove: removeVerification,
-    claimIdsToVerify,
-    addClaimToVerify,
-    removeClaimToVerify,
-  } = useClaimVerification();
+  const verification = useClaimVerification();
 
   const removeItem = (index: number) => {
     claim.remove(index);
-    removeVerification(index);
+    verification.remove(index);
   };
 
   const errorMessage = useMemo(() => {
@@ -40,17 +32,17 @@ export default function FactCheckList({ className }: Props) {
         <div className="text-red-500 text-center">{errorMessage}</div>
       )}
       {claim.items.map((claim) => {
-        const verificationItem = verifications.find(
+        const verificationItem = verification.items.find(
           (item) => item.claimId === claim.id,
         );
-        const verificationError = verificationErrors.find(
+        const verificationError = verification.errors.find(
           (item) => item.claimId === claim.id,
         );
-        const isSelected = claimIdsToVerify.includes(claim.id);
+        const isSelected = verification.claimIdsToVerify.includes(claim.id);
         let status: VerificationStatus;
         if (verificationItem) {
           status = VerificationStatus.VERIFIED;
-        } else if (isSelected && isVerificationsLoading) {
+        } else if (isSelected && verification.isLoading) {
           status = VerificationStatus.LOADING;
         } else if (verificationError) {
           status = VerificationStatus.ERROR;
@@ -69,10 +61,12 @@ export default function FactCheckList({ className }: Props) {
               status={status}
               isSelected={isSelected}
               onSelect={() =>
-                !isVerificationsLoading && addClaimToVerify(claim.id)
+                !verification.isLoading &&
+                verification.addClaimToVerify(claim.id)
               }
               onUnselect={() =>
-                !isVerificationsLoading && removeClaimToVerify(claim.id)
+                !verification.isLoading &&
+                verification.removeClaimToVerify(claim.id)
               }
               onRemove={() => removeItem(claim.index)}
             />

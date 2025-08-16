@@ -34,7 +34,7 @@ export default class ClaimVerificationService {
   private logger = new LLMHistoryLogger('claim-verification', {
     title: 'Claim verification',
   });
-  private cache: ClaimVerification[] = [];
+  // private cache: ClaimVerification[] = [];
 
   constructor(private signal: AbortSignal) {}
 

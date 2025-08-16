@@ -46,7 +46,7 @@ export default function EvidenceCollapse({
           isShown ? '' : 'hidden'
         }`}
       >
-        {evidences.map(({ summary, citations: citaions }, index) => {
+        {evidences.map(({ summary, citations }, index) => {
           return (
             <li
               className={`flex flex-col gap-y-1
@@ -68,7 +68,7 @@ export default function EvidenceCollapse({
               </div>
 
               <div className="flex flex-wrap gap-x-2 pl-4">
-                {citaions.map(({ url, siteName }, index) => {
+                {citations.map(({ url, siteName }, index) => {
                   return (
                     <a
                       className="inline-block bg-surface-subtle-hover px-3 py-1 rounded-full text-[0.5rem] text-text-subtle"

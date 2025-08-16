@@ -14,7 +14,7 @@ export interface CreateClaimsRequestDto {
 // }
 export interface VerifyClaimsRequestDto {
   claims: Claim[];
-  factCheckSessionId: string;
+  // factCheckSessionId: string;
 }
 
 // Response
