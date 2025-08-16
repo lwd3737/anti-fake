@@ -83,6 +83,7 @@ export async function POST(
   }
 
   let transcript = transcriptResult;
+  let summary: string | null = null;
   const youtubeService = new YoutubeService();
 
   if (!transcript) {
@@ -93,25 +94,25 @@ export async function POST(
     }
 
     transcript = transcriptResult;
-  }
 
-  const summaryResult = await youtubeService.summarizeTranscript(
-    contentId,
-    transcript.text,
-  );
-  if (isFailure(summaryResult)) {
-    const { code, message } = summaryResult;
-    return handleRouteError(code, message, 500);
+    const summaryResult = await youtubeService.summarizeTranscript(
+      contentId,
+      transcript.text,
+    );
+    if (isFailure(summaryResult)) {
+      const { code, message } = summaryResult;
+      return handleRouteError(code, message, 500);
+    }
+
+    summary = summaryResult;
   }
 
   const stream = createUIMessageStream<CreateClaimMessageDto>({
     async execute({ writer }) {
-      const summary = summaryResult;
-
       writer.write({
         type: 'data-video-summary',
         data: {
-          summary,
+          summary: summary!,
         },
         transient: true,
       });

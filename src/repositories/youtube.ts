@@ -69,10 +69,12 @@ const youtubeRepo = {
         thumbnailUrl,
         publishedAt,
         transcript: transcript?.text,
-        transcriptMetadata: {
-          segments: transcript?.segments,
-          duration: transcript?.duration,
-        },
+        transcriptMetadata: transcript
+          ? {
+              segments: transcript?.segments,
+              duration: transcript?.duration,
+            }
+          : undefined,
         transcriptSummary: summary,
       },
     });
