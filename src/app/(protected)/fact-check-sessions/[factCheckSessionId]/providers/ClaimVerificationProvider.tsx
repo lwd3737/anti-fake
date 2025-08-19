@@ -58,6 +58,7 @@ export default function ClaimVerificationProvider({
 }) {
   const [items, setItems] = useState<ClaimVerification[]>([]);
   const [errors, setErrors] = useState<ClaimVerificationError[]>([]);
+  const [claimIdsToVerify, setClaimIdsToVerify] = useState<string[]>([]);
 
   const { status, sendMessage, stop } = useChat<VerifyClaimMessageDto>({
     transport: new DefaultChatTransport({
@@ -103,8 +104,6 @@ export default function ClaimVerificationProvider({
     setItems([]);
     await deleteClaimVerifications(factCheckSession.id);
   }, [factCheckSession.id]);
-
-  const [claimIdsToVerify, setClaimIdsToVerify] = useState<string[]>([]);
 
   const addClaimToVerify = useCallback((id: string) => {
     setClaimIdsToVerify((prev) => Array.from(new Set([...prev, id])));
@@ -171,7 +170,7 @@ export default function ClaimVerificationProvider({
       value={{
         items,
         errors,
-        isLoading: status === 'streaming',
+        isLoading: status === 'submitted' || status === 'streaming',
         claimIdsToVerify,
         start,
         stop,

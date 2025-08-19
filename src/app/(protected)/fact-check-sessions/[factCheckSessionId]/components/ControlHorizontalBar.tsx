@@ -14,17 +14,17 @@ export default function ControlHorizontalBar({ className }: Props) {
   const verification = useClaimVerification();
   const { addClaimsToVerifyBulk, resetClaimsToVerify, clear } = verification;
 
-  const verificationsByClaimId = useMemo(
-    () =>
-      verification.items.reduce(
-        (result, verification) => {
-          result[verification.claimId] = verification;
-          return result;
-        },
-        {} as Record<string, ClaimVerification>,
-      ),
-    [verification.items],
-  );
+  // const verificationsByClaimId = useMemo(
+  //   () =>
+  //     verification.items.reduce(
+  //       (result, verification) => {
+  //         result[verification.claimId] = verification;
+  //         return result;
+  //       },
+  //       {} as Record<string, ClaimVerification>,
+  //     ),
+  //   [verification.items],
+  // );
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
   // const selectAllClaims = useCallback(() => {
@@ -38,10 +38,18 @@ export default function ControlHorizontalBar({ className }: Props) {
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
       if (isAllItemsSelected) {
-        const claimIds = claim.items
+        const verificationsByClaimId = verification.items.reduce(
+          (result, verification) => {
+            result[verification.claimId] = verification;
+            return result;
+          },
+          {} as Record<string, ClaimVerification>,
+        );
+        const notVerifiedClaimIds = claim.items
           .filter((claim) => !verificationsByClaimId[claim.id])
           .map((claim) => claim.id);
-        addClaimsToVerifyBulk(claimIds);
+
+        addClaimsToVerifyBulk(notVerifiedClaimIds);
       } else {
         resetClaimsToVerify();
       }
@@ -49,7 +57,7 @@ export default function ControlHorizontalBar({ className }: Props) {
     [
       isAllItemsSelected,
       claim.items,
-      verificationsByClaimId,
+      verification.items,
       addClaimsToVerifyBulk,
       resetClaimsToVerify,
     ],
@@ -58,6 +66,15 @@ export default function ControlHorizontalBar({ className }: Props) {
   const handleAllSelectionChange = (ev: ChangeEvent) => {
     const isChecked = (ev.target as HTMLInputElement).checked;
     setIsAllItemsSelected(isChecked);
+
+    // if (isChecked) {
+    //   const claimIds = claim.items
+    //     .filter((claim) => !verificationsByClaimId[claim.id])
+    //     .map((claim) => claim.id);
+    //   addClaimsToVerifyBulk(claimIds);
+    // } else {
+    //   resetClaimsToVerify();
+    // }
   };
 
   const handleStartVerification = () => {
@@ -70,6 +87,7 @@ export default function ControlHorizontalBar({ className }: Props) {
     );
     if (!ok) return;
 
+    setIsAllItemsSelected(false);
     resetClaimsToVerify();
     await clear();
     await claim.retry();
