@@ -39,6 +39,15 @@ const claimRepo = {
     return claims.map(claimMapper.fromPersistence);
   },
 
+  async delete(factCheckSessionId: string, claimId: string): Promise<void> {
+    await prisma.claim.delete({
+      where: {
+        factCheckSessionId,
+        id: claimId,
+      },
+    });
+  },
+
   async deleteManyBySessionId(factCheckSessionId: string): Promise<void> {
     await prisma.claim.deleteMany({
       where: {

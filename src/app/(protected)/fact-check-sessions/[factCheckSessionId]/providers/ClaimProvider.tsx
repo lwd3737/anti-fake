@@ -1,5 +1,10 @@
 'use client';
-import { getClaims } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
+import { deleteClaimVerifications } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
+import { deleteClaim } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/[claimId]/fetch';
+import {
+  deleteClaims,
+  getClaims,
+} from '@/app/api/fact-check-sessions/[factCheckSessionId]/claims/fetch';
 import { APIRoutes, PageRoutes } from '@/constants/routes';
 import { CreateClaimMessageDto } from '@/gateway/dto/claim';
 import { ErrorCode } from '@/gateway/error/error-code';
@@ -154,15 +159,21 @@ export default function ClaimProvider({
   const retry = useCallback(async () => {
     setErrors({});
     setClaims([]);
+
+    await deleteClaims(factCheckSession.id);
     await sendMessage();
-  }, [sendMessage]);
+  }, [factCheckSession.id, sendMessage]);
 
   const remove = useCallback(
     async (index: number) => {
+      const result = await deleteClaim(factCheckSession.id, claims[index].id);
+      if (isFailure(result)) {
+        alert('주장 삭제에 실패했습니다.');
+        return;
+      }
       setClaims((prev) => prev.filter((_, i) => i !== index));
-      // TODO: DB 삭제 요청
     },
-    [setClaims],
+    [factCheckSession.id, claims],
   );
 
   return (

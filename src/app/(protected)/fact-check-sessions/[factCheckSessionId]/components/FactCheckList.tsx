@@ -52,9 +52,8 @@ export default function FactCheckList({ className }: Props) {
 
         // TODO: theme 적용
         return (
-          <li className="flex flex-col gap-y-6" key={claim.index}>
+          <li className="flex flex-col gap-y-6" key={claim.id}>
             <FactCheckItemCard
-              key={claim.index}
               claim={claim}
               verification={verificationItem}
               verificationError={verificationError?.message}
