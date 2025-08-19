@@ -20,6 +20,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -60,7 +61,11 @@ export default function ClaimProvider({
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>('idle');
   const [errors, setErrors] = useState<ClaimErrors>({});
 
-  const { sendMessage, stop: stopStream } = useChat<CreateClaimMessageDto>({
+  const {
+    sendMessage,
+    stop: stopStream,
+    status,
+  } = useChat<CreateClaimMessageDto>({
     transport: new DefaultChatTransport({
       api: APIRoutes.factCheckSessions.claims(factCheckSession.id),
       body: {
@@ -103,9 +108,15 @@ export default function ClaimProvider({
     },
   });
 
+  const isLoadedRef = useRef(false);
   // TODO: 에러 단순화 필요
   useEffect(
     function getClaimsOnMount() {
+      if (isLoadedRef.current) {
+        return;
+      }
+      isLoadedRef.current = true;
+
       getClaims(factCheckSession.id).then(async (result) => {
         if (isFailure(result)) {
           const { code, message } = result;
@@ -148,8 +159,12 @@ export default function ClaimProvider({
         setClaimStatus('videoSummarizing');
         await sendMessage();
       });
+
+      return () => {
+        stopStream();
+      };
     },
-    [factCheckSession.id, router, sendMessage],
+    [factCheckSession.id, router, sendMessage, stopStream],
   );
 
   const stop = useCallback(async () => {
