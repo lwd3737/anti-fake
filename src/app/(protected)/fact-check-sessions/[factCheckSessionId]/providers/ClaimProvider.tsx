@@ -38,7 +38,7 @@ const ClaimContext = createContext<
       errors: ClaimErrors;
       stop: () => Promise<void>;
       retry: () => Promise<void>;
-      remove: (index: number) => Promise<void>;
+      remove: (claimId: string) => Promise<void>;
     }
   | undefined
 >(undefined);
@@ -180,15 +180,15 @@ export default function ClaimProvider({
   }, [factCheckSession.id, sendMessage]);
 
   const remove = useCallback(
-    async (index: number) => {
-      const result = await deleteClaim(factCheckSession.id, claims[index].id);
+    async (claimId: string) => {
+      const result = await deleteClaim(factCheckSession.id, claimId);
       if (isFailure(result)) {
         alert('주장 삭제에 실패했습니다.');
         return;
       }
-      setClaims((prev) => prev.filter((_, i) => i !== index));
+      setClaims((prev) => prev.filter((claim) => claim.id !== claimId));
     },
-    [factCheckSession.id, claims],
+    [factCheckSession.id],
   );
 
   return (

@@ -15,9 +15,9 @@ export default function FactCheckList({ className }: Props) {
   const claim = useClaim();
   const verification = useClaimVerification();
 
-  const removeItem = (index: number) => {
-    claim.remove(index);
-    verification.remove(index);
+  const remove = (claimId: string) => {
+    claim.remove(claimId);
+    verification.remove(claimId);
   };
 
   const errorMessage = useMemo(() => {
@@ -67,7 +67,7 @@ export default function FactCheckList({ className }: Props) {
                 !verification.isLoading &&
                 verification.removeClaimToVerify(claim.id)
               }
-              onRemove={() => removeItem(claim.index)}
+              onRemove={() => remove(claim.id)}
             />
           </li>
         );

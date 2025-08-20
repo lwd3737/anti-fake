@@ -36,7 +36,7 @@ export interface IClaimVerification {
   addClaimsToVerifyBulk: (ids: string[]) => void;
   removeClaimsToVerifyBulk: (ids: string[]) => void;
   resetClaimsToVerify: () => void;
-  remove: (index: number) => void;
+  remove: (claimId: string) => void;
   clear: () => Promise<void>;
 }
 
@@ -96,8 +96,8 @@ export default function ClaimVerificationProvider({
     },
   });
 
-  const remove = useCallback((index: number) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+  const remove = useCallback((claimId: string) => {
+    setItems((prev) => prev.filter((item) => item.claimId !== claimId));
   }, []);
 
   const clear = useCallback(async () => {
