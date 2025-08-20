@@ -12,7 +12,7 @@ interface Props {
   claimCount: number;
   verificationCount: number;
   createdAt: Date;
-  onClose: (id: string) => void;
+  onRemove: (factCheckSessionId: string) => void;
 }
 
 export default function FactCheckSessionCard({
@@ -21,8 +21,16 @@ export default function FactCheckSessionCard({
   claimCount,
   verificationCount,
   createdAt,
-  onClose,
+  onRemove,
 }: Props) {
+  const handleRemove = () => {
+    const ok = confirm('삭제하시겠습니까?');
+    if (!ok) return;
+
+    onRemove(id);
+    window.location.reload();
+  };
+
   return (
     <li className="bg-white shadow-md hover:shadow-lg rounded-lg transition-shadow duration-300">
       <Link href={PageRoutes.factCheckSession(id)}>
@@ -40,7 +48,7 @@ export default function FactCheckSessionCard({
               <span>게시일: {formatDate(video.publishedAt)}</span>
             </div>
           </div>
-          <CloseButton onClick={() => onClose(id)} />
+          <CloseButton onClick={handleRemove} />
         </div>
         <div className="flex justify-between bg-gray-50 px-8 py-4 text-sm">
           <div className="flex gap-x-3 font-semibold text-gray-600">

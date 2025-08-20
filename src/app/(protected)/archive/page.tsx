@@ -13,7 +13,7 @@ export default async function ArchivePage() {
     return <div>Error: {archiveResult.message}</div>;
   }
 
-  const handleClose = async (id: string) => {
+  const handleRemove = async (id: string) => {
     'use server';
 
     const result = await new FactCheckSessionService().delete(id);
@@ -23,13 +23,14 @@ export default async function ArchivePage() {
   };
 
   const archive = archiveResult;
+
   return archive.length > 0 ? (
     <ul className="gap-x-6 gap-y-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
       {archive.map((factCheckSession) => (
         <FactCheckSessionCard
           key={factCheckSession.id}
           {...factCheckSession}
-          onClose={handleClose}
+          onRemove={handleRemove}
         />
       ))}
     </ul>
