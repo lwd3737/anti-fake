@@ -76,14 +76,14 @@ export async function POST(
     return handleRouteError(code, error, 401);
   }
 
-  const transcriptResult = await new YoutubeService().getTranscript(contentId);
-  if (isFailure(transcriptResult)) {
-    const { code, message } = transcriptResult;
+  const transcriptAndSummaryResult =
+    await new YoutubeService().getTranscriptAndSummary(contentId);
+  if (isFailure(transcriptAndSummaryResult)) {
+    const { code, message } = transcriptAndSummaryResult;
     return handleRouteError(code, message, 500);
   }
 
-  let transcript = transcriptResult;
-  let summary: string | null = null;
+  let { transcript, summary } = transcriptAndSummaryResult ?? {};
   const youtubeService = new YoutubeService();
 
   if (!transcript) {
@@ -94,7 +94,8 @@ export async function POST(
     }
 
     transcript = transcriptResult;
-
+  }
+  if (!summary) {
     const summaryResult = await youtubeService.summarizeTranscript(
       contentId,
       transcript.text,

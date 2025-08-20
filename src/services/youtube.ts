@@ -123,10 +123,14 @@ export default class YoutubeService {
     return { original: transcript, summary };
   }
 
-  public async getTranscript(
-    videoId: string,
-  ): Promise<
-    Result<YoutubeVideoTranscript | null, ErrorCode.YOUTUBE_VIDEO_NOT_FOUND>
+  public async getTranscriptAndSummary(videoId: string): Promise<
+    Result<
+      {
+        transcript: YoutubeVideoTranscript | null;
+        summary: string | null;
+      } | null,
+      ErrorCode.YOUTUBE_VIDEO_NOT_FOUND
+    >
   > {
     const found = await youtubeRepo.findVideoById(videoId);
     if (!found)
@@ -135,6 +139,9 @@ export default class YoutubeService {
         message: `Youtube video not found`,
       };
 
-    return found.transcript ?? null;
+    return {
+      transcript: found.transcript ?? null,
+      summary: found.summary ?? null,
+    };
   }
 }
