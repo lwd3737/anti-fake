@@ -1,7 +1,5 @@
 import { AIModel, openai } from '@/libs/ai';
 import { streamObject } from 'ai';
-import { z } from 'zod';
-import LLMHistoryLogger from '@/logger/llm-history.logger';
 import loadConfig from '@/config';
 import { Claim } from '@/models/claim';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,10 +12,6 @@ import { YoutubeVideoTranscript } from '@/models/youtube';
 import { ClaimSchema } from '@/schemas/claim';
 
 export default class ClaimService {
-  // private logger = new LLMHistoryLogger('detect-claims', {
-  //   title: 'Detect claims',
-  // });
-
   constructor(private signal: AbortSignal) {}
 
   // TODO: logger 추가
@@ -94,28 +88,4 @@ export default class ClaimService {
     const { devMode } = loadConfig();
     return devMode.claimDetection ?? devMode.default;
   }
-
-  // private async startTranscriptionDetectionOnDevMode(): Promise<void> {
-  //   const mockData = await import('/mock/claims.json');
-  //   const { mockDataCount } = loadConfig();
-
-  //   const dataCount = mockDataCount ?? mockData.claims.length;
-  //   const claims = mockData.claims.slice(0, dataCount);
-
-  //   for (let index = 0; index < dataCount; index++) {
-  //     const claim = claims[index];
-  //     this.events.emit(EventType.CLAIM_DETECTED, { ...claim, index });
-
-  //     await new Promise((resolve) => setTimeout(resolve, STREAM_INTERVAL));
-  //   }
-
-  //   const claimsWithIndex = claims.map((claim, index) => ({
-  //     ...claim,
-  //     index,
-  //   }));
-
-  //   this.events.emit(EventType.FINISHED, {
-  //     output: claimsWithIndex,
-  //   });
-  // }
 }

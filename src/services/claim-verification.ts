@@ -34,14 +34,8 @@ export default class ClaimVerificationService {
   private logger = new LLMHistoryLogger('claim-verification', {
     title: 'Claim verification',
   });
-  // private cache: ClaimVerification[] = [];
 
   constructor(private signal: AbortSignal) {}
-
-  // private get isDevMode(): boolean {
-  //   const { devMode } = loadConfig();
-  //   return devMode.claimVerification ?? devMode.default;
-  // }
 
   public async verify({
     factCheckSessionId,
@@ -140,17 +134,4 @@ export default class ClaimVerificationService {
       };
     }
   }
-
-  // private async verifyOnDevMode(): Promise<
-  //   Pick<ClaimVerification, 'verdict' | 'verdictReason'>
-  // > {
-  //   const { claimVerifications } = await import(
-  //     '/mock/claim-verification.json'
-  //   );
-  //   const idx = Math.floor(Math.random() * claimVerifications.length);
-  //   return claimVerifications[idx] as Pick<
-  //     ClaimVerification,
-  //     'verdict' | 'verdictReason'
-  //   >;
-  // }
 }
