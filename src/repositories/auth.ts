@@ -2,7 +2,6 @@ import loadConfig, { Config } from '@/config';
 import { OauthProviderType, User } from '@/models/user';
 import userRepo from '@/repositories/user';
 import { google, Auth } from 'googleapis';
-import jwt from 'jsonwebtoken';
 
 export default class AuthRepo {
   private config: Pick<Config['google'], 'clientId'>;

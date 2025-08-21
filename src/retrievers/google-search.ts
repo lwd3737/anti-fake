@@ -104,8 +104,8 @@ export default class GoogleSearch {
         contents: [],
         metadata: {
           tokenUsage: {
-            promptTokens: 0,
-            completionTokens: 0,
+            inputTokens: 0,
+            outputTokens: 0,
             totalTokens: 0,
           },
           model: this.model.model,
@@ -136,8 +136,8 @@ export default class GoogleSearch {
       contents,
       metadata: {
         tokenUsage: {
-          promptTokens: promptTokenCount ?? 0,
-          completionTokens: candidatesTokenCount ?? 0,
+          inputTokens: promptTokenCount ?? 0,
+          outputTokens: candidatesTokenCount ?? 0,
           totalTokens: totalTokenCount ?? 0,
         },
         model: this.model.model,
@@ -167,7 +167,8 @@ export default class GoogleSearch {
             return false;
           },
         )
-        .map((result) => result.value);
+        .map((result) => result.value)
+        .filter((citation) => !!citation);
       result.push(...citations);
     }
 
@@ -202,7 +203,6 @@ export default class GoogleSearch {
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get('location');
       if (!location) throw new Error('location header not found');
-      console.log('redirecting to', location);
       return this.getCitation({ uri: location, title: domain });
     }
 

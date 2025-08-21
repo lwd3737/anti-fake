@@ -1,16 +1,18 @@
 'use client';
 import { useMemo } from 'react';
-import { useClaim } from '../../../providers/ClaimProvider';
 import { useClaimVerification } from '../../../providers/ClaimVerificationProvider';
+import { useClaim } from '../../../providers/ClaimProvider';
 
 export default function FactCheckProgressDisplay() {
-  const { items: claims } = useClaim();
+  const claim = useClaim();
   const { items: verifications } = useClaimVerification();
 
   const progressPercent = useMemo(() => {
-    const percent = Math.round((verifications.length / claims.length) * 100);
+    const percent = Math.round(
+      (verifications.length / claim.items.length) * 100,
+    );
     return isNaN(percent) ? 0 : percent;
-  }, [claims.length, verifications.length]);
+  }, [claim.items.length, verifications.length]);
 
   return (
     <div className="flex flex-col gap-y-2 bg-surface-subtle p-4 rounded-lg">
@@ -20,7 +22,7 @@ export default function FactCheckProgressDisplay() {
       </div>
       <progress
         className="w-full"
-        max={claims.length}
+        max={claim.items.length}
         value={verifications.length}
       />
     </div>

@@ -7,14 +7,17 @@ import {
 import { GaxiosResponse } from 'gaxios';
 import { google, youtube_v3 } from 'googleapis';
 import { authService } from '../services';
-import { Result } from '@/result';
+import { isFailure, Result } from '@/result';
 import { ErrorCode } from '@/gateway/error/error-code';
 import YTDlpWrap from 'yt-dlp-wrap';
 import path from 'path';
-import fs from 'fs';
-import axios from 'axios';
 import os from 'os';
 import { YoutubeVideoTranscript } from '@/models/youtube';
+import { experimental_transcribe as transcribe } from 'ai';
+import { openai } from './ai';
+import { mkdir, readdir, readFile } from 'fs/promises';
+import { existsSync } from 'fs';
+import { execSync } from 'child_process';
 
 interface WhisperTranscription {
   task: string;
@@ -34,18 +37,63 @@ interface WhisperTranscription {
   }[];
 }
 
+export type GenerateTranscriptErrorCode =
+  | ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
+  | ErrorCode.OPENAI_TRANSCRIPTION_FAILED;
+
 export default class Youtube {
   private youtube: youtube_v3.Youtube;
 
   public static async generateTranscript(
     videoId: string,
     signal?: AbortSignal,
-  ): Promise<Result<YoutubeVideoTranscript>> {
+  ): Promise<Result<YoutubeVideoTranscript, GenerateTranscriptErrorCode>> {
+    const downloadResult = await this.downloadAudio(videoId, signal);
+    if (isFailure(downloadResult)) {
+      const error = downloadResult;
+      return error;
+    }
+
+    const { filePath, dirPath } = downloadResult;
+
+    const chunkDir = path.join(dirPath, `${videoId}_chunks`);
+    await mkdir(chunkDir, { recursive: true });
+    const chunkDuration = 600; // 10분
+    execSync(
+      `./bin/ffmpeg -i ${filePath} -f segment -segment_time ${chunkDuration} -c copy ${chunkDir}/chunk_%03d.mp3`,
+      { stdio: 'ignore' },
+    );
+    const chunkFiles = (await readdir(chunkDir)).sort();
+    const chunkPaths = chunkFiles.map((fileName) =>
+      path.join(chunkDir, fileName),
+    );
+    const chunks = await Promise.all(
+      chunkPaths.map((filePath) => this.transcribeByCLI(filePath)),
+    );
+
+    const transcript = this.mergeTranscriptChunks(chunks);
+
+    return transcript;
+  }
+
+  public static async downloadAudio(
+    videoId: string,
+    signal?: AbortSignal,
+  ): Promise<
+    Result<
+      { dirPath: string; filePath: string },
+      ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
+    >
+  > {
     const ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg');
-    if (!fs.existsSync(ffmpegPath)) {
-      throw new Error(
-        'ffmpeg binary not found. Please run npm run init first.',
-      );
+    if (!existsSync(ffmpegPath)) {
+      return {
+        code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
+        message: 'ffmpeg binary not found. Please run yarn run init first.',
+        context: {
+          videoId,
+        },
+      };
     }
 
     const url = `https://www.youtube.com/watch?v=${videoId}`;
@@ -53,87 +101,151 @@ export default class Youtube {
 
     const tempDir = os.tmpdir();
     const tempFile = path.join(tempDir, `${videoId}.mp3`);
-    fs.mkdirSync(tempDir, { recursive: true });
-
-    await ytDlp.execPromise(
-      [
-        url,
-        '-f',
-        'bestaudio',
-        '--extract-audio',
-        '--audio-format',
-        'mp3',
-        '--audio-quality',
-        '0',
-        '--no-playlist',
-        '--ffmpeg-location',
-        ffmpegPath,
-        '-o',
-        tempFile,
-      ],
-      {
-        signal,
-      },
-    );
+    await mkdir(tempDir, { recursive: true });
 
     try {
-      const { exec } = require('child_process');
-      const { promisify } = require('util');
-      const execAsync = promisify(exec);
-      const curlCommand = [
-        'curl',
-        '-X POST',
-        'https://api.openai.com/v1/audio/transcriptions',
-        '-H',
-        `"Authorization: Bearer ${loadConfig().openai.apiKey}"`,
-        '-H',
-        '"Content-Type: multipart/form-data"',
-        '-F',
-        `"file=@${tempFile}"`,
-        '-F',
-        '"model=whisper-1"',
-        '-F',
-        '"language=ko"',
-        '-F',
-        '"response_format=verbose_json"',
-        '-F',
-        '"temperature=0"',
-        // '--max-time',
-        // '120',
-      ].join(' ');
-
-      const { stdout, stderr } = await execAsync(curlCommand);
-      if (stderr) console.debug('Curl stderr:', stderr);
-
-      try {
-        const transcription = JSON.parse(stdout) as WhisperTranscription;
-        console.log('transcription', transcription);
-        const { text, duration, segments } = transcription;
-
-        return {
-          text,
-          duration,
-          segments: segments.map(({ text, start, end }) => ({
-            text,
-            start,
-            end,
-          })),
-        };
-      } catch (parseError) {
-        console.error('Failed to parse transcription:', parseError);
-        throw parseError;
-      }
+      await ytDlp.execPromise(
+        [
+          url,
+          '-f',
+          'bestaudio',
+          '--extract-audio',
+          '--audio-format',
+          'mp3',
+          '--audio-quality',
+          '0',
+          '--no-playlist',
+          '--ffmpeg-location',
+          ffmpegPath,
+          '-o',
+          tempFile,
+        ],
+        {
+          signal,
+        },
+      );
     } catch (error) {
-      const message = 'Failed to transcribe audio';
-      console.error(message, error);
-
-      if (axios.isAxiosError(error)) console.error(error.response?.data);
-
       return {
-        code: ErrorCode.OPENAI_TRANSCRIPTION_FAILED,
-        message: error instanceof Error ? error.message : message,
+        code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
+        message: 'Failed to download audio by yt-dlp',
+        context: {
+          videoId,
+          detail: error,
+        },
       };
     }
+
+    return {
+      dirPath: tempDir,
+      filePath: tempFile,
+    };
+  }
+
+  // INFO: sdk 라이브러리 사용 시 오류 발생
+  public static async transcribeBySDK(
+    buffer: Buffer,
+  ): Promise<YoutubeVideoTranscript> {
+    const transcript = await transcribe({
+      model: openai.transcription('whisper-1'),
+      audio: buffer,
+    });
+
+    transcript.warnings.forEach((warning) => {
+      console.warn('warning', warning);
+    });
+
+    const { text, segments, durationInSeconds } = transcript;
+
+    return {
+      text,
+      duration: durationInSeconds ?? 0,
+      segments: segments.map(({ text, startSecond, endSecond }) => ({
+        text,
+        start: startSecond,
+        end: endSecond,
+      })),
+    };
+  }
+
+  public static async transcribeByCLI(
+    filePath: string,
+    // previousSegmentText?: string,
+  ): Promise<YoutubeVideoTranscript> {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    const curlCommand = [
+      'curl',
+      '-X POST',
+      'https://api.openai.com/v1/audio/transcriptions',
+      '-H',
+      `"Authorization: Bearer ${loadConfig().openai.apiKey}"`,
+      '-H',
+      '"Content-Type: multipart/form-data"',
+      '-F',
+      `"file=@${filePath}"`,
+      '-F',
+      '"model=whisper-1"',
+      '-F',
+      '"language=ko"',
+      '-F',
+      '"response_format=verbose_json"',
+      '-F',
+      '"temperature=0"',
+    ].join(' ');
+
+    const { stdout, stderr } = await execAsync(curlCommand);
+    if (stderr) console.debug('Curl stderr:', stderr);
+
+    const transcription = JSON.parse(stdout) as WhisperTranscription;
+    const { text, duration, segments } = transcription;
+
+    return {
+      text,
+      duration,
+      segments: segments.map(({ text, start, end }) => ({
+        text,
+        start,
+        end,
+      })),
+    };
+  }
+
+  private static mergeTranscriptChunks(
+    chunks: YoutubeVideoTranscript[],
+  ): YoutubeVideoTranscript {
+    return chunks.reduce<YoutubeVideoTranscript>(
+      (result, chunk, idx) => {
+        if (idx === 0) {
+          const { text, duration, segments } = chunk;
+          return {
+            text,
+            duration,
+            segments,
+          };
+        }
+
+        const prevChunkSegment = result.segments[result.segments.length - 1];
+        const timeOffset = prevChunkSegment.end;
+
+        const adjustedChunkSegments = chunk.segments.map((segment) => ({
+          ...segment,
+          start: segment.start + timeOffset,
+          end: segment.end + timeOffset,
+        }));
+
+        return {
+          text: result.text + ' ' + chunk.text,
+          duration: result.duration + chunk.duration,
+          segments: [...result.segments, ...adjustedChunkSegments],
+        };
+      },
+      {
+        text: '',
+        duration: 0,
+        segments: [],
+      },
+    );
   }
 
   constructor() {
@@ -143,14 +255,25 @@ export default class Youtube {
     });
   }
 
-  public async getVideo(id: string): Promise<Result<YoutubeVideoDto | null>> {
+  public async getVideo(
+    id: string,
+  ): Promise<
+    Result<YoutubeVideoDto | null, ErrorCode.YOUTUBE_VIDEO_GET_FAILED>
+  > {
     try {
       const res = await this.youtube.videos.list({
         part: ['id', 'snippet'],
         id: [id],
       });
       if (this.isFailed(res)) {
-        throw new Error(`Youtube video search is failed: ${res.statusText}`);
+        return {
+          code: ErrorCode.YOUTUBE_VIDEO_GET_FAILED,
+          message: `Youtube video get failed from google server`,
+          context: {
+            videoId: id,
+            error: res.statusText,
+          },
+        };
       }
 
       const video = res.data.items?.map((item) => {

@@ -9,6 +9,7 @@ import CloseButton from '@/components/CloseButton';
 interface Props {
   claim: Claim;
   verification?: ClaimVerification;
+  verificationError?: string;
   status: VerificationStatus;
   isSelected: boolean;
   onSelect: () => void;
@@ -17,14 +18,16 @@ interface Props {
 }
 
 export enum VerificationStatus {
-  VERIFIED = 'VERIFIED',
   LOADING = 'LOADING',
   NOT_VERIFIED = 'NOT_VERIFIED',
+  VERIFIED = 'VERIFIED',
+  ERROR = 'ERROR',
 }
 
 export default function FactCheckItemCard({
   claim,
   verification,
+  verificationError,
   status,
   isSelected,
   onSelect,
@@ -37,6 +40,8 @@ export default function FactCheckItemCard({
         return 'checked.svg';
       case VerificationStatus.NOT_VERIFIED:
         return 'question-mark.svg';
+      case VerificationStatus.ERROR:
+        return 'error.svg';
     }
   }, [status]);
 
@@ -47,6 +52,15 @@ export default function FactCheckItemCard({
       return 'hover:outline hover:outline-2 hover:bg-[#1F3A931A] hover:outline-brand cursor-pointer';
     else return '';
   }, [isSelected, status]);
+
+  const renderVerificationCardBody = () => {
+    switch (status) {
+      case VerificationStatus.VERIFIED:
+        return <ClaimVerificationCardBody {...verification!} />;
+      case VerificationStatus.ERROR:
+        return <div>{verificationError}</div>;
+    }
+  };
 
   const handleClick = () => {
     if (status !== VerificationStatus.NOT_VERIFIED) return;
@@ -92,9 +106,7 @@ export default function FactCheckItemCard({
         <CloseButton onClick={onRemove} />
       </div>
 
-      {status === VerificationStatus.VERIFIED && (
-        <ClaimVerificationCardBody {...verification!} />
-      )}
+      {renderVerificationCardBody()}
     </article>
   );
 }

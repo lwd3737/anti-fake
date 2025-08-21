@@ -1,5 +1,3 @@
-import { User } from '@/models/user';
-
 // Request DTO
 export interface VerifyTokenRequestDto {
   accessToken: string;

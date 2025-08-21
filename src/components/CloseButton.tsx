@@ -18,7 +18,6 @@ export default function CloseButton({
   const handleClick = (evt: MouseEvent) => {
     evt.preventDefault();
     onClick();
-    window.location.reload();
   };
 
   return (

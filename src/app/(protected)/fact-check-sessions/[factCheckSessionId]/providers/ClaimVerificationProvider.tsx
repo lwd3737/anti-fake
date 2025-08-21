@@ -1,5 +1,4 @@
 'use client';
-import useStreamingResponse from '@/hooks/useStreamingResponse';
 import { ClaimVerification } from '@/models/claim-verification';
 import assert from 'assert';
 import {
@@ -8,10 +7,8 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
-import { useClaim } from './ClaimProvider';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
 import { APIRoutes } from '@/constants/routes';
 import { FactCheckSession } from '@/models/fact-check-session';
@@ -21,9 +18,15 @@ import {
   getClaimVerifications,
 } from '@/app/api/fact-check-sessions/[factCheckSessionId]/claim-verifications/fetch';
 import { isFailure } from '@/result';
+import { VerifyClaimMessageDto } from '@/gateway/dto/claim-verification';
+import { useClaim } from './ClaimProvider';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { ErrorCode } from '@/gateway/error/error-code';
 
 export interface IClaimVerification {
   items: ClaimVerification[];
+  errors: ClaimVerificationError[];
   isLoading: boolean;
   claimIdsToVerify: string[];
   start: () => void;
@@ -33,8 +36,13 @@ export interface IClaimVerification {
   addClaimsToVerifyBulk: (ids: string[]) => void;
   removeClaimsToVerifyBulk: (ids: string[]) => void;
   resetClaimsToVerify: () => void;
-  remove: (index: number) => void;
+  remove: (claimId: string) => void;
   clear: () => Promise<void>;
+}
+
+export interface ClaimVerificationError {
+  claimId: string;
+  message: string;
 }
 
 const ClaimVerificationContext = createContext<IClaimVerification | undefined>(
@@ -49,27 +57,53 @@ export default function ClaimVerificationProvider({
   factCheckSession: FactCheckSession;
 }) {
   const [items, setItems] = useState<ClaimVerification[]>([]);
+  const [errors, setErrors] = useState<ClaimVerificationError[]>([]);
+  const [claimIdsToVerify, setClaimIdsToVerify] = useState<string[]>([]);
 
-  const append = useCallback((data: ClaimVerification[]) => {
-    setItems((prev) => [...prev, ...data]);
-  }, []);
+  const { status, sendMessage, stop } = useChat<VerifyClaimMessageDto>({
+    transport: new DefaultChatTransport({
+      api: APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS(factCheckSession.id),
+    }),
+    onData(part) {
+      switch (part.type) {
+        case 'data-claim-verification': {
+          setItems((prev) => [...prev, part.data.claimVerification]);
+          break;
+        }
+        case 'data-error': {
+          const { code, claimId } = part.data;
 
-  const remove = useCallback((index: number) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
+          let errorMessage: string;
+          switch (code) {
+            case ErrorCode.EVIDENCE_RETRIEVAL_FAILED:
+              errorMessage = '증거 조회를 실패했습니다.';
+              break;
+            case ErrorCode.CLAIM_VERIFICATIONS_CREATE_FAILED:
+              errorMessage = '주장 검증을 실패했습니다.';
+              break;
+          }
+
+          setErrors((prev) => [
+            ...prev,
+            {
+              claimId,
+              message: errorMessage,
+            },
+          ]);
+          break;
+        }
+      }
+    },
+  });
+
+  const remove = useCallback((claimId: string) => {
+    setItems((prev) => prev.filter((item) => item.claimId !== claimId));
   }, []);
 
   const clear = useCallback(async () => {
     setItems([]);
     await deleteClaimVerifications(factCheckSession.id);
   }, [factCheckSession.id]);
-
-  const { isLoading, startStreaming, stopStreaming } = useStreamingResponse(
-    (chunks: unknown[]) => {
-      append(chunks as ClaimVerification[]);
-    },
-  );
-
-  const [claimIdsToVerify, setClaimIdsToVerify] = useState<string[]>([]);
 
   const addClaimToVerify = useCallback((id: string) => {
     setClaimIdsToVerify((prev) => Array.from(new Set([...prev, id])));
@@ -91,7 +125,7 @@ export default function ClaimVerificationProvider({
     setClaimIdsToVerify([]);
   }, []);
 
-  const { items: claims } = useClaim();
+  const claim = useClaim();
 
   const start = useCallback(async () => {
     const hasClaimToVerify = claimIdsToVerify.length > 0;
@@ -101,19 +135,21 @@ export default function ClaimVerificationProvider({
     }
 
     const claimsToVerify = claimIdsToVerify
-      .map((id) => claims.find((claim) => claim.id === id))
+      .map((id) => claim.items.find((claim) => claim.id === id))
       .filter((claim): claim is Claim => claim !== undefined);
-    const dto = {
-      factCheckSessionId: factCheckSession.id,
-      claims: claimsToVerify,
-    } satisfies VerifyClaimsRequestDto;
-    await startStreaming(
-      APIRoutes.factCheckSessions.CLAIM_VERIFICATIONS(factCheckSession.id),
-      dto,
-    );
 
+    await sendMessage(
+      {
+        text: '',
+      },
+      {
+        body: {
+          claims: claimsToVerify,
+        } as VerifyClaimsRequestDto,
+      },
+    );
     setClaimIdsToVerify([]);
-  }, [claimIdsToVerify, claims, factCheckSession.id, startStreaming]);
+  }, [claimIdsToVerify, claim.items, sendMessage]);
 
   useEffect(
     function getVerificationsOnMount() {
@@ -129,39 +165,24 @@ export default function ClaimVerificationProvider({
     [factCheckSession.id],
   );
 
-  const value: IClaimVerification = useMemo(
-    () => ({
-      items,
-      isLoading,
-      claimIdsToVerify,
-      start,
-      stop: stopStreaming,
-      addClaimToVerify,
-      removeClaimToVerify,
-      addClaimsToVerifyBulk,
-      removeClaimsToVerifyBulk,
-      resetClaimsToVerify,
-      remove,
-      clear,
-    }),
-    [
-      items,
-      isLoading,
-      claimIdsToVerify,
-      start,
-      stopStreaming,
-      addClaimToVerify,
-      removeClaimToVerify,
-      addClaimsToVerifyBulk,
-      removeClaimsToVerifyBulk,
-      resetClaimsToVerify,
-      remove,
-      clear,
-    ],
-  );
-
   return (
-    <ClaimVerificationContext.Provider value={value}>
+    <ClaimVerificationContext.Provider
+      value={{
+        items,
+        errors,
+        isLoading: status === 'submitted' || status === 'streaming',
+        claimIdsToVerify,
+        start,
+        stop,
+        addClaimToVerify,
+        removeClaimToVerify,
+        addClaimsToVerifyBulk,
+        removeClaimsToVerifyBulk,
+        resetClaimsToVerify,
+        remove,
+        clear,
+      }}
+    >
       {children}
     </ClaimVerificationContext.Provider>
   );

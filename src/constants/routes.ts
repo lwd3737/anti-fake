@@ -9,9 +9,13 @@ export const APIRoutes = {
   factCheckSessions: {
     claims: (factCheckSessionId: string) =>
       `/api/fact-check-sessions/${factCheckSessionId}/claims`,
-
+    claim: (factCheckSessionId: string, claimId: string) =>
+      `/api/fact-check-sessions/${factCheckSessionId}/claims/${claimId}`,
     CLAIM_VERIFICATIONS: (factCheckSessionId: string) =>
       `/api/fact-check-sessions/${factCheckSessionId}/claim-verifications`,
+  },
+  youtube: {
+    TRANSCRIPT: `/api/youtube/transcript`,
   },
 };
 

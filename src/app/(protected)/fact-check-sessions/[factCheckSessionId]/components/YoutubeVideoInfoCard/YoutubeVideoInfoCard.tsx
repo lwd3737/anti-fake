@@ -2,23 +2,24 @@ import { formatDate } from '@/utils/date';
 import Image from 'next/image';
 import FactCheckProgressDisplay from './components/FactCheckProgressDisplay';
 import VideoThumbnailLink from './components/VideoThumbnailLink';
-import TranscriptSummary from './components/TranscriptSummary';
+import VideoSummary from './components/VideoSummary';
 import { YoutubeVideo } from '@/models/youtube';
 
 interface Props {
-  video: Required<YoutubeVideo>;
+  video: YoutubeVideo;
+  isSummaryLoading: boolean;
   className?: string;
 }
 
-export default async function YoutubeVideoInfoCard({
+export default function YoutubeVideoInfoCard({
   video,
+  isSummaryLoading,
   className,
 }: Props) {
-  const { thumbnailUrl, title, channelTitle, transcriptSummary, publishedAt } =
-    video;
+  const { thumbnailUrl, title, channelTitle, summary, publishedAt } = video;
 
   return (
-    <div className={` bg-white shadow-sm p-6 rounded-sm ${className}`}>
+    <div className={`bg-white shadow-sm p-6 rounded-sm ${className}`}>
       <div className="flex gap-x-4">
         <VideoThumbnailLink
           url={thumbnailUrl}
@@ -57,7 +58,7 @@ export default async function YoutubeVideoInfoCard({
         </div>
       </div>
       <div className="bg-gray-50 mt-4 p-4 rounded-lg">
-        <TranscriptSummary videoId={video.id} summary={transcriptSummary} />
+        {<VideoSummary isLoading={isSummaryLoading} summary={summary} />}
       </div>
     </div>
   );

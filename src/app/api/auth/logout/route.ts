@@ -1,9 +1,9 @@
-import { guardServer } from '@/gateway/auth/guard-server';
+import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
-  const authGuardResult = await guardServer(req);
-  if (!authGuardResult.isAuthenticated) return authGuardResult.response;
+  const authGuardResult = await guardRouteHandler();
+  if (!authGuardResult.isAuthenticated) return authGuardResult.redirect();
 
   const res = new NextResponse();
   res.cookies.delete('access-token');

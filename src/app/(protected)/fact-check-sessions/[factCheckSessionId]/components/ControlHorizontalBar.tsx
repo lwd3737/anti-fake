@@ -1,52 +1,47 @@
 'use client';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useClaim } from '../providers/ClaimProvider';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useClaimVerification } from '../providers/ClaimVerificationProvider';
 import Button from '@/components/Button';
 import { ClaimVerification } from '@/models/claim-verification';
+import { useClaim } from '../providers/ClaimProvider';
 
 interface Props {
   className?: string;
 }
 
 export default function ControlHorizontalBar({ className }: Props) {
-  const { items: claims, retry: retryClaims } = useClaim();
-  const {
-    items: verifications,
-    claimIdsToVerify,
-    isLoading: isVerficationLoading,
-    start: startVerification,
-    clear: clearVerification,
-    addClaimsToVerifyBulk,
-    resetClaimsToVerify,
-    stop: stopVerification,
-  } = useClaimVerification();
+  const claim = useClaim();
+  const verification = useClaimVerification();
+  const { addClaimsToVerifyBulk, resetClaimsToVerify, clear } = verification;
 
-  const verificationsByClaimId = useMemo(
-    () =>
-      verifications.reduce(
-        (result, verification) => {
-          result[verification.claimId] = verification;
-          return result;
-        },
-        {} as Record<string, ClaimVerification>,
-      ),
-    [verifications],
-  );
   const [isAllItemsSelected, setIsAllItemsSelected] = useState(true);
 
   useEffect(
     function toggleAllSelectionOnCheckboxUpdate() {
       if (isAllItemsSelected) {
-        const claimIds = claims
+        const verificationsByClaimId = verification.items.reduce(
+          (result, verification) => {
+            result[verification.claimId] = verification;
+            return result;
+          },
+          {} as Record<string, ClaimVerification>,
+        );
+        const notVerifiedClaimIds = claim.items
           .filter((claim) => !verificationsByClaimId[claim.id])
           .map((claim) => claim.id);
-        addClaimsToVerifyBulk(claimIds);
+
+        addClaimsToVerifyBulk(notVerifiedClaimIds);
       } else {
         resetClaimsToVerify();
       }
     },
-    [isAllItemsSelected, addClaimsToVerifyBulk, resetClaimsToVerify, claims],
+    [
+      isAllItemsSelected,
+      claim.items,
+      verification.items,
+      addClaimsToVerifyBulk,
+      resetClaimsToVerify,
+    ],
   );
 
   const handleAllSelectionChange = (ev: ChangeEvent) => {
@@ -55,8 +50,7 @@ export default function ControlHorizontalBar({ className }: Props) {
   };
 
   const handleStartVerification = () => {
-    startVerification();
-    addClaimsToVerifyBulk(claimIdsToVerify);
+    verification.start();
   };
 
   const handleRetry = async () => {
@@ -65,12 +59,13 @@ export default function ControlHorizontalBar({ className }: Props) {
     );
     if (!ok) return;
 
+    setIsAllItemsSelected(false);
     resetClaimsToVerify();
-    await clearVerification();
-    await retryClaims();
+    await clear();
+    await claim.retry();
   };
 
-  const isAllVerified = verifications.length === claims.length;
+  const isAllVerified = verification.items.length === claim.items.length;
 
   const allSelectionButtonStyle = useMemo(() => {
     const isDisabled = isAllVerified;
@@ -80,11 +75,11 @@ export default function ControlHorizontalBar({ className }: Props) {
   }, [isAllVerified]);
 
   const startBatchButtonStyle = useMemo(() => {
-    const isDisabled = isVerficationLoading || isAllVerified;
+    const isDisabled = verification.isLoading || isAllVerified;
     return isDisabled
       ? 'bg-[#AEB9D1] text-gray-300 cursor-not-allowed'
       : 'bg-brand text-white hover:bg-brand-hover';
-  }, [isAllVerified, isVerficationLoading]);
+  }, [isAllVerified, verification.isLoading]);
 
   const retryButtonStyle = useMemo(
     () => `bg-surface-subtle hover:bg-surface-subtle-hover text-text-base`,
@@ -99,20 +94,20 @@ export default function ControlHorizontalBar({ className }: Props) {
       <div className="flex justify-center items-center gap-x-4 pr-6 border-gray-200 border-r border-solid">
         <Button
           className={`flex items-center gap-x-2 ${allSelectionButtonStyle}`}
-          disabled={isVerficationLoading || isAllVerified}
+          disabled={verification.isLoading || isAllVerified}
         >
           <input
             id="all-selector"
             type="checkbox"
-            disabled={isVerficationLoading || isAllVerified}
+            disabled={verification.isLoading || isAllVerified}
             checked={isAllItemsSelected}
             onChange={handleAllSelectionChange}
           />
           <label htmlFor="all-selector">전체 선택</label>
         </Button>
 
-        {isVerficationLoading ? (
-          <Button className="bg-danger text-white" onClick={stopVerification}>
+        {verification.isLoading ? (
+          <Button className="bg-danger text-white" onClick={verification.stop}>
             중단
           </Button>
         ) : (
@@ -122,7 +117,7 @@ export default function ControlHorizontalBar({ className }: Props) {
             onClick={handleStartVerification}
           >
             <strong className="inline-block w-3 text-[#FFEB3B]">
-              {claimIdsToVerify.length}
+              {verification.claimIdsToVerify.length}
             </strong>
             개 검증 시작
           </Button>

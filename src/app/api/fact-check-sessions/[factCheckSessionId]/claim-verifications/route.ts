@@ -1,6 +1,8 @@
-import { GetClaimVerificationsResponseDto } from '@/gateway/dto/claim-verification';
+import {
+  GetClaimVerificationsResponseDto,
+  VerifyClaimMessageDto,
+} from '@/gateway/dto/claim-verification';
 import { VerifyClaimsRequestDto } from '@/gateway/dto/claim';
-import { streamingResponse } from '@/gateway/streaming/streaming-response';
 import claimVerificationRepo from '@/repositories/claim-verification';
 import { isFailure } from '@/result';
 import ClaimVerificationService from '@/services/claim-verification';
@@ -10,6 +12,7 @@ import { guardRouteHandler } from '@/gateway/auth/guard-route-handler';
 import { handleRouteError } from '@/gateway/error/reponse-error-handler';
 import { ErrorCode } from '@/gateway/error/error-code';
 import FactCheckSessionService from '@/services/fact-check-session';
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 
 interface Params {
   factCheckSessionId: string;
@@ -54,32 +57,59 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
   const evidencesResultStream = new EvidenceRetrievalService(
     req.signal,
   ).retrieveEvidencesStream(claims);
+  const claimVerificationService = new ClaimVerificationService(req.signal);
 
-  return streamingResponse(async ({ send, close }) => {
-    let idx = 0;
-    for await (const evidencesResult of evidencesResultStream) {
-      if (isFailure(evidencesResult)) {
-        const failure = evidencesResult;
-        console.error(failure);
-        continue;
+  const stream = createUIMessageStream<VerifyClaimMessageDto>({
+    async execute({ writer }) {
+      let idx = 0;
+      for await (const evidencesResult of evidencesResultStream) {
+        if (isFailure(evidencesResult)) {
+          const failure = evidencesResult;
+          writer.write({
+            type: 'data-error',
+            data: {
+              code: failure.code,
+              message: 'evidence retrieval error',
+              claimId: failure.context!.claimId,
+            },
+          });
+          idx++;
+          continue;
+        }
+
+        const evidences = evidencesResult;
+        const claim = claims[idx];
+        const verificationResult = await claimVerificationService.verify({
+          factCheckSessionId,
+          claim,
+          evidences,
+        });
+
+        if (isFailure(verificationResult)) {
+          const failure = verificationResult;
+          writer.write({
+            type: 'data-error',
+            data: {
+              code: failure.code,
+              message: 'claim verification error',
+              claimId: failure.context!.claimId,
+            },
+          });
+          idx++;
+          continue;
+        }
+
+        const claimVerification = verificationResult;
+        writer.write({
+          type: 'data-claim-verification',
+          data: { claimVerification },
+        });
+        idx++;
       }
-
-      const evidences = evidencesResult;
-      const claim = claims[idx];
-      const verificationResult = await new ClaimVerificationService(
-        req.signal,
-      ).verify({
-        factCheckSessionId,
-        claim,
-        evidences,
-      });
-
-      send(verificationResult);
-      idx++;
-    }
-
-    close();
+    },
   });
+
+  return createUIMessageStreamResponse({ stream });
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Params }) {
@@ -89,7 +119,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Params }) {
     await claimVerificationRepo.deleteManyBySessionId(factCheckSessionId);
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (error) {
-    console.error(error);
+    console.debug(error);
     return handleRouteError(
       ErrorCode.CLAIM_VERIFICATIONS_DELETE_FAILED,
       'Claim verifications delete failed',

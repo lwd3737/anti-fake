@@ -1,5 +1,5 @@
 import { openai } from '@/libs/ai';
-import { generateObject } from 'ai';
+import { generateObject, GenerateObjectResult } from 'ai';
 import { z } from 'zod';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
 import CLAIM_VERIFICATION_PROMPT from '@/prompts/claim-verification';
@@ -12,7 +12,7 @@ import { Claim } from '@/models/claim';
 import { v4 as uuidv4 } from 'uuid';
 import claimVerificationRepo from '@/repositories/claim-verification';
 import { ErrorCode } from '@/gateway/error/error-code';
-import { isFailure } from '@/result';
+import { isFailure, Result } from '@/result';
 
 const ClaimVerificationSchema = z.object({
   verdict: z
@@ -34,7 +34,7 @@ export default class ClaimVerificationService {
   private logger = new LLMHistoryLogger('claim-verification', {
     title: 'Claim verification',
   });
-  private cache: ClaimVerification[] = [];
+  // private cache: ClaimVerification[] = [];
 
   constructor(private signal: AbortSignal) {}
 
@@ -51,15 +51,24 @@ export default class ClaimVerificationService {
     factCheckSessionId: string;
     claim: Claim;
     evidences: VerificationEvidence[];
-  }) {
+  }): Promise<
+    Result<
+      ClaimVerification,
+      ErrorCode.CLAIM_VERIFICATIONS_CREATE_FAILED,
+      { claimId: string }
+    >
+  > {
     const verificationResult = await this.generateVerification({
       claim,
       evidences,
     });
     if (isFailure(verificationResult)) {
       const failure = verificationResult;
-      console.error(failure);
-      return failure;
+      console.debug(failure);
+      return {
+        ...failure,
+        context: { claimId: claim.id },
+      };
     }
 
     const { verdict, verdictReason } = verificationResult;
@@ -75,10 +84,11 @@ export default class ClaimVerificationService {
     try {
       await claimVerificationRepo.create(newVerification);
     } catch (error) {
+      console.debug(error);
       return {
         code: ErrorCode.CLAIM_VERIFICATIONS_CREATE_FAILED,
         message: 'Failed to create claim verification on repository',
-        context: error as Record<string, any>,
+        context: { claimId: claim.id },
       };
     }
 
@@ -91,7 +101,15 @@ export default class ClaimVerificationService {
   }: {
     claim: Claim;
     evidences: VerificationEvidence[];
-  }) {
+  }): Promise<
+    Result<
+      GenerateObjectResult<{
+        verdict: VerdictType;
+        verdictReason: string;
+      }>['object'],
+      ErrorCode.CLAIM_VERIFICATIONS_CREATE_FAILED
+    >
+  > {
     const prompt = `
         # Claim
         ${claim.content}

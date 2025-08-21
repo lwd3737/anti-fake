@@ -3,7 +3,7 @@ import { YoutubeVideo as PrismaYoutubeVideo } from '/prisma/generated/prisma';
 import { YoutubeVideoDto } from '@/gateway/dto/youttube';
 
 export const youtubeVideoMapper = {
-  fromPersistence(record: PrismaYoutubeVideo): Required<YoutubeVideo> {
+  fromPersistence(record: PrismaYoutubeVideo): YoutubeVideo {
     const transcript = youtubeVideoTranscriptMapper.fromPersistence(record);
     return {
       id: record.id,
@@ -12,7 +12,7 @@ export const youtubeVideoMapper = {
       channelTitle: record.channelTitle,
       thumbnailUrl: record.thumbnailUrl,
       transcript,
-      transcriptSummary: record.transcriptSummary,
+      summary: record.transcriptSummary,
       publishedAt: record.publishedAt,
     };
   },
@@ -30,7 +30,9 @@ export const youtubeVideoMapper = {
 };
 
 export const youtubeVideoTranscriptMapper = {
-  fromPersistence(record: PrismaYoutubeVideo): YoutubeVideoTranscript {
+  fromPersistence(record: PrismaYoutubeVideo): YoutubeVideoTranscript | null {
+    if (!record.transcriptMetadata || !record.transcript) return null;
+
     const { duration, segments } = record.transcriptMetadata as unknown as {
       duration: number;
       segments: {

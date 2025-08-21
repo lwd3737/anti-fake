@@ -4,8 +4,8 @@ export interface YoutubeVideo {
   channelId: string;
   channelTitle: string;
   thumbnailUrl: string;
-  transcript?: YoutubeVideoTranscript;
-  transcriptSummary?: string;
+  transcript?: YoutubeVideoTranscript | null;
+  summary?: string | null;
   publishedAt: Date;
 }
 

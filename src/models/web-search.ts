@@ -1,6 +1,4 @@
-// export type WebSearchResult = WebSearchResponse | EvidenceRetrievalError;
-
-import { TokenUsage } from '@/logger/llm-history.logger';
+import { LanguageModelUsage } from 'ai';
 
 export interface WebSearchResponse {
   contents: WebSearchContent[];
@@ -8,7 +6,7 @@ export interface WebSearchResponse {
 }
 
 export interface WebSearchMetadata {
-  tokenUsage: TokenUsage;
+  tokenUsage: LanguageModelUsage;
   model: string;
 }
 
