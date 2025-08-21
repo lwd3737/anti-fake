@@ -2,7 +2,7 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['cheerio', 'googleapis'],
-    instrumentationHook: true,
+    // instrumentationHook: true,
   },
   images: {
     remotePatterns: [
