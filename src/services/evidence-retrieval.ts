@@ -1,7 +1,6 @@
 import RETRIEVE_EVIDENCES_PROMPT from '@/prompts/retrieve-evidences';
 import GoogleSearch from '../retrievers/google-search';
 import LLMHistoryLogger from '@/logger/llm-history.logger';
-import loadConfig from '@/config';
 import { VerificationEvidence } from '@/models/claim-verification';
 import { isFailure, Result } from '@/result';
 import { Claim } from '@/models/claim';
@@ -82,25 +81,25 @@ export default class EvidenceRetrievalService {
     }
   }
 
-  private get isDevMode(): boolean {
-    const { devMode } = loadConfig();
-    return devMode.claimVerification ?? devMode.default;
-  }
+  // private get isDevMode(): boolean {
+  //   const { devMode } = loadConfig();
+  //   return devMode.claimVerification ?? devMode.default;
+  // }
 
-  private async retrieveOnDevMode(
-    claim: string,
-  ): Promise<{ evidences: VerificationEvidence[] }> {
-    const { evidences } = await import('/mock/evidence-retrieval.json');
-    const count = Math.floor(Math.random() * 5) + 1;
+  // private async retrieveOnDevMode(
+  //   claim: string,
+  // ): Promise<{ evidences: VerificationEvidence[] }> {
+  //   const { evidences } = await import('/mock/evidence-retrieval.json');
+  //   const count = Math.floor(Math.random() * 5) + 1;
 
-    const picked = [];
-    for (let i = 0; i < count; i++) {
-      const idx = Math.floor(Math.random() * evidences.length);
-      picked.push(evidences[idx]);
-    }
+  //   const picked = [];
+  //   for (let i = 0; i < count; i++) {
+  //     const idx = Math.floor(Math.random() * evidences.length);
+  //     picked.push(evidences[idx]);
+  //   }
 
-    return {
-      evidences: picked,
-    };
-  }
+  //   return {
+  //     evidences: picked,
+  //   };
+  // }
 }
