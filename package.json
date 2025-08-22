@@ -5,7 +5,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "node src/scripts/init.js && next dev",
-    "build": "node src/scripts/init.js && prisma generate && next build",
+    "build": "node src/scripts/init.js &&  next build",
     "start": "node src/scripts/init.js && next start",
     "test": "vitest",
     "db:reset": "prisma db push --force-reset && prisma db seed",
