@@ -3,7 +3,7 @@ import {
   VerdictType,
   VerificationEvidence,
 } from '@/models/claim-verification';
-import { ClaimVerification as PrismaClaimVerification } from '/prisma/generated/prisma';
+import { ClaimVerification as PrismaClaimVerification } from '@prisma/client';
 
 const claimVerificationMapper = {
   toDomain(record: PrismaClaimVerification): ClaimVerification {

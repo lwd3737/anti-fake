@@ -1,5 +1,6 @@
 import loadConfig from '@/config';
-import { OauthProviderType, PrismaClient, UserRole } from './generated/prisma';
+import { OauthProviderType, UserRole } from '@/models/user';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

@@ -1,4 +1,4 @@
-import { User as PrismaUser } from '/prisma/generated/prisma';
+import { User as PrismaUser } from '@prisma/client';
 import { OauthProviderType, UserRole, User } from '@/models/user';
 
 const userMapper = {
