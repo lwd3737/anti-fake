@@ -19,6 +19,8 @@ import YoutubeService from '@/services/youtube';
 import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 export async function GET(
   req: NextRequest,
   {

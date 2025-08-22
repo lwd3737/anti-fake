@@ -6,6 +6,8 @@ import { isFailure } from '@/result';
 import FactCheckSessionService from '@/services/fact-check-session';
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { factCheckSessionId: string; claimId: string } },

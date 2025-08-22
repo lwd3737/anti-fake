@@ -3,6 +3,8 @@ import { GenerateOauthUrlResponseDto } from '@/gateway/dto/auth';
 import { authService } from '@/services';
 import { generateCsrfToken } from '@/utils/csrf';
 
+export const runtime = 'nodejs';
+
 export async function POST(
   req: NextRequest,
 ): Promise<NextResponse<GenerateOauthUrlResponseDto>> {

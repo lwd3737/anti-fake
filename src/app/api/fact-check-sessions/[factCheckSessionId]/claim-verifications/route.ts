@@ -18,6 +18,8 @@ interface Params {
   factCheckSessionId: string;
 }
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest, { params }: { params: Params }) {
   const guardResult = await guardRouteHandler();
   if (!guardResult.isAuthenticated) return guardResult.redirect();
