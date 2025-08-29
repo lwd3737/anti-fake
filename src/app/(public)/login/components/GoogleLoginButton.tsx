@@ -3,17 +3,20 @@ import { generateOauthUrl } from '@/app/api/auth/oauth-url/fetch';
 import { PageRoutes } from '@/constants/routes';
 import { useRouter } from 'next/navigation';
 import '../style.css';
+import { isFailure } from '@/result';
 
 export default function GoogleLoginButton() {
   const router = useRouter();
 
   const handleClick = async () => {
-    try {
-      const { oauthUrl } = await generateOauthUrl();
-      location.href = oauthUrl;
-    } catch {
+    const result = await generateOauthUrl();
+    if (isFailure(result)) {
+      console.error(result.message);
       router.push(PageRoutes.error.AUTH);
+      return;
     }
+
+    location.href = result.oauthUrl;
   };
 
   return (

@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
 
   const authorizeResult = await authService.authorizeCode(code);
   if (isFailure(authorizeResult)) {
+    const failure = authorizeResult;
+    console.error('authorize failed', failure);
     return NextResponse.redirect(PageRoutes.error.AUTH);
   }
 

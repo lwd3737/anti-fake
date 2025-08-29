@@ -1,8 +1,12 @@
 import { APIRoutes } from '@/constants/routes';
 import { GenerateOauthUrlResponseDto } from '@/gateway/dto/auth';
 import apiClient from '../../client';
+import { Result } from '@/result';
+import { ErrorCode } from '@/gateway/error/error-code';
 
-export async function generateOauthUrl(): Promise<GenerateOauthUrlResponseDto> {
+export async function generateOauthUrl(): Promise<
+  Result<GenerateOauthUrlResponseDto, ErrorCode.UNAUTHENTICATED>
+> {
   const res = await apiClient(APIRoutes.auth.OAUTH_URL, {
     method: 'POST',
   });
