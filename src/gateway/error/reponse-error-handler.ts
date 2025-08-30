@@ -10,12 +10,12 @@ export interface Failure<
   context?: Context;
 }
 
-export const handleRouteError = (
+export const handleRouteError = <Code extends ErrorCode>(
   code: ErrorCode,
   message: string,
   status = 500,
   context?: Record<string, any>,
-): NextResponse<Failure> => {
+): NextResponse<Failure<Code>> => {
   return NextResponse.json(
     {
       code,
@@ -23,5 +23,5 @@ export const handleRouteError = (
       context,
     },
     { status },
-  );
+  ) as NextResponse<Failure<Code>>;
 };

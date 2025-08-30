@@ -1,5 +1,5 @@
 import { Claim } from '@/models/claim';
-import { Claim as PrismaClaim } from '@prisma/client';
+import { Claim as PrismaClaim } from '@/generated/prisma/client';
 
 const claimMapper = {
   fromPersistence(record: PrismaClaim): Claim {

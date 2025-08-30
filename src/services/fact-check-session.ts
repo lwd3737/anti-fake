@@ -65,7 +65,7 @@ export default class FactCheckSessionService {
         },
       });
 
-      const videoIds = sessions.map(({ contentId }) => contentId);
+      const videoIds = sessions.map((session) => session.contentId);
       const videos = await youtubeRepo.findVideos(videoIds);
 
       return sessions
