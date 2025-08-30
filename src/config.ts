@@ -7,6 +7,7 @@ export default function loadConfig() {
   const {
     BASE_URL,
     ADMIN_EMAIL,
+    DATABASE_URL,
     AUTH_INACTIVE_MODE,
     JWT_SECRET,
     OPENAI_API_KEY,
@@ -27,6 +28,7 @@ export default function loadConfig() {
 
   if (!BASE_URL) throw new Error('BASE_URL is required');
   if (!ADMIN_EMAIL) throw new Error('ADMIN_EMAIL is required');
+  if (!DATABASE_URL) throw new Error('DATABASE_URL is required');
   if (!JWT_SECRET) throw new Error('JWT_SECRET is required');
   if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is required');
   if (!GOOGLE_API_KEY) throw new Error('GOOGLE_API_KEY is required');
@@ -42,6 +44,7 @@ export default function loadConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
     baseUrl: BASE_URL,
+    databaseUrl: DATABASE_URL,
     admin: {
       email: ADMIN_EMAIL,
     },

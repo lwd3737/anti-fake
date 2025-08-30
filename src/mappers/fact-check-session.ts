@@ -1,5 +1,5 @@
 import { ContentType, FactCheckSession } from '@/models/fact-check-session';
-import { FactCheckSession as PrismaFactCheckSession } from '@prisma/client';
+import { FactCheckSession as PrismaFactCheckSession } from '@/generated/prisma/client';
 
 const factCheckSessionMapper = {
   toDomain(record: PrismaFactCheckSession): FactCheckSession {

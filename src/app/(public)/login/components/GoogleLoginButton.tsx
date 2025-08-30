@@ -9,14 +9,14 @@ export default function GoogleLoginButton() {
   const router = useRouter();
 
   const handleClick = async () => {
-    const result = await generateOauthUrl();
-    if (isFailure(result)) {
-      console.error(result.message);
+    const oatuthUrlResult = await generateOauthUrl();
+    if (isFailure(oatuthUrlResult)) {
+      console.error(oatuthUrlResult.message);
       router.push(PageRoutes.error.AUTH);
       return;
     }
 
-    location.href = result.oauthUrl;
+    router.replace(oatuthUrlResult.oauthUrl);
   };
 
   return (

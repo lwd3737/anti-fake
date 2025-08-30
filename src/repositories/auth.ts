@@ -41,7 +41,7 @@ export default class AuthRepo {
         'email',
         'https://www.googleapis.com/auth/youtube.force-ssl',
         'https://www.googleapis.com/auth/youtubepartner',
-        'https://www.googleapis.com/auth/cse',
+        // 'https://www.googleapis.com/auth/cse',
       ],
     });
   }

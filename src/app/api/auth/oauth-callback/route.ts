@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
+  console.log('req', req.url);
 
   if (!code || !state) {
     console.error('state or code is not provided');
