@@ -1,8 +1,8 @@
 {
-  "name": "prisma-client-7a994b015c8a79bea7eda811436f9169480b4be9db8944a1e9d35f5b3d72cca3",
+  "name": "prisma-client-e5d8d16c7e022b4929ea01eb631b5c84a02ca6f95fd44a613eab378c44d51058",
   "main": "index.js",
   "types": "index.d.ts",
-  "browser": "default.js",
+  "browser": "index-browser.js",
   "exports": {
     "./client": {
       "require": {
@@ -146,32 +146,5 @@
     "./*": "./*"
   },
   "version": "6.15.0",
-  "sideEffects": false,
-  "imports": {
-    "#wasm-compiler-loader": {
-      "edge-light": "./wasm-edge-light-loader.mjs",
-      "workerd": "./wasm-worker-loader.mjs",
-      "worker": "./wasm-worker-loader.mjs",
-      "default": "./wasm-worker-loader.mjs"
-    },
-    "#main-entry-point": {
-      "require": {
-        "node": "./index.js",
-        "edge-light": "./wasm.js",
-        "workerd": "./wasm.js",
-        "worker": "./wasm.js",
-        "browser": "./index-browser.js",
-        "default": "./index.js"
-      },
-      "import": {
-        "node": "./index.js",
-        "edge-light": "./wasm.js",
-        "workerd": "./wasm.js",
-        "worker": "./wasm.js",
-        "browser": "./index-browser.js",
-        "default": "./index.js"
-      },
-      "default": "./index.js"
-    }
-  }
+  "sideEffects": false
 }

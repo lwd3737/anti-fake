@@ -1,5 +1,5 @@
 import { YoutubeVideo, YoutubeVideoTranscript } from '@/models/youtube';
-import { YoutubeVideo as PrismaYoutubeVideo } from '@/generated/prisma/client';
+import { YoutubeVideo as PrismaYoutubeVideo } from '@prisma/client';
 import { YoutubeVideoDto } from '@/gateway/dto/youttube';
 
 export const youtubeVideoMapper = {

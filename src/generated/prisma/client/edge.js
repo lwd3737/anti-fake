@@ -217,19 +217,20 @@ const config = {
       "fromEnvVar": null
     },
     "config": {
-      "engineType": "client"
+      "engineType": "library"
     },
     "binaryTargets": [
       {
         "fromEnvVar": null,
         "value": "darwin-arm64",
         "native": true
+      },
+      {
+        "fromEnvVar": null,
+        "value": "rhel-openssl-3.0.x"
       }
     ],
-    "previewFeatures": [
-      "driverAdapters",
-      "queryCompiler"
-    ],
+    "previewFeatures": [],
     "sourceFilePath": "/Users/lwd432/projects/anti-fake/prisma/schema.prisma",
     "isCustomOutput": true
   },
@@ -244,6 +245,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -252,8 +254,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider        = \"prisma-client-js\"\n  previewFeatures = [\"queryCompiler\", \"driverAdapters\"]\n  output          = \"../src/generated/prisma/client\"\n  // binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"] // vercel node runtime\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String            @id @default(uuid())\n  provider     OauthProviderType\n  providerSub  String?\n  email        String            @unique\n  role         UserRole          @default(USER)\n  refreshToken String?\n  createdAt    DateTime          @default(now())\n\n  factCheckSessions FactCheckSession[]\n\n  @@unique([provider, providerSub])\n}\n\nenum OauthProviderType {\n  GOOGLE\n}\n\nenum UserRole {\n  USER\n  ADMIN\n\n  @@map(\"Role\")\n}\n\nmodel YoutubeVideo {\n  id                 String   @id // youtube video id\n  title              String\n  channelId          String   @unique\n  channelTitle       String\n  thumbnailUrl       String\n  transcript         String?\n  transcriptMetadata Json?\n  transcriptSummary  String?\n  publishedAt        DateTime\n  updatedAt          DateTime @updatedAt\n}\n\nenum ContentType {\n  YOUTUBE_VIDEO\n}\n\nmodel FactCheckSession {\n  id          String      @id @default(uuid())\n  userId      String\n  user        User        @relation(fields: [userId], references: [id])\n  contentType ContentType\n  contentId   String\n\n  claimVerifications ClaimVerification[]\n  claims             Claim[]\n  createdAt          DateTime            @default(now())\n\n  @@unique([contentType, contentId])\n}\n\nmodel Claim {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  index              Int\n  content            String\n  context            String\n  detectionReason    String\n  metadata           Json?\n  createdAt          DateTime         @default(now())\n\n  claimVerifications ClaimVerification[]\n}\n\nmodel ClaimVerification {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  claimId            String\n  claim              Claim            @relation(fields: [claimId], references: [id])\n  verdict            VerdictType\n  verdictReason      String\n  evidences          Json\n  createdAt          DateTime         @default(now())\n}\n\nenum VerdictType {\n  TRUE\n  MOSTLY_TRUE\n  MIXED\n  MOSTLY_FALSE\n  FALSE\n  UNKNOWN\n}\n",
-  "inlineSchemaHash": "f441b00aab7d96060ca70c53aa138425d3f3329b475c71e0465c8e28e3560d3b",
+  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  // previewFeatures = [\"queryCompiler\", \"driverAdapters\"]\n  output        = \"../src/generated/prisma/client\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"] // vercel node runtime\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String            @id @default(uuid())\n  provider     OauthProviderType\n  providerSub  String?\n  email        String            @unique\n  role         UserRole          @default(USER)\n  refreshToken String?\n  createdAt    DateTime          @default(now())\n\n  factCheckSessions FactCheckSession[]\n\n  @@unique([provider, providerSub])\n}\n\nenum OauthProviderType {\n  GOOGLE\n}\n\nenum UserRole {\n  USER\n  ADMIN\n\n  @@map(\"Role\")\n}\n\nmodel YoutubeVideo {\n  id                 String   @id // youtube video id\n  title              String\n  channelId          String   @unique\n  channelTitle       String\n  thumbnailUrl       String\n  transcript         String?\n  transcriptMetadata Json?\n  transcriptSummary  String?\n  publishedAt        DateTime\n  updatedAt          DateTime @updatedAt\n}\n\nenum ContentType {\n  YOUTUBE_VIDEO\n}\n\nmodel FactCheckSession {\n  id          String      @id @default(uuid())\n  userId      String\n  user        User        @relation(fields: [userId], references: [id])\n  contentType ContentType\n  contentId   String\n\n  claimVerifications ClaimVerification[]\n  claims             Claim[]\n  createdAt          DateTime            @default(now())\n\n  @@unique([contentType, contentId])\n}\n\nmodel Claim {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  index              Int\n  content            String\n  context            String\n  detectionReason    String\n  metadata           Json?\n  createdAt          DateTime         @default(now())\n\n  claimVerifications ClaimVerification[]\n}\n\nmodel ClaimVerification {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  claimId            String\n  claim              Claim            @relation(fields: [claimId], references: [id])\n  verdict            VerdictType\n  verdictReason      String\n  evidences          Json\n  createdAt          DateTime         @default(now())\n}\n\nenum VerdictType {\n  TRUE\n  MOSTLY_TRUE\n  MIXED\n  MOSTLY_FALSE\n  FALSE\n  UNKNOWN\n}\n",
+  "inlineSchemaHash": "a97a4265a7622cec254be15a96e438d98960ee24eaf6c13db1618adcd8bb797b",
   "copyEngine": true
 }
 config.dirname = '/'
