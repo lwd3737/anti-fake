@@ -2,6 +2,10 @@ import { OauthProviderType, UserRole } from '@/models/user';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
+if (process.env.NODE_ENV === 'production') {
+  process.exit(0);
+}
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is required for seeding');
