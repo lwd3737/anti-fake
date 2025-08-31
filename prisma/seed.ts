@@ -1,14 +1,14 @@
+import { PrismaClient } from '@/generated/prisma/client';
 import { OauthProviderType, UserRole } from '@/models/user';
-import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required for seeding');
   }
-  const adapter = new PrismaPg({ connectionString: databaseUrl });
-  const prisma = new PrismaClient({ adapter });
+  //const adapter = new PrismaPg({ connectionString: databaseUrl });
+  const prisma = new PrismaClient();
 
   const Config = {
     USER_COUNT: 3,
