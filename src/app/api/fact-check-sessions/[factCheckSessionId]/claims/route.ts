@@ -91,8 +91,9 @@ export async function POST(
   if (!transcript) {
     const transcriptResult = await youtubeService.generateTranscript(contentId);
     if (isFailure(transcriptResult)) {
-      const { code, message } = transcriptResult;
-      return handleRouteError(code, message, 500);
+      const failure = transcriptResult;
+      console.error(failure);
+      return handleRouteError(failure.code, failure.message, 500);
     }
 
     transcript = transcriptResult;

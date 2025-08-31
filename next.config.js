@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['cheerio', 'googleapis'],
+    serverComponentsExternalPackages: [
+      'cheerio',
+      'googleapis',
+      'yt-dlp-wrap',
+      'ffmpeg-static',
+    ],
+    outputFileTracingIncludes: {
+      '/api/**': ['./bin/yt-dlp', './bin/ffmpeg'],
+    },
     // instrumentationHook: true,
   },
   images: {
