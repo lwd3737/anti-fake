@@ -1,7 +1,6 @@
 import loadConfig from '@/config';
 import { PageRoutes } from '@/constants/routes';
 import { OauthProviderType } from '@/models/user';
-import AuthRepo from '@/repositories/auth';
 import userRepo from '@/repositories/user';
 import { isFailure } from '@/result';
 import { authService } from '@/services';
