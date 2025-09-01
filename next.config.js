@@ -5,10 +5,10 @@ const nextConfig = {
       'cheerio',
       'googleapis',
       'yt-dlp-wrap',
-      // ffmpeg-static resolves to a platform binary at runtime; avoid bundling bin copy
+      'ffmpeg-static',
     ],
     outputFileTracingIncludes: {
-      '/api/**': ['./bin/yt-dlp'],
+      '/api/**': ['./bin/yt-dlp', 'node_modules/ffmpeg-static/**'],
     },
     // instrumentationHook: true,
   },
