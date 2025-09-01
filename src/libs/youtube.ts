@@ -17,7 +17,8 @@ import { experimental_transcribe as transcribe } from 'ai';
 import { openai } from './ai';
 import { mkdir, readdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
+import ytdl from 'ytdl-core';
 
 interface WhisperTranscription {
   task: string;
@@ -125,14 +126,44 @@ export default class Youtube {
         },
       );
     } catch (error) {
-      return {
-        code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
-        message: 'Failed to download audio by yt-dlp',
-        context: {
-          videoId,
-          detail: error,
-        },
-      };
+      // Fallback: Python이 없는 Vercel 환경에서 ytdl-core + ffmpeg로 추출
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const ff = spawn(ffmpegPath, [
+            '-y',
+            '-i',
+            'pipe:0', // stdin에서 입력
+            '-vn',
+            '-acodec',
+            'libmp3lame',
+            '-b:a',
+            '192k',
+            tempFile,
+          ]);
+
+          ff.on('error', reject);
+          ff.on('close', (code) => {
+            if (code === 0) resolve();
+            else reject(new Error(`ffmpeg exited with code ${code}`));
+          });
+
+          const stream = ytdl(url, {
+            filter: 'audioonly',
+            quality: 'highestaudio',
+          });
+          stream.on('error', reject);
+          stream.pipe(ff.stdin);
+        });
+      } catch (fallbackErr) {
+        return {
+          code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
+          message: 'Failed to download audio by yt-dlp and ytdl-core fallback',
+          context: {
+            videoId,
+            detail: { ytDlpError: error, ytdlCoreError: fallbackErr },
+          },
+        };
+      }
     }
 
     return {
