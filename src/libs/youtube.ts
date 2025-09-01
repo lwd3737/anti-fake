@@ -16,8 +16,9 @@ import { YoutubeVideoTranscript } from '@/models/youtube';
 import { experimental_transcribe as transcribe } from 'ai';
 import { openai } from './ai';
 import { mkdir, readdir, readFile } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, chmodSync, copyFileSync } from 'fs';
 import { execSync, spawn } from 'child_process';
+import ffmpeg from 'ffmpeg-static';
 import ytdl from 'ytdl-core';
 
 interface WhisperTranscription {
@@ -60,8 +61,26 @@ export default class Youtube {
     const chunkDir = path.join(dirPath, `${videoId}_chunks`);
     await mkdir(chunkDir, { recursive: true });
     const chunkDuration = 600; // 10분
+    let ffmpegPathForSeg =
+      (ffmpeg as unknown as string) ||
+      path.join(process.cwd(), 'bin', 'ffmpeg');
+    try {
+      if (ffmpegPathForSeg && existsSync(ffmpegPathForSeg)) {
+        // Vercel의 /var/task는 read-only일 수 있으므로 /tmp로 복사 후 실행
+        if (ffmpegPathForSeg.startsWith('/var/task') || process.env.VERCEL) {
+          const tmpFfmpeg = path.join(os.tmpdir(), 'ffmpeg');
+          try {
+            copyFileSync(ffmpegPathForSeg, tmpFfmpeg);
+            chmodSync(tmpFfmpeg, 0o755);
+            ffmpegPathForSeg = tmpFfmpeg;
+          } catch {}
+        } else {
+          chmodSync(ffmpegPathForSeg, 0o755);
+        }
+      }
+    } catch {}
     execSync(
-      `./bin/ffmpeg -i ${filePath} -f segment -segment_time ${chunkDuration} -c copy ${chunkDir}/chunk_%03d.mp3`,
+      `${ffmpegPathForSeg} -i "${filePath}" -f segment -segment_time ${chunkDuration} -c copy "${chunkDir}/chunk_%03d.mp3"`,
       { stdio: 'ignore' },
     );
     const chunkFiles = (await readdir(chunkDir)).sort();
@@ -86,11 +105,27 @@ export default class Youtube {
       ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
     >
   > {
-    const ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg');
-    if (!existsSync(ffmpegPath)) {
+    let ffmpegPath =
+      (ffmpeg as unknown as string) ||
+      path.join(process.cwd(), 'bin', 'ffmpeg');
+    try {
+      if (ffmpegPath && existsSync(ffmpegPath)) {
+        if (ffmpegPath.startsWith('/var/task') || process.env.VERCEL) {
+          const tmpFfmpeg = path.join(os.tmpdir(), 'ffmpeg');
+          try {
+            copyFileSync(ffmpegPath, tmpFfmpeg);
+            chmodSync(tmpFfmpeg, 0o755);
+            ffmpegPath = tmpFfmpeg;
+          } catch {}
+        } else {
+          chmodSync(ffmpegPath, 0o755);
+        }
+      }
+    } catch {}
+    if (!ffmpegPath || !existsSync(ffmpegPath)) {
       return {
         code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
-        message: 'ffmpeg binary not found. Please run yarn run init first.',
+        message: 'ffmpeg binary not found. Ensure ffmpeg-static is installed.',
         context: {
           videoId,
         },
@@ -104,7 +139,9 @@ export default class Youtube {
     const tempFile = path.join(tempDir, `${videoId}.mp3`);
     await mkdir(tempDir, { recursive: true });
 
-    try {
+    const useYtdlpFirst = !process.env.VERCEL; // Vercel에서는 우선 ytdl-core 사용 권장
+
+    const tryYtDlp = async () => {
       await ytDlp.execPromise(
         [
           url,
@@ -125,42 +162,56 @@ export default class Youtube {
           signal,
         },
       );
-    } catch (error) {
-      // Fallback: Python이 없는 Vercel 환경에서 ytdl-core + ffmpeg로 추출
-      try {
-        await new Promise<void>((resolve, reject) => {
-          const ff = spawn(ffmpegPath, [
-            '-y',
-            '-i',
-            'pipe:0', // stdin에서 입력
-            '-vn',
-            '-acodec',
-            'libmp3lame',
-            '-b:a',
-            '192k',
-            tempFile,
-          ]);
+    };
 
-          ff.on('error', reject);
-          ff.on('close', (code) => {
-            if (code === 0) resolve();
-            else reject(new Error(`ffmpeg exited with code ${code}`));
-          });
+    const tryYtdlCore = async () => {
+      await new Promise<void>((resolve, reject) => {
+        const ff = spawn(ffmpegPath, [
+          '-y',
+          '-i',
+          'pipe:0',
+          '-vn',
+          '-acodec',
+          'libmp3lame',
+          '-b:a',
+          '192k',
+          tempFile,
+        ]);
 
-          const stream = ytdl(url, {
-            filter: 'audioonly',
-            quality: 'highestaudio',
-          });
-          stream.on('error', reject);
-          stream.pipe(ff.stdin);
+        ff.on('error', reject);
+        ff.on('close', (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`ffmpeg exited with code ${code}`));
         });
-      } catch (fallbackErr) {
+
+        const stream = ytdl(url, {
+          filter: 'audioonly',
+          quality: 'highestaudio',
+          requestOptions: { headers: { 'user-agent': 'Mozilla/5.0' } },
+          highWaterMark: 1 << 25,
+        });
+        stream.on('error', reject);
+        stream.pipe(ff.stdin);
+      });
+    };
+
+    try {
+      if (useYtdlpFirst) {
+        await tryYtDlp();
+      } else {
+        await tryYtdlCore();
+      }
+    } catch (firstErr) {
+      try {
+        if (useYtdlpFirst) await tryYtdlCore();
+        else await tryYtDlp();
+      } catch (secondErr) {
         return {
           code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
-          message: 'Failed to download audio by yt-dlp and ytdl-core fallback',
+          message: 'Failed to download audio (both methods failed)',
           context: {
             videoId,
-            detail: { ytDlpError: error, ytdlCoreError: fallbackErr },
+            detail: { firstErr, secondErr },
           },
         };
       }
