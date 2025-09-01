@@ -7,6 +7,7 @@ async function downloadYtDlpBinary() {
   const YTDlpWrap = require('yt-dlp-wrap').default;
   const fs = require('fs');
   const path = require('path');
+  const os = require('os');
 
   const binDir = path.join(process.cwd(), 'bin');
   const binaryPath = path.join(binDir, 'yt-dlp');
@@ -19,13 +20,39 @@ async function downloadYtDlpBinary() {
   if (!fs.existsSync(binaryPath)) {
     console.log('yt-dlp binary not found, downloading...');
 
+    const isVercel = !!process.env.VERCEL;
+    const platform = process.platform;
+
     try {
-      await YTDlpWrap.downloadFromGithub(binaryPath);
+      if (isVercel || platform === 'linux') {
+        // Prefer standalone Linux binary on Vercel to avoid Python dependency
+        const url =
+          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
+        await YTDlpWrap.downloadFile(url, binaryPath);
+      } else if (platform === 'darwin') {
+        // macOS universal binary
+        const url =
+          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+        await YTDlpWrap.downloadFile(url, binaryPath);
+      } else if (platform === 'win32') {
+        const url =
+          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+        await YTDlpWrap.downloadFile(url, binaryPath);
+      } else {
+        await YTDlpWrap.downloadFromGithub(binaryPath);
+      }
+
       fs.chmodSync(binaryPath, '755');
       console.log('yt-dlp binary download completed and made executable');
     } catch (downloadError) {
       console.error('Failed to download yt-dlp binary:', downloadError);
-      throw downloadError;
+      // Final fallback to wrapper default
+      try {
+        await YTDlpWrap.downloadFromGithub(binaryPath);
+        fs.chmodSync(binaryPath, '755');
+      } catch (e) {
+        throw e;
+      }
     }
   }
 
