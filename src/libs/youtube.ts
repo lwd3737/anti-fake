@@ -61,6 +61,7 @@ export default class Youtube {
     const chunkDir = path.join(dirPath, `${videoId}_chunks`);
     await mkdir(chunkDir, { recursive: true });
     const chunkDuration = 600; // 10분
+    const inputExt = path.extname(filePath) || '.mp3';
     let ffmpegPathForSeg = ffmpeg ?? path.join(process.cwd(), 'bin', 'ffmpeg');
 
     try {
@@ -79,7 +80,7 @@ export default class Youtube {
       }
     } catch {}
     execSync(
-      `${ffmpegPathForSeg} -i "${filePath}" -f segment -segment_time ${chunkDuration} -c copy "${chunkDir}/chunk_%03d.mp3"`,
+      `${ffmpegPathForSeg} -i "${filePath}" -f segment -segment_time ${chunkDuration} -c copy "${chunkDir}/chunk_%03d${inputExt}"`,
       { stdio: 'ignore' },
     );
     const chunkFiles = (await readdir(chunkDir)).sort();
