@@ -16,7 +16,7 @@ import { YoutubeVideoTranscript } from '@/models/youtube';
 import { experimental_transcribe as transcribe } from 'ai';
 import { openai } from './ai';
 import { mkdir, readdir, readFile } from 'fs/promises';
-import { existsSync, chmodSync, copyFileSync } from 'fs';
+import { existsSync, chmodSync, copyFileSync, createWriteStream } from 'fs';
 import { execSync, spawn } from 'child_process';
 import ffmpeg from 'ffmpeg-static';
 import ytdl from 'ytdl-core';
@@ -61,9 +61,8 @@ export default class Youtube {
     const chunkDir = path.join(dirPath, `${videoId}_chunks`);
     await mkdir(chunkDir, { recursive: true });
     const chunkDuration = 600; // 10분
-    let ffmpegPathForSeg =
-      (ffmpeg as unknown as string) ||
-      path.join(process.cwd(), 'bin', 'ffmpeg');
+    let ffmpegPathForSeg = ffmpeg ?? path.join(process.cwd(), 'bin', 'ffmpeg');
+
     try {
       if (ffmpegPathForSeg && existsSync(ffmpegPathForSeg)) {
         // Vercel의 /var/task는 read-only일 수 있으므로 /tmp로 복사 후 실행
@@ -105,8 +104,9 @@ export default class Youtube {
       ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
     >
   > {
+    const isVercel = !!process.env.VERCEL;
     let ffmpegPath =
-      (ffmpeg as unknown as string) ||
+      (ffmpeg as unknown as string) ??
       path.join(process.cwd(), 'bin', 'ffmpeg');
     try {
       if (ffmpegPath && existsSync(ffmpegPath)) {
@@ -122,24 +122,18 @@ export default class Youtube {
         }
       }
     } catch {}
-    if (!ffmpegPath || !existsSync(ffmpegPath)) {
-      return {
-        code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
-        message: 'ffmpeg binary not found. Ensure ffmpeg-static is installed.',
-        context: {
-          videoId,
-        },
-      };
-    }
 
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     const ytDlp = new YTDlpWrap(path.join(process.cwd(), 'bin', 'yt-dlp'));
 
     const tempDir = os.tmpdir();
-    const tempFile = path.join(tempDir, `${videoId}.mp3`);
+    const tempFile = path.join(
+      tempDir,
+      `${videoId}${isVercel ? '.m4a' : '.mp3'}`,
+    );
     await mkdir(tempDir, { recursive: true });
 
-    const useYtdlpFirst = !process.env.VERCEL; // Vercel에서는 우선 ytdl-core 사용 권장
+    const useYtdlpFirst = !isVercel; // Vercel에서는 우선 ytdl-core 사용
 
     const tryYtDlp = async () => {
       await ytDlp.execPromise(
@@ -166,24 +160,6 @@ export default class Youtube {
 
     const tryYtdlCore = async () => {
       await new Promise<void>((resolve, reject) => {
-        const ff = spawn(ffmpegPath, [
-          '-y',
-          '-i',
-          'pipe:0',
-          '-vn',
-          '-acodec',
-          'libmp3lame',
-          '-b:a',
-          '192k',
-          tempFile,
-        ]);
-
-        ff.on('error', reject);
-        ff.on('close', (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`ffmpeg exited with code ${code}`));
-        });
-
         const stream = ytdl(url, {
           filter: 'audioonly',
           quality: 'highestaudio',
@@ -191,7 +167,31 @@ export default class Youtube {
           highWaterMark: 1 << 25,
         });
         stream.on('error', reject);
-        stream.pipe(ff.stdin);
+
+        if (isVercel || !ffmpegPath || !existsSync(ffmpegPath)) {
+          const out = createWriteStream(tempFile);
+          out.on('error', reject);
+          out.on('finish', resolve);
+          stream.pipe(out);
+        } else {
+          const ff = spawn(ffmpegPath, [
+            '-y',
+            '-i',
+            'pipe:0',
+            '-vn',
+            '-acodec',
+            'libmp3lame',
+            '-b:a',
+            '192k',
+            tempFile,
+          ]);
+          ff.on('error', reject);
+          ff.on('close', (code) => {
+            if (code === 0) resolve();
+            else reject(new Error(`ffmpeg exited with code ${code}`));
+          });
+          stream.pipe(ff.stdin);
+        }
       });
     };
 
@@ -204,7 +204,7 @@ export default class Youtube {
     } catch (firstErr) {
       try {
         if (useYtdlpFirst) await tryYtdlCore();
-        else await tryYtDlp();
+        else if (!isVercel) await tryYtDlp(); // Vercel에선 yt-dlp 재시도 생략
       } catch (secondErr) {
         return {
           code: ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED,
