@@ -52,7 +52,6 @@ async function downloadYtDlpBinary() {
       try {
         await YTDlpWrap.downloadFromGithub(binaryPath);
         fs.chmodSync(binaryPath, '755');
-        console.log('YTDlp download path: ', binaryPath);
       } catch (e) {
         throw e;
       }
@@ -63,7 +62,11 @@ async function downloadYtDlpBinary() {
     const ytDlp = new YTDlpWrap(binaryPath);
     const version = await ytDlp.getVersion();
 
-    console.log('yt-dlp binary is working, version:', version);
+    console.log(
+      'yt-dlp binary is working, version, path:',
+      version,
+      binaryPath,
+    );
   } catch (error) {
     console.error('yt-dlp binary verification failed:', error);
     throw error;
@@ -93,8 +96,6 @@ async function setupFfmpeg() {
 
     fs.copyFileSync(ffmpeg, ffmpegPath);
     fs.chmodSync(ffmpegPath, '755');
-
-    console.log('ffmpeg setup completed: ', ffmpegPath);
   }
 
   console.log('ffmpeg is ready at:', ffmpegPath);
