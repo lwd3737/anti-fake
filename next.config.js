@@ -8,7 +8,10 @@ const nextConfig = {
       'ffmpeg-static',
     ],
     outputFileTracingIncludes: {
-      '/api/*': ['./bin/yt-dlp', 'node_modules/ffmpeg-static/**'],
+      '/api/factcheck-sessions/[factCheckSessionId]/claims': [
+        './bin/yt-dlp',
+        'node_modules/ffmpeg-static/**',
+      ],
     },
     // instrumentationHook: true,
   },
