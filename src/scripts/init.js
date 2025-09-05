@@ -1,3 +1,5 @@
+const ytdl = require('ytdl-core');
+
 async function init() {
   await downloadYtDlpBinary();
   await setupFfmpeg();
@@ -50,6 +52,7 @@ async function downloadYtDlpBinary() {
       try {
         await YTDlpWrap.downloadFromGithub(binaryPath);
         fs.chmodSync(binaryPath, '755');
+        console.log('YTDlp download path: ', binaryPath);
       } catch (e) {
         throw e;
       }
@@ -91,7 +94,7 @@ async function setupFfmpeg() {
     fs.copyFileSync(ffmpeg, ffmpegPath);
     fs.chmodSync(ffmpegPath, '755');
 
-    console.log('ffmpeg setup completed');
+    console.log('ffmpeg setup completed: ', ffmpegPath);
   }
 
   console.log('ffmpeg is ready at:', ffmpegPath);

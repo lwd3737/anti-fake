@@ -10,6 +10,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '/api/fact-check-sessions/[factCheckSessionId]/claims': [
         './bin/yt-dlp',
+        './bin/ffmpeg',
         'node_modules/ffmpeg-static/**',
       ],
     },
