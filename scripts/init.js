@@ -1,5 +1,3 @@
-const ytdl = require('ytdl-core');
-
 async function init() {
   await downloadYtDlpBinary();
   await setupFfmpeg();
@@ -9,7 +7,6 @@ async function downloadYtDlpBinary() {
   const YTDlpWrap = require('yt-dlp-wrap').default;
   const fs = require('fs');
   const path = require('path');
-  const os = require('os');
 
   const binDir = path.join(process.cwd(), 'bin');
   const binaryPath = path.join(binDir, 'yt-dlp');
@@ -22,11 +19,10 @@ async function downloadYtDlpBinary() {
   if (!fs.existsSync(binaryPath)) {
     console.log('yt-dlp binary not found, downloading...');
 
-    const isVercel = !!process.env.VERCEL;
     const platform = process.platform;
 
     try {
-      if (isVercel || platform === 'linux') {
+      if (platform === 'linux') {
         // Prefer standalone Linux binary on Vercel to avoid Python dependency
         const url =
           'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';

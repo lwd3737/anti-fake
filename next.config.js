@@ -7,13 +7,13 @@ const nextConfig = {
       'yt-dlp-wrap',
       'ffmpeg-static',
     ],
-    outputFileTracingIncludes: {
-      '/api/fact-check-sessions/[factCheckSessionId]/claims': [
-        './bin/yt-dlp',
-        './bin/ffmpeg',
-        'node_modules/ffmpeg-static/**',
-      ],
-    },
+    // outputFileTracingIncludes: {
+    //   '/api/fact-check-sessions/[factCheckSessionId]/claims': [
+    //     './bin/yt-dlp',
+    //     './bin/ffmpeg',
+    //     'node_modules/ffmpeg-static/**',
+    //   ],
+    // },
     // instrumentationHook: true,
   },
   images: {

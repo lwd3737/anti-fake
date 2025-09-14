@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate && node src/scripts/init.js",
+    "postinstall": "prisma generate && node ./scripts/init.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
