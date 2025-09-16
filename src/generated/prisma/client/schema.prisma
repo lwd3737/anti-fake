@@ -1,8 +1,8 @@
 generator client {
   provider      = "prisma-client-js"
   // previewFeatures = ["queryCompiler", "driverAdapters"]
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
   output        = "../src/generated/prisma/client"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"] // vercel node runtime
 }
 
 datasource db {

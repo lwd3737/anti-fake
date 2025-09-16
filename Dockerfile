@@ -25,9 +25,10 @@ COPY package.json yarn.lock ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/bin ./bin
-COPY --from=builder /app/prisma ./prisma
+# COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/src/generated ./src/generated
 RUN yarn install --frozen-lockfile --production --ignore-scripts&& yarn cache clean
-# COPY --from=builder /app/src/generated ./src/generated
 # COPY --from=builder /app/next.config.js ./
 # COPY --from=builder /app/tsconfig.json ./
 

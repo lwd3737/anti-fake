@@ -35,12 +35,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.15.0
- * Query Engine version: 85179d7826409ee107a6ba334b5e305ae3fba9fb
+ * Prisma Client JS version: 6.16.1
+ * Query Engine version: 1c57fdcd7e44b29b9313256c76699e91c3ac3c43
  */
 Prisma.prismaVersion = {
-  client: "6.15.0",
-  engine: "85179d7826409ee107a6ba334b5e305ae3fba9fb"
+  client: "6.16.1",
+  engine: "1c57fdcd7e44b29b9313256c76699e91c3ac3c43"
 }
 
 Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
@@ -227,7 +227,7 @@ const config = {
       },
       {
         "fromEnvVar": null,
-        "value": "rhel-openssl-3.0.x"
+        "value": "linux-musl-arm64-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
@@ -235,12 +235,11 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../../prisma",
-  "clientVersion": "6.15.0",
-  "engineVersion": "85179d7826409ee107a6ba334b5e305ae3fba9fb",
+  "clientVersion": "6.16.1",
+  "engineVersion": "1c57fdcd7e44b29b9313256c76699e91c3ac3c43",
   "datasourceNames": [
     "db"
   ],
@@ -254,8 +253,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  // previewFeatures = [\"queryCompiler\", \"driverAdapters\"]\n  output        = \"../src/generated/prisma/client\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"] // vercel node runtime\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String            @id @default(uuid())\n  provider     OauthProviderType\n  providerSub  String?\n  email        String            @unique\n  role         UserRole          @default(USER)\n  refreshToken String?\n  createdAt    DateTime          @default(now())\n\n  factCheckSessions FactCheckSession[]\n\n  @@unique([provider, providerSub])\n}\n\nenum OauthProviderType {\n  GOOGLE\n}\n\nenum UserRole {\n  USER\n  ADMIN\n\n  @@map(\"Role\")\n}\n\nmodel YoutubeVideo {\n  id                 String   @id // youtube video id\n  title              String\n  channelId          String   @unique\n  channelTitle       String\n  thumbnailUrl       String\n  transcript         String?\n  transcriptMetadata Json?\n  transcriptSummary  String?\n  publishedAt        DateTime\n  updatedAt          DateTime @updatedAt\n}\n\nenum ContentType {\n  YOUTUBE_VIDEO\n}\n\nmodel FactCheckSession {\n  id          String      @id @default(uuid())\n  userId      String\n  user        User        @relation(fields: [userId], references: [id])\n  contentType ContentType\n  contentId   String\n\n  claimVerifications ClaimVerification[]\n  claims             Claim[]\n  createdAt          DateTime            @default(now())\n\n  @@unique([contentType, contentId])\n}\n\nmodel Claim {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  index              Int\n  content            String\n  context            String\n  detectionReason    String\n  metadata           Json?\n  createdAt          DateTime         @default(now())\n\n  claimVerifications ClaimVerification[]\n}\n\nmodel ClaimVerification {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  claimId            String\n  claim              Claim            @relation(fields: [claimId], references: [id])\n  verdict            VerdictType\n  verdictReason      String\n  evidences          Json\n  createdAt          DateTime         @default(now())\n}\n\nenum VerdictType {\n  TRUE\n  MOSTLY_TRUE\n  MIXED\n  MOSTLY_FALSE\n  FALSE\n  UNKNOWN\n}\n",
-  "inlineSchemaHash": "a97a4265a7622cec254be15a96e438d98960ee24eaf6c13db1618adcd8bb797b",
+  "inlineSchema": "generator client {\n  provider      = \"prisma-client-js\"\n  // previewFeatures = [\"queryCompiler\", \"driverAdapters\"]\n  binaryTargets = [\"native\", \"linux-musl-arm64-openssl-3.0.x\"]\n  output        = \"../src/generated/prisma/client\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\nmodel User {\n  id           String            @id @default(uuid())\n  provider     OauthProviderType\n  providerSub  String?\n  email        String            @unique\n  role         UserRole          @default(USER)\n  refreshToken String?\n  createdAt    DateTime          @default(now())\n\n  factCheckSessions FactCheckSession[]\n\n  @@unique([provider, providerSub])\n}\n\nenum OauthProviderType {\n  GOOGLE\n}\n\nenum UserRole {\n  USER\n  ADMIN\n\n  @@map(\"Role\")\n}\n\nmodel YoutubeVideo {\n  id                 String   @id // youtube video id\n  title              String\n  channelId          String   @unique\n  channelTitle       String\n  thumbnailUrl       String\n  transcript         String?\n  transcriptMetadata Json?\n  transcriptSummary  String?\n  publishedAt        DateTime\n  updatedAt          DateTime @updatedAt\n}\n\nenum ContentType {\n  YOUTUBE_VIDEO\n}\n\nmodel FactCheckSession {\n  id          String      @id @default(uuid())\n  userId      String\n  user        User        @relation(fields: [userId], references: [id])\n  contentType ContentType\n  contentId   String\n\n  claimVerifications ClaimVerification[]\n  claims             Claim[]\n  createdAt          DateTime            @default(now())\n\n  @@unique([contentType, contentId])\n}\n\nmodel Claim {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  faactCheckSession  FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  index              Int\n  content            String\n  context            String\n  detectionReason    String\n  metadata           Json?\n  createdAt          DateTime         @default(now())\n\n  claimVerifications ClaimVerification[]\n}\n\nmodel ClaimVerification {\n  id                 String           @id @default(uuid())\n  factCheckSessionId String\n  factCheckSession   FactCheckSession @relation(fields: [factCheckSessionId], references: [id], onDelete: Cascade)\n  claimId            String\n  claim              Claim            @relation(fields: [claimId], references: [id])\n  verdict            VerdictType\n  verdictReason      String\n  evidences          Json\n  createdAt          DateTime         @default(now())\n}\n\nenum VerdictType {\n  TRUE\n  MOSTLY_TRUE\n  MIXED\n  MOSTLY_FALSE\n  FALSE\n  UNKNOWN\n}\n",
+  "inlineSchemaHash": "b804badf9e4c5a33d42ae9fb4dcba530e35acad5f21035e2c06cd927d7573ca7",
   "copyEngine": true
 }
 config.dirname = '/'

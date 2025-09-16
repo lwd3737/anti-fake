@@ -10,7 +10,8 @@
     "test": "vitest",
     "db:reset": "prisma db push --force-reset && prisma db seed",
     "db:update": "prisma db push && prisma generate",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker buildx build --platform linux/arm64 -t anti-fake ."
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
