@@ -14,18 +14,17 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');
-  console.log('req', req.url);
 
   if (!code || !state) {
     console.error('state or code is not provided');
-    return NextResponse.redirect(PageRoutes.error.AUTH);
+    return NextResponse.redirect(generateServerUrl(PageRoutes.error.AUTH));
   }
 
   const authorizeResult = await authService.authorizeCode(code);
   if (isFailure(authorizeResult)) {
     const failure = authorizeResult;
     console.error('authorize failed', failure);
-    return NextResponse.redirect(PageRoutes.error.AUTH);
+    return NextResponse.redirect(generateServerUrl(PageRoutes.error.AUTH));
   }
 
   const { tokens, providerSub, email } = authorizeResult;

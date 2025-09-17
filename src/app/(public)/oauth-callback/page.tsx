@@ -2,16 +2,15 @@
 
 import { redirect, RedirectType } from 'next/navigation';
 import { PageRoutes } from '@/constants/routes';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import LoginLoading from './components/loading';
 
-export default function OauthCallbackPage({
-  searchParams,
-}: {
-  searchParams: { state: string };
-}) {
+function OauthCallbackContent() {
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    const { state } = searchParams;
+    const state = searchParams.get('state');
     if (!state) {
       console.error('state is not provided');
       redirect(PageRoutes.error.AUTH);
@@ -32,4 +31,12 @@ export default function OauthCallbackPage({
   }, [searchParams]);
 
   return <LoginLoading />;
+}
+
+export default function OauthCallbackPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <OauthCallbackContent />
+    </Suspense>
+  );
 }

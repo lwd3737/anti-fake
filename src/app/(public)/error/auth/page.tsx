@@ -8,7 +8,7 @@ export default function AuthErrorPage() {
 
   useEffect(() => {
     setTimeout(() => {
-      router.replace(PageRoutes.LOGIN);
+      // router.replace(PageRoutes.LOGIN);
     }, 3000);
   }, [router]);
 
