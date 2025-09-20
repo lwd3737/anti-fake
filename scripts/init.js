@@ -23,18 +23,18 @@ async function downloadYtDlpBinary() {
 
     try {
       if (platform === 'linux') {
-        // Prefer standalone Linux binary on Vercel to avoid Python dependency
+        // Use specific version for better stability
         const url =
-          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
+          'https://github.com/yt-dlp/yt-dlp/releases/download/2024.12.13/yt-dlp_linux';
         await YTDlpWrap.downloadFile(url, binaryPath);
       } else if (platform === 'darwin') {
         // macOS universal binary
         const url =
-          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+          'https://github.com/yt-dlp/yt-dlp/releases/download/2024.12.13/yt-dlp_macos';
         await YTDlpWrap.downloadFile(url, binaryPath);
       } else if (platform === 'win32') {
         const url =
-          'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+          'https://github.com/yt-dlp/yt-dlp/releases/download/2024.12.13/yt-dlp.exe';
         await YTDlpWrap.downloadFile(url, binaryPath);
       } else {
         await YTDlpWrap.downloadFromGithub(binaryPath);

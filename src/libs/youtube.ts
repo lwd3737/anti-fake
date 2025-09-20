@@ -16,9 +16,11 @@ import { YoutubeVideoTranscript } from '@/models/youtube';
 import { experimental_transcribe as transcribe } from 'ai';
 import { openai } from './ai';
 import { mkdir, readdir } from 'fs/promises';
-import { existsSync, chmodSync } from 'fs';
+import { existsSync, chmodSync, createReadStream } from 'fs';
 import { execSync } from 'child_process';
 import ffmpeg from 'ffmpeg-static';
+import axios from 'axios';
+import FormData from 'form-data';
 
 interface WhisperTranscription {
   task: string;
@@ -61,15 +63,9 @@ export default class Youtube {
     await mkdir(chunkDir, { recursive: true });
     const chunkDuration = 600; // 10분
     const inputExt = '.m4a';
-    let ffmpegPathForSeg = ffmpeg ?? path.join(process.cwd(), 'bin', 'ffmpeg');
-
-    try {
-      if (ffmpegPathForSeg && existsSync(ffmpegPathForSeg)) {
-        chmodSync(ffmpegPathForSeg, 0o755);
-      }
-    } catch {}
+    const ffmpegSegmentationPath = this.resolveFfmpegPath();
     execSync(
-      `${ffmpegPathForSeg} -i "${filePath}" -f segment -segment_time ${chunkDuration} -c copy -reset_timestamps 1 "${chunkDir}/chunk_%03d${inputExt}"`,
+      `${ffmpegSegmentationPath} -i "${filePath}" -f segment -segment_time ${chunkDuration} -c copy -reset_timestamps 1 "${chunkDir}/chunk_%03d${inputExt}"`,
       { stdio: 'ignore' },
     );
     const chunkFiles = (await readdir(chunkDir)).sort();
@@ -94,12 +90,7 @@ export default class Youtube {
       ErrorCode.YOUTUBE_TRANSCRIPTION_FAILED
     >
   > {
-    let ffmpegPath = ffmpeg ?? path.join(process.cwd(), 'bin', 'ffmpeg');
-    try {
-      if (ffmpegPath && existsSync(ffmpegPath)) {
-        chmodSync(ffmpegPath, 0o755);
-      }
-    } catch {}
+    const resolvedFfmpeg = this.resolveFfmpegPath();
 
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     const ytDlp = new YTDlpWrap(path.join(process.cwd(), 'bin', 'yt-dlp'));
@@ -109,29 +100,73 @@ export default class Youtube {
     await mkdir(tempDir, { recursive: true });
 
     // Download using yt-dlp only, in m4a (AAC in MP4)
-    await ytDlp.execPromise(
-      [
+    try {
+      const args = [
         url,
         '-f',
-        'bestaudio[ext=m4a]/bestaudio',
+        'bestaudio[ext=m4a]/bestaudio/best',
         '--extract-audio',
         '--audio-format',
         'm4a',
         '--audio-quality',
         '0',
         '--no-playlist',
-        '--ffmpeg-location',
-        ffmpegPath,
+        '--no-check-certificates',
+        '--user-agent',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        '--verbose',
         '-o',
         tempFile,
-      ],
-      { signal },
-    );
+      ];
+
+      // Only pass ffmpeg-location if we have an absolute/existing path (not just 'ffmpeg')
+      if (resolvedFfmpeg !== 'ffmpeg' && existsSync(resolvedFfmpeg)) {
+        args.splice(
+          args.indexOf('--verbose'),
+          0,
+          '--ffmpeg-location',
+          resolvedFfmpeg,
+        );
+      }
+
+      await ytDlp.execPromise(args, { signal });
+    } catch (error) {
+      console.error('yt-dlp execution failed:', error);
+      console.error(
+        'Command:',
+        `${path.join(process.cwd(), 'bin', 'yt-dlp')} ${url} -f bestaudio[ext=m4a]/bestaudio/best --extract-audio --audio-format m4a --audio-quality 0 --no-playlist --no-check-certificates --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" ${
+          resolvedFfmpeg !== 'ffmpeg' && existsSync(resolvedFfmpeg)
+            ? `--ffmpeg-location ${resolvedFfmpeg} `
+            : ''
+        }--verbose -o ${tempFile}`,
+      );
+      throw error;
+    }
 
     return {
       dirPath: tempDir,
       filePath: tempFile,
     };
+  }
+
+  private static resolveFfmpegPath(): string {
+    // Prefer system ffmpeg if available (installed in Docker via apk)
+    try {
+      execSync('command -v ffmpeg', { stdio: 'ignore' });
+      return 'ffmpeg';
+    } catch {}
+
+    // Fall back to ffmpeg-static path if it exists
+    const staticPath = ffmpeg ?? path.join(process.cwd(), 'bin', 'ffmpeg');
+    try {
+      if (staticPath && existsSync(staticPath)) {
+        chmodSync(staticPath, 0o755);
+        return staticPath;
+      }
+    } catch {}
+
+    // Last resort: let PATH resolution try
+    return 'ffmpeg';
   }
 
   // INFO: sdk 라이브러리 사용 시 오류 발생
@@ -164,33 +199,29 @@ export default class Youtube {
     filePath: string,
     // previousSegmentText?: string,
   ): Promise<YoutubeVideoTranscript> {
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
-    const execAsync = promisify(exec);
-    const curlCommand = [
-      'curl',
-      '-X POST',
+    const form = new FormData();
+    form.append('file', createReadStream(filePath), {
+      filename: path.basename(filePath),
+      contentType: 'audio/m4a',
+    });
+    form.append('model', 'whisper-1');
+    form.append('language', 'ko');
+    form.append('response_format', 'verbose_json');
+    form.append('temperature', '0');
+
+    const { data } = await axios.post<WhisperTranscription>(
       'https://api.openai.com/v1/audio/transcriptions',
-      '-H',
-      `"Authorization: Bearer ${loadConfig().openai.apiKey}"`,
-      '-H',
-      '"Content-Type: multipart/form-data"',
-      '-F',
-      `"file=@${filePath}"`,
-      '-F',
-      '"model=whisper-1"',
-      '-F',
-      '"language=ko"',
-      '-F',
-      '"response_format=verbose_json"',
-      '-F',
-      '"temperature=0"',
-    ].join(' ');
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${loadConfig().openai.apiKey}`,
+        },
+        maxBodyLength: Infinity,
+      },
+    );
 
-    const { stdout, stderr } = await execAsync(curlCommand);
-    if (stderr) console.debug('Curl stderr:', stderr);
-
-    const transcription = JSON.parse(stdout) as WhisperTranscription;
+    const transcription = data as WhisperTranscription;
     const { text, duration, segments } = transcription;
 
     return {

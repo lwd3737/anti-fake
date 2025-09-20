@@ -16,14 +16,15 @@ RUN yarn build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN apk add --no-cache python3 py3-pip
+RUN apk add --no-cache python3 py3-pip ffmpeg ca-certificates
 COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --production --ignore-scripts && yarn cache clean
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/bin ./bin
+COPY --from=builder /app/node_modules/ffmpeg-static ./node_modules/ffmpeg-static
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/src/generated ./src/generated
-RUN yarn install --frozen-lockfile --production --ignore-scripts&& yarn cache clean
 
 EXPOSE 3000
 CMD ["yarn", "start"]
