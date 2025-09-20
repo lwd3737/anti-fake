@@ -118,14 +118,16 @@ export default class GoogleSearch {
       title: web!.title!,
     }));
 
-    const citations = await this.getCitationBulk(sources);
+    const citations = await this.getCitations(sources);
     const contents = groundingSupports.map((support) => {
       const { segment, groundingChunkIndices } = support;
       const { text } = segment as unknown as { text?: string };
 
       return {
         summary: text!,
-        citations: groundingChunkIndices.map((idx) => citations[idx]),
+        citations: groundingChunkIndices
+          .map((idx) => citations[idx])
+          .filter((citation) => !!citation),
       };
     });
 
@@ -145,7 +147,7 @@ export default class GoogleSearch {
     };
   }
 
-  private async getCitationBulk(
+  private async getCitations(
     sources: GroundingSource[],
   ): Promise<WebSearchCitation[]> {
     const chunkSize = 10;
@@ -159,17 +161,28 @@ export default class GoogleSearch {
       const citationResults = await Promise.allSettled(
         chunks.map(this.getCitation.bind(this)),
       );
-      const citations = citationResults
+      const filteredCitations = citationResults
         .filter(
           (result): result is PromiseFulfilledResult<WebSearchCitation> => {
-            if (result.status === 'fulfilled') return true;
-            console.debug('citation fetch failed', result.reason);
-            return false;
+            return result.status === 'fulfilled';
           },
         )
         .map((result) => result.value)
         .filter((citation) => !!citation);
-      result.push(...citations);
+
+      if (citationResults.length !== filteredCitations.length) {
+        citationResults
+          .map((result, index) => ({ index, ...result }))
+          .filter((result) => result.status === 'rejected')
+          .map(({ reason, index }) => ({ reason, index }))
+          .forEach(({ index, reason }) => {
+            const source = chunks[index];
+            console.error(
+              `source: ${source.title}, citationIndex: ${index}, reason: ${reason}`,
+            );
+          });
+      }
+      result.push(...filteredCitations);
     }
 
     return result;

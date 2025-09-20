@@ -46,33 +46,38 @@ export default function EvidenceCollapse({
           isShown ? '' : 'hidden'
         }`}
       >
-        {evidences.map(({ summary, citations }, index) => {
+        {evidences.map(({ summary, citations }, evidenceIndex) => {
           return (
             <li
               className={`flex flex-col gap-y-1
 								`}
               ref={(el) => {
-                if (el) itemsRef.current[index] = el;
+                if (el) itemsRef.current[evidenceIndex] = el;
               }}
-              key={index}
+              key={evidenceIndex}
             >
               <div
                 className={`flex gap-x-2 w-fit text-[0.875rem] ${
-                  highlightedItemIndex === index
+                  highlightedItemIndex === evidenceIndex
                     ? 'bg-[#FFF59D] text-[#2C3E50]'
                     : ''
                 }`}
               >
-                <span className="text-black">{index + 1}.</span>
+                <span className="text-black">{evidenceIndex + 1}.</span>
                 <p className="inline-block w-fit text-text-subtle">{summary}</p>
               </div>
 
               <div className="flex flex-wrap gap-x-2 pl-4">
-                {citations.map(({ url, siteName }, index) => {
+                {citations.map((citation, citationIndex) => {
+                  if (!citation) {
+                    console.log('evidence', evidenceIndex, summary);
+                    console.log('citation', citationIndex, citation);
+                  }
+                  const { url, siteName } = citation;
                   return (
                     <a
                       className="inline-block bg-surface-subtle-hover px-3 py-1 rounded-full text-[0.5rem] text-text-subtle"
-                      key={index}
+                      key={citationIndex}
                       href={url}
                       target="_blank"
                     >
