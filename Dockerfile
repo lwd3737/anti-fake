@@ -18,6 +18,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN apk add --no-cache python3 py3-pip ffmpeg ca-certificates
 COPY package.json yarn.lock ./
+COPY next.config.js ./
 RUN yarn install --frozen-lockfile --production --ignore-scripts && yarn cache clean
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
