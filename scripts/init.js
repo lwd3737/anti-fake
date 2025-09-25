@@ -72,29 +72,45 @@ async function downloadYtDlpBinary() {
 async function setupFfmpeg() {
   const fs = require('fs');
   const path = require('path');
-  const ffmpeg = require('ffmpeg-static');
 
-  if (!ffmpeg) {
-    throw new Error('ffmpeg-static package is not installed properly');
+  // Prefer system ffmpeg if available (installed in Docker runner stage)
+  try {
+    const { execSync } = require('child_process');
+    execSync('command -v ffmpeg', { stdio: 'ignore' });
+    console.log('System ffmpeg detected via PATH; skipping ffmpeg-static copy');
+    return;
+  } catch {}
+
+  // If system ffmpeg not present during build, try ffmpeg-static; if missing, skip without failing
+  let ffmpegBinaryPath = null;
+  try {
+    ffmpegBinaryPath = require('ffmpeg-static');
+  } catch (e) {
+    console.log(
+      'ffmpeg-static not available; skipping ffmpeg setup for build stage',
+    );
   }
 
   const binDir = path.join(process.cwd(), 'bin');
   const ffmpegPath = path.join(binDir, 'ffmpeg');
 
-  // Create bin directory if it doesn't exist
   if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true });
   }
 
-  // Copy ffmpeg binary to our bin directory
-  if (!fs.existsSync(ffmpegPath)) {
-    console.log('Setting up ffmpeg...');
-
-    fs.copyFileSync(ffmpeg, ffmpegPath);
-    fs.chmodSync(ffmpegPath, '755');
+  if (ffmpegBinaryPath && !fs.existsSync(ffmpegPath)) {
+    try {
+      console.log('Setting up ffmpeg from ffmpeg-static...');
+      fs.copyFileSync(ffmpegBinaryPath, ffmpegPath);
+      fs.chmodSync(ffmpegPath, '755');
+    } catch (e) {
+      console.log(
+        'Failed to set up ffmpeg from ffmpeg-static; proceeding without it',
+      );
+    }
   }
 
-  console.log('ffmpeg is ready at:', ffmpegPath);
+  console.log('ffmpeg setup step completed');
 }
 
 init();

@@ -48,6 +48,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.1.0",
     "@types/cheerio": "^0.22.35",
