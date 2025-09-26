@@ -19,12 +19,12 @@ ENV NODE_ENV=production
 RUN apk add --no-cache python3 py3-pip ffmpeg ca-certificates
 COPY package.json yarn.lock ./
 COPY next.config.js ./
+COPY src/config.ts ./src/config.ts
 RUN yarn install --frozen-lockfile --production --ignore-scripts && yarn cache clean
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/node_modules/ffmpeg-static ./node_modules/ffmpeg-static
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/src/generated ./src/generated
 
 EXPOSE 3000

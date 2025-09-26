@@ -20,12 +20,19 @@ async function downloadYtDlpBinary() {
     console.log('yt-dlp binary not found, downloading...');
 
     const platform = process.platform;
+    const isAlpine = (() => {
+      try {
+        return fs.existsSync('/etc/alpine-release');
+      } catch {
+        return false;
+      }
+    })();
 
     try {
       if (platform === 'linux') {
-        // Use specific version for better stability
-        const url =
-          'https://github.com/yt-dlp/yt-dlp/releases/download/2024.12.13/yt-dlp_linux';
+        // On Alpine (musl), prefer the universal Python zipapp to avoid glibc issues
+        const fileName = isAlpine ? 'yt-dlp' : 'yt-dlp_linux';
+        const url = `https://github.com/yt-dlp/yt-dlp/releases/download/2024.12.13/${fileName}`;
         await YTDlpWrap.downloadFile(url, binaryPath);
       } else if (platform === 'darwin') {
         // macOS universal binary

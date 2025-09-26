@@ -19,7 +19,7 @@ import { mkdir, readdir } from 'fs/promises';
 import { existsSync, chmodSync, createReadStream } from 'fs';
 import { execSync } from 'child_process';
 import ffmpeg from 'ffmpeg-static';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import FormData from 'form-data';
 
 interface WhisperTranscription {
@@ -209,30 +209,40 @@ export default class Youtube {
     form.append('response_format', 'verbose_json');
     form.append('temperature', '0');
 
-    const { data } = await axios.post<WhisperTranscription>(
-      'https://api.openai.com/v1/audio/transcriptions',
-      form,
-      {
-        headers: {
-          ...form.getHeaders(),
-          Authorization: `Bearer ${loadConfig().openai.apiKey}`,
+    try {
+      const { data } = await axios.post<WhisperTranscription>(
+        'https://api.openai.com/v1/audio/transcriptions',
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+            Authorization: `Bearer ${loadConfig().openai.apiKey}`,
+          },
+          maxBodyLength: Infinity,
         },
-        maxBodyLength: Infinity,
-      },
-    );
+      );
 
-    const transcription = data as WhisperTranscription;
-    const { text, duration, segments } = transcription;
+      const transcription = data as WhisperTranscription;
+      const { text, duration, segments } = transcription;
 
-    return {
-      text,
-      duration,
-      segments: segments.map(({ text, start, end }) => ({
+      return {
         text,
-        start,
-        end,
-      })),
-    };
+        duration,
+        segments: segments.map(({ text, start, end }) => ({
+          text,
+          start,
+          end,
+        })),
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError;
+
+      console.error(
+        'whisper transcription failed: ',
+        axiosError.response?.data,
+      );
+      throw error;
+    }
   }
 
   private static mergeTranscriptChunks(

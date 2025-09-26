@@ -1,12 +1,6 @@
 import loadConfig from '@/config';
 import { WebSearchCitation, WebSearchResponse } from '@/models/web-search';
-import {
-  DynamicRetrievalMode,
-  GenerativeModel,
-  GoogleGenerativeAI,
-  GroundingChunk,
-  GroundingMetadata,
-} from '@google/generative-ai';
+import { GoogleGenAI, GroundingChunk, GroundingMetadata } from '@google/genai';
 import * as cheerio from 'cheerio';
 
 interface GroundingSource {
@@ -15,28 +9,24 @@ interface GroundingSource {
 }
 
 export default class GoogleSearch {
-  private model: GenerativeModel;
+  // private model: GenerativeModel;
+  private ai = new GoogleGenAI({});
 
   constructor(private signal: AbortSignal) {
-    const { google } = loadConfig();
-    const ai = new GoogleGenerativeAI(google.gemini.apiKey);
-
-    this.model = ai.getGenerativeModel(
-      {
-        model: 'gemini-1.5-flash',
-        tools: [
-          {
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: DynamicRetrievalMode.MODE_DYNAMIC,
-                dynamicThreshold: 0,
-              },
-            },
-          },
-        ],
-      },
-      { apiVersion: 'v1beta' },
-    );
+    // const { google } = loadConfig();
+    // const ai = new GoogleGenerativeAI(google.gemini.apiKey);
+    // this.model = ai.getGenerativeModel(
+    //   {
+    //     // TODO: 환경변수에서 관리
+    //     model: 'gemini-2.0-flash',
+    //     tools: [
+    //       {
+    //         goo
+    //       },
+    //     ],
+    //   },
+    //   { apiVersion: 'v1beta' },
+    // );
   }
 
   public async search(
@@ -51,36 +41,58 @@ export default class GoogleSearch {
       mode?: 'json' | 'text';
     },
   ): Promise<WebSearchResponse> {
-    const generatedContent = await this.model.generateContent(
-      {
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: query }],
-          },
-        ],
-        systemInstruction: system,
-        generationConfig: {
-          temperature,
+    // const generatedContent = await this.model.generateContent(
+    //   {
+    //     contents: [
+    //       {
+    //         role: 'user',
+    //         parts: [{ text: query }],
+    //       },
+    //     ],
+    //     systemInstruction: system,
+    //     generationConfig: {
+    //       temperature,
+    //     },
+    //     tools: [
+    //       {
+    //         googleSearchRetrieval: {
+    //           dynamicRetrievalConfig: {
+    //             mode: DynamicRetrievalMode.MODE_DYNAMIC,
+    //             dynamicThreshold: 0,
+    //           },
+    //         },
+    //       },
+    //     ],
+    //   },
+    //   {
+    //     signal: this.signal,
+    //   },
+    // );
+
+    const result = await this.ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: query }],
         },
+      ],
+      config: {
+        systemInstruction: system,
+        temperature,
         tools: [
           {
-            googleSearchRetrieval: {
-              dynamicRetrievalConfig: {
-                mode: DynamicRetrievalMode.MODE_DYNAMIC,
-                dynamicThreshold: 0,
-              },
-            },
+            googleSearch: {},
           },
         ],
       },
-      {
-        signal: this.signal,
-      },
-    );
+      // generationConfig: {
+      //   temperature,
+      // },
+      // tools: [this.googleSearchTool],
+    });
 
-    const groundingMetadata = generatedContent.response.candidates?.[0]
-      .groundingMetadata as Omit<
+    const groundingMetadata = result.candidates?.[0].groundingMetadata as Omit<
       GroundingMetadata,
       'groundingChuncks' | 'groundingSupports'
     > & {
@@ -108,7 +120,8 @@ export default class GoogleSearch {
             outputTokens: 0,
             totalTokens: 0,
           },
-          model: this.model.model,
+          // TODO: 환경변수에서 관리
+          model: 'gemini-2.5-flash',
         },
       };
     }
@@ -132,7 +145,7 @@ export default class GoogleSearch {
     });
 
     const { promptTokenCount, candidatesTokenCount, totalTokenCount } =
-      generatedContent.response.usageMetadata ?? {};
+      result.usageMetadata ?? {};
 
     return {
       contents,
@@ -142,7 +155,7 @@ export default class GoogleSearch {
           outputTokens: candidatesTokenCount ?? 0,
           totalTokens: totalTokenCount ?? 0,
         },
-        model: this.model.model,
+        model: 'gemini-2.5-flash',
       },
     };
   }
